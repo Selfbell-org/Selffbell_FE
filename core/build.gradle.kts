@@ -1,23 +1,18 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.kapt) // Hilt 사용을 위해 kapt 플러그인 추가
-    alias(libs.plugins.hilt.android) // Hilt Gradle 플러그인 추가
+    alias(libs.plugins.kotlin.kapt)
 }
 
 android {
-    namespace = "com.selfbell.app"
+    namespace = "com.selfbell.core"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.selfbell.app"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -35,7 +30,8 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+        freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn" // @OptIn 어노테이션 사용 시 필요
+
     }
     buildFeatures {
         compose = true // Compose 사용 설정
@@ -47,38 +43,25 @@ android {
 
 dependencies {
 
-    implementation(project(":core"))
-    implementation(project(":data"))
-    implementation(project(":domain"))
-    implementation(project(":feature:home"))     // 각 피처 모듈 추가
-    implementation(project(":feature:alerts"))
-    implementation(project(":feature:emergency"))
-    implementation(project(":feature:escort"))
-    implementation(project(":feature:settings"))
-
-    // Android 기본 라이브러리
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
 
-    // Compose UI
+    // Compose 관련
     implementation(platform(libs.androidx.compose.bom)) // Compose BOM
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.ui.tooling)
-    implementation(libs.androidx.ui.test.manifest)
 
-    // Compose Navigation (최상위 내비게이션)
-    implementation(libs.androidx.navigation.compose)
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
 
-    // Hilt
+    // Hilt (core 모듈이 Hilt를 사용하거나 DI 모듈이 있다면)
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
-    implementation(libs.hilt.navigation.compose)
 
-    // 테스트 관련
+    // 테스트 관련 (필요시)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
