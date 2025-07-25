@@ -20,6 +20,7 @@
             <option value="$PROJECT_DIR$/feature/escort" />
             <option value="$PROJECT_DIR$/feature/home" />
             <option value="$PROJECT_DIR$/feature/settings" />
+            <option value="$PROJECT_DIR$/home" />
           </set>
         </option>
       </GradleProjectSettings>

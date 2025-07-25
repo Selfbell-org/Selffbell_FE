@@ -50,11 +50,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":domain"))
-    implementation(project(":feature:home"))     // 각 피처 모듈 추가
-    implementation(project(":feature:alerts"))
-    implementation(project(":feature:emergency"))
-    implementation(project(":feature:escort"))
-    implementation(project(":feature:settings"))
+
 
     // Android 기본 라이브러리
     implementation(libs.androidx.core.ktx)
