@@ -1,6 +1,8 @@
 plugins {
     id("java-library")
-    alias(libs.plugins.jetbrains.kotlin.jvm)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.kapt) // <-- 여기에 이 라인이 정확히 있는지 확인
+
 }
 java {
     sourceCompatibility = JavaVersion.VERSION_11
