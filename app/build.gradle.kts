@@ -52,7 +52,7 @@ dependencies {
     implementation(project(":domain"))
 
 
-    // Android 기본 라이브러리
+    // Android 기본 라이브러리!
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

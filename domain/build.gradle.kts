@@ -1,7 +1,7 @@
 plugins {
     id("java-library")
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.kapt) // <-- 여기에 이 라인이 정확히 있는지 확인
+    alias(libs.plugins.kotlin.kapt) // <-- 여기에 이 라인이 정확히 있는지 확인 !!
 
 }
 java {
