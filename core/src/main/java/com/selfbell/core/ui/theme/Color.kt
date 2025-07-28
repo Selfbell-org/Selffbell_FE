@@ -1,4 +1,4 @@
-package com.selfbell.app.ui.theme
+package com.selfbell.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

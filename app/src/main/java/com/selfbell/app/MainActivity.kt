@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.selfbell.app.ui.theme.SelfBellTheme
+import com.selfbell.core.ui.theme.SelfBellTheme
 // core 모듈에서 정의된 테마 임포트 (패키지 구조에 따라 다를 수 있음)
 //import com.selfbell.core.ui.theme.SelfBellTheme
 import dagger.hilt.android.AndroidEntryPoint // AndroidEntryPoint 어노테이션 임포트
