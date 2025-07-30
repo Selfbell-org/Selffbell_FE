@@ -2,6 +2,11 @@ package com.selfbell.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val Primary = Color(0xFF2563EB)
+val Secondary = Color(0xFF1E40AF)
+val Black = Color(0xFF0F114)
+val GrayInactivte= Color(0xFFD1D4DA)
+
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)
