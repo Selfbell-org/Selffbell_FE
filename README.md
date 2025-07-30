@@ -15,7 +15,7 @@ SelfBell은 범죄자 사전 정보 알림, 원터치 긴급 신고, 안심 동�
 
 프로젝트의 상세한 진행 상황과 업데이트는 아래 Notion 페이지에서 확인하실 수 있습니다.
 
-➡️ **[Notion에서 자세한 진행사항 보러가기]([Notion 페이지 링크])**
+➡️ **[Notion에서 자세한 진행사항 보러가기][([Notion 페이지 링크])**](https://www.notion.so/23df30f133af8044a732dc81312a8c5f)
 
 -----
 
@@ -52,7 +52,7 @@ SelfBell은 범죄자 사전 정보 알림, 원터치 긴급 신고, 안심 동�
 | **Jetpack Navigation** | 2.0.21  | 화면 전환 관리를 위한 라이브러리 |
 | **Hilt** | 2.51.1  | 의존성 주입을 위한 라이브러리    |
 | **Retrofit2** | 2.11.0  | HTTP 통신을 위한 라이브러리     |
-| **SharedPreference** | 1.2.1   | 로컬 데이터 저장을 위한 라이브러리 |
+| **DataStore** | 1.1.7   | 로컬 데이터 저장을 위한 라이브러리 |
 | **Room** | 2.6.1   | 로컬 데이터베이스 라이브러리      |
 | **Naver Map SDK** | 3.20.0  | 네이버 지도 사용을 위한 SDK      |
 | **KakaoSDK** | 2.20.6  | 카카오 로그인을 위한 SDK         |
@@ -75,7 +75,7 @@ SelfBell은 범죄자 사전 정보 알림, 원터치 긴급 신고, 안심 동�
 <img width="600" height="800" alt="git" src="https://github.com/user-attachments/assets/6754c9a1-072e-4b74-b10d-a885f6887de4" />
 
 
-* **`master`**: 배포 가능한 단위의 브랜치
+* **`main`**: 배포 가능한 단위의 브랜치
 * **`release`**: 배포 전 테스트가 가능한 단위의 브랜치
 * **`develop`**: 개발 중인 브랜치
 * **`feature/#issue_number`**: 개발 단위별 브랜치

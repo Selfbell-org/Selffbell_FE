@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -41,7 +42,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // Networking (Retrofit, OkHttp)
+    // Networking (Retrofit, OkHttp) !!
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson) // JSON 파싱 (Gson 사용 시)
     implementation(libs.okhttp.logging.interceptor) // API 로깅

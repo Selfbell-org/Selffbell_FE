@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -34,7 +35,7 @@ android {
 }
 
 dependencies {
-    // domain 모듈 의존성 (필수)
+    // domain 모듈 의존성 (필수) !!
     implementation(project(":domain"))
 
     // Android 기본 라이브러리
