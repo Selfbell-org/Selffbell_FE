@@ -60,7 +60,7 @@ fun SelfBellBottomNavigation(
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     NavigationBar(
-        modifier = modifier.height(80.dp), // 바텀바 자체의 높이 유지
+        modifier = modifier.height(80.dp), // 바텀바 자체의 높이 유지 ㅋ
         containerColor = Color.Transparent, // 바깥 Surface가 배경색을 담당
         contentColor = Black, // 기본 콘텐츠 색상 (아이템의 colors 파라미터가 오버라이드)
         tonalElevation = 0.dp // 그림자 제거
