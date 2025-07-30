@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.room.runtime)
     kapt(libs.room.compiler)
     implementation(libs.room.ktx) // 코루틴 지원
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
