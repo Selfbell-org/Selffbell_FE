@@ -9,34 +9,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.selfbell.app.ui.SplashScreen
+import dagger.hilt.android.AndroidEntryPoint
 import com.selfbell.core.ui.theme.SelfBellTheme
-// core 모듈에서 정의된 테마 임포트 (패키지 구조에 따라 다를 수 있음)
-//import com.selfbell.core.ui.theme.SelfBellTheme
-import dagger.hilt.android.AndroidEntryPoint // AndroidEntryPoint 어노테이션 임포트
+import com.selfbell.app.navigation.AppNavHost // AppNavHost 임포트
+import androidx.navigation.compose.rememberNavController // rememberNavController 임포트
 
-/**
- * SelfBell 앱의 메인 활동 (Activity).
- * @AndroidEntryPoint 어노테이션은 Hilt가 이 Activity에 의존성을 주입할 수 있도록 합니다.
- */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // TODO: 스플래시 화면 설치 (친구 분의 작업)
+        // val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
-        // 화면을 시스템 바(상태바, 내비게이션 바) 영역까지 확장
         enableEdgeToEdge()
         setContent {
-            // core 모듈에서 정의된 앱 테마 적용
             SelfBellTheme {
-                // Scaffold는 기본 Material Design 레이아웃 구조를 제공
+                // rememberNavController()를 사용하여 NavController 인스턴스 생성
+                val navController = rememberNavController()
+                // 앱의 최상위 내비게이션을 AppNavHost로 관리
+                AppNavHost(navController = navController)
                 SplashScreen()
             }
         }
     }
 }
 
-/**
- * 간단한 환영 메시지를 표시하는 Composable 함수.
- */
+// Greeting Composable은 이제 AppNavHost 외부에서 사용되지 않으므로 제거 가능 (선택 사항)
+/*
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
@@ -44,10 +42,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         modifier = modifier
     )
 }
-
-/**
- * Greeting Composable의 미리보기 함수.
- */
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
@@ -55,3 +49,4 @@ fun GreetingPreview() {
         Greeting("Android")
     }
 }
+*/
