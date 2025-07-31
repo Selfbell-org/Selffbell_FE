@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.selfbell.app.ui.SplashScreen
 import com.selfbell.core.ui.theme.SelfBellTheme
 // core 모듈에서 정의된 테마 임포트 (패키지 구조에 따라 다를 수 있음)
 //import com.selfbell.core.ui.theme.SelfBellTheme
@@ -30,14 +31,7 @@ class MainActivity : ComponentActivity() {
             // core 모듈에서 정의된 앱 테마 적용
             SelfBellTheme {
                 // Scaffold는 기본 Material Design 레이아웃 구조를 제공
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // 현재는 간단한 "Hello Android!" 텍스트를 표시
-                    // 여기에 앱의 AppNavHost 등을 배치하여 실제 UI를 구성할 예정
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                SplashScreen()
             }
         }
     }
