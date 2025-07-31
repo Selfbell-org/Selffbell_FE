@@ -23,10 +23,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.selfbell.app.R
 
 @Composable
-fun SplashScreen(modifier: Modifier = Modifier) {
+fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
 
     Box(
         modifier = modifier
@@ -60,5 +62,5 @@ fun SplashScreen(modifier: Modifier = Modifier) {
 @Preview
 @Composable
 fun SplashScreenPreview() {
-    SplashScreen()
+    SplashScreen(navController = rememberNavController())
 }
