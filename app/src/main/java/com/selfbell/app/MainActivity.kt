@@ -3,8 +3,13 @@ package com.selfbell.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.activity.enableEdgeToEdge // 전체 화면 사용을 위한 유틸리티
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.selfbell.app.ui.SplashScreen
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.app.navigation.AppNavHost // AppNavHost 임포트
 import androidx.navigation.compose.rememberNavController // rememberNavController 임포트
@@ -18,10 +23,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SelfBellTheme {
-                // rememberNavController()를 사용하여 NavController 인스턴스 생성
-                val navController = rememberNavController()
-                // 앱의 최상위 내비게이션을 AppNavHost로 관리
-                AppNavHost(navController = navController)
+                // 스플래시 화면을 앱의 시작점으로 호출
+                SplashScreen(navController = rememberNavController()) // AppNavHost에서 사용할 NavController를 미리 생성하여 전달
             }
         }
     }
