@@ -17,7 +17,6 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
-
 }
 
 rootProject.name = "SelfBell"
@@ -30,3 +29,4 @@ include(":feature:alerts")
 include(":feature:emergency")
 include(":feature:settings")
 include(":feature:escort")
+include(":feature:auth")

@@ -38,9 +38,20 @@ dependencies {
     // domain 모듈 의존성 (필수)
     implementation(project(":domain"))
 
-    // Android 기본 라이브러리
+    // Compose UI
+    implementation(platform(libs.androidx.compose.bom)) // Compose BOM
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.ui.tooling)
+    implementation(libs.androidx.ui.test.manifest)
+
+
+    // Android 기본 라이브러리 !!
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
 
     // Networking (Retrofit, OkHttp)
     implementation(libs.retrofit)

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.selfbell.feature.settings"
+    namespace = "com.example.auth"
     compileSdk = 35
 
     defaultConfig {
@@ -53,13 +53,15 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-    // Networking (Retrofit, OkHttp) !!
+    // Networking (Retrofit, OkHttp)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson) // JSON 파싱 (Gson 사용 시)
     implementation(libs.okhttp.logging.interceptor) // API 로깅
 
     // Local Database (Room)
     implementation(libs.room.runtime)
+    implementation(libs.androidx.runtime.android)
+    implementation(libs.androidx.ui.android)
     kapt(libs.room.compiler)
     implementation(libs.room.ktx) // 코루틴 지원
 
