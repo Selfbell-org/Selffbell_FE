@@ -26,6 +26,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.selfbell.app.R
 import com.selfbell.core.ui.theme.Primary
+import com.selfbell.core.ui.theme.Typography
 
 @Composable
 fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
@@ -48,13 +49,10 @@ fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
             Spacer(Modifier.height(8.dp))
             Text(
                 text = "SelfBell",
-                style = TextStyle(
-                    fontSize = 40.sp,
-                    fontFamily = FontFamily(Font(R.font.gabarito_variablefont_wght)),
-                    fontWeight = FontWeight(700),
+                style = Typography.displayLarge,
                     color = Color(0xFFFFFFFF)
                 )
-            )
+
         }
     }
 }
