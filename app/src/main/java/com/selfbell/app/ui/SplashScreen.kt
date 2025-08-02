@@ -50,7 +50,7 @@ fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
                 text = "SelfBell",
                 style = TextStyle(
                     fontSize = 40.sp,
-                    fontFamily = FontFamily(Font(R.font.gabarito_variablefont_wght)),
+                    fontFamily = FontFamily(Font(com.selfbell.core.R.font.gabarito_variablefont_wght)),
                     fontWeight = FontWeight(700),
                     color = Color(0xFFFFFFFF)
                 )
