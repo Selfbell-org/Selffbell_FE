@@ -1,8 +1,11 @@
+// feature/home/src/main/java/com/selfbell/feature/home/ui/HomeScreen.kt
 package com.selfbell.feature.home.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import com.selfbell.core.ui.composables.SelfBellButton // SelfBellButton 임포트
 import com.selfbell.core.ui.composables.SelfBellButtonType // SelfBellButtonType 임포트
 import com.selfbell.core.ui.theme.SelfBellTheme // 테마 임포트
-
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -35,6 +37,18 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             text = "외곽선 버튼 테스트",
             onClick = { /* TODO: 클릭 시 동작 정의 */ println("외곽선 버튼 클릭!") },
             buttonType = SelfBellButtonType.OUTLINED,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        SelfBellButton(
+            text = "텍스트 버튼 테스트",
+            onClick = { /* TODO */ println("텍스트 버튼 클릭!") },
+            buttonType = SelfBellButtonType.TEXT_ONLY,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        SelfBellButton(
+            text = "FAB 버튼 테스트",
+            onClick = { /* TODO */ println("FAB 버튼 클릭!") },
+            buttonType = SelfBellButtonType.FAB,
             modifier = Modifier.padding(top = 8.dp)
         )
         SelfBellButton(
