@@ -84,8 +84,7 @@ fun AppNavHost(
                 ) {
                     Surface(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .widthIn(max = 600.dp)
+                            .widthIn(max = 400.dp)
                             .clip(RoundedCornerShape(40.dp)),
                         color = Color.White,
                         shadowElevation = 8.dp
