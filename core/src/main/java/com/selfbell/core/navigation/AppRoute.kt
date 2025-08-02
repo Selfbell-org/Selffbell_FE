@@ -5,6 +5,8 @@ package com.selfbell.core.navigation
  * 각 경로는 고유한 문자열 ID를 가집니다.
  */
 object AppRoute {
+    // 초기 화면
+    const val SPLASH_ROUTE = "splash_route"   // 설정/프로필 화면
     // 메인 탭 화면 경로
     const val HOME_ROUTE = "home_route"           // 홈 화면
     const val ALERTS_ROUTE = "alerts_route"       // 알림 목록 화면
