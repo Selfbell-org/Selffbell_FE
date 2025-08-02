@@ -23,13 +23,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SelfBellTheme {
-                // 스플래시 화면을 앱의 시작점으로 호출
-                SplashScreen(navController = rememberNavController()) // AppNavHost에서 사용할 NavController를 미리 생성하여 전달
+                // NavController는 앱의 최상위 내비게이션을 관리하므로 여기서 생성하고 AppNavHost에 전달
+                val navController = rememberNavController() // <-- 여기서 NavController 생성
+                AppNavHost(navController = navController) // <-- AppNavHost를 호출
             }
         }
     }
 }
-
 // Greeting Composable은 이제 AppNavHost 외부에서 사용되지 않으므로 제거 가능 (선택 사항)
 /*
 @Composable
