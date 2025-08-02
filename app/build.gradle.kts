@@ -50,6 +50,11 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":domain"))
+    implementation(project(":feature:home"))     // <-- 이 라인이 핵심입니다! (추가 또는 확인)
+    implementation(project(":feature:alerts"))   // <-- 다른 feature 모듈들도 추가했는지 확인
+    implementation(project(":feature:emergency"))
+    implementation(project(":feature:escort"))
+    implementation(project(":feature:settings"))
 
 
     // Android 기본 라이브러리!

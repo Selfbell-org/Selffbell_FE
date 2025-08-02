@@ -27,7 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.SelfBellBottomNavigation
 import com.selfbell.core.ui.theme.SelfBellTheme
-
+import com.selfbell.feature.home.ui.HomeScreen // HomeScreen 임포트 (수정)
 
 @Composable
 fun AppNavHost(
@@ -54,7 +54,7 @@ fun AppNavHost(
                         bottom = paddingValues.calculateBottomPadding() + 80.dp // 바텀바 높이 80dp + 아래쪽 추가 마진 16dp 정도
                     )
                 ) {
-                    composable(AppRoute.HOME_ROUTE) { Text(text = "홈 화면") } // Modifier.padding는 NavHost에서 이미 적용
+                    composable(AppRoute.HOME_ROUTE) { HomeScreen() } // <-- 여기를 Text("홈 화면") 대신 HomeScreen()으로 변경
                     composable(AppRoute.ALERTS_ROUTE) { Text(text = "알림 화면") }
                     composable(AppRoute.ESCORT_ROUTE) { Text(text = "동행 화면") }
                     composable(AppRoute.SETTINGS_ROUTE) { Text(text = "설정 화면") }
