@@ -50,6 +50,12 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":domain"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:alerts"))
+    implementation(project(":feature:emergency"))
+    implementation(project(":feature:escort"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:auth"))
 
 
     // Android 기본 라이브러리!
