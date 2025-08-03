@@ -20,4 +20,7 @@ object AppRoute {
     const val ADDRESS_MANAGEMENT_ROUTE = "address_management_route" // 주소 관리 화면
     const val LANDING_ROUTE = "landing_route" // 로그인/회원가입
     const val ONBOARDING_ROUTE = "onboarding_route" // 온보딩
+    const val LOGIN_ROUTE = "login_route" // 로그인
+    const val SIGNUP_ROUTE = "signup_route" // 회원가입
+
 }

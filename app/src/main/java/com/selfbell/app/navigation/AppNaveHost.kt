@@ -1,6 +1,7 @@
 // app/src/main/java/com/selfbell/app/navigation/AppNavHost.kt
 package com.selfbell.app.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +28,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState // currentBackStackEntryAsState 임포트
 import androidx.navigation.compose.rememberNavController
 import com.example.auth.ui.LandingScreen
+import com.example.auth.ui.LoginScreen
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.SelfBellBottomNavigation
 import com.selfbell.core.ui.theme.SelfBellTheme
@@ -67,7 +69,13 @@ fun AppNavHost(
                     composable(AppRoute.ESCORT_ROUTE) { Text(text = "동행 화면") }
                     composable(AppRoute.SETTINGS_ROUTE) { Text(text = "설정 화면") }
                     composable(AppRoute.FRIENDS_ROUTE) { Text(text = "친구 화면") }
-                    composable(AppRoute.LANDING_ROUTE) { LandingScreen(onLoginClick = {}, onSigninClick = {}) }
+                    composable(AppRoute.LANDING_ROUTE) { LandingScreen(
+                        onLoginClick = {navController.navigate(AppRoute.LOGIN_ROUTE)},
+                        onSigninClick = {navController.navigate(AppRoute.SIGNUP_ROUTE)}) }
+                    composable(AppRoute.LOGIN_ROUTE) { LoginScreen(onPinCompleted = {pin ->
+                        println("입력된 PIN: $pin")
+                    }) }
+                    composable(AppRoute.SIGNUP_ROUTE) {  }
                 }
             }
 

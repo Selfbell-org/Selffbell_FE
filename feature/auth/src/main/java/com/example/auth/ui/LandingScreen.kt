@@ -3,6 +3,7 @@ package com.example.auth.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -73,7 +75,9 @@ fun LandingScreen(
                     .width(343.dp)
                     .height(48.dp)
                     .background(color = Primary, shape = RoundedCornerShape(size = 16.dp))
-                    .padding(start = 27.dp, top = 12.dp, end = 27.dp, bottom = 12.dp)
+                    .clickable { onLoginClick() }
+                    .padding(start = 27.dp, top = 12.dp, end = 27.dp, bottom = 12.dp),
+
             ){
                 Text(
                     text = "로그인 하기",
@@ -92,6 +96,7 @@ fun LandingScreen(
                     .width(343.dp)
                     .height(48.dp)
                     .background(color = White, shape = RoundedCornerShape(size = 16.dp))
+                    .clickable { onSigninClick() }
                     .padding(start = 27.dp, top = 12.dp, end = 27.dp, bottom = 12.dp)
             ){
                 Text(

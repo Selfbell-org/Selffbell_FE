@@ -18,5 +18,7 @@ val Black = Color(0xFF0F1114)
 val White = Color(0xFFFFFFFF)
 val BG = Color(0xFFFCFCFF)
 val GrayInactivte = Color(0xFFD1D4DA) // 바텀바 unselected
+val GreyscaleGrey200: Color = Color(0xFFD1D4DA)
+
 
 val kakaoYellow = Color(0xFFFEE500)
