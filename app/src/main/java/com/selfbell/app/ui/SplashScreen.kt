@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,11 +26,21 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.selfbell.app.R
+import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.theme.Primary
+import com.selfbell.core.ui.theme.Typography
+import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
 
+    LaunchedEffect(key1 = true) {
+        delay(2500L) // 2.5초 지연
+
+        // 현재는 임시로 홈 화면으로 바로 이동
+        navController.popBackStack() // 스플래시 화면을 백스택에서 제거
+        navController.navigate(AppRoute.HOME_ROUTE) // <-- 홈 화면으로 이동
+    }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -48,13 +59,10 @@ fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
             Spacer(Modifier.height(8.dp))
             Text(
                 text = "SelfBell",
-                style = TextStyle(
-                    fontSize = 40.sp,
-                    fontFamily = FontFamily(Font(R.font.gabarito_variablefont_wght)),
-                    fontWeight = FontWeight(700),
+                style = Typography.displayLarge,
                     color = Color(0xFFFFFFFF)
                 )
-            )
+
         }
     }
 }
