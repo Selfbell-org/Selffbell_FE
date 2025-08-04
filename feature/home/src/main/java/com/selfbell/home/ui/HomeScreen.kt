@@ -22,6 +22,7 @@ import androidx.navigation.compose.rememberNavController // 미리보기용 reme
 import com.selfbell.core.ui.composables.SelfBellButton // SelfBellButton 임포트
 import com.selfbell.core.ui.composables.SelfBellButtonType // SelfBellButtonType 임포트
 import com.selfbell.core.ui.theme.SelfBellTheme // 테마 임포트
+import com.selfbell.core.ui.theme.Typography
 
 
 @Composable

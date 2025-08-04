@@ -61,7 +61,7 @@ fun AppNavHost(
                     }
 
                     // 메인 탭 화면 라우트 (여기에 실제 feature 모듈의 화면이 연결될 것임)
-                    composable(AppRoute.HOME_ROUTE) { HomeScreen() }
+                    composable(AppRoute.HOME_ROUTE) { HomeScreen(navController = navController) }
                     composable(AppRoute.ALERTS_ROUTE) { Text(text = "알림 화면") }
                     composable(AppRoute.ESCORT_ROUTE) { Text(text = "동행 화면") }
                     composable(AppRoute.SETTINGS_ROUTE) { Text(text = "설정 화면") }
