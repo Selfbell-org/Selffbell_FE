@@ -36,7 +36,7 @@ import com.selfbell.core.ui.theme.White
 @Composable
 fun LandingScreen(
     onLoginClick: () -> Unit,
-    onSigninClick: () -> Unit,
+    onSignUpClick: () -> Unit,
     modifier: Modifier = Modifier) {
 
     Column(
@@ -96,7 +96,7 @@ fun LandingScreen(
                     .width(343.dp)
                     .height(48.dp)
                     .background(color = White, shape = RoundedCornerShape(size = 16.dp))
-                    .clickable { onSigninClick() }
+                    .clickable { onSignUpClick() }
                     .padding(start = 27.dp, top = 12.dp, end = 27.dp, bottom = 12.dp)
             ){
                 Text(
@@ -124,5 +124,5 @@ fun LandingScreen(
 @Preview
 @Composable
 fun LandingScreenPreview(){
-    LandingScreen(onLoginClick = {}, onSigninClick = {})
+    LandingScreen(onLoginClick = {}, onSignUpClick = {})
 }

@@ -18,8 +18,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,14 +38,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.requestFocus
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -56,8 +61,10 @@ import kotlin.text.substring
 
 const val PIN_LENGTH = 4
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
+    onNavigateUp: () -> Unit = {},
     onPinCompleted: (String) -> Unit = {} // PIN 입력 완료 시 호출될 콜백
 ) {
     var pinValue by remember { mutableStateOf(TextFieldValue("")) }
@@ -85,64 +92,82 @@ fun LoginScreen(
         focusRequester.requestFocus()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFCFCFF))
-            .padding(horizontal = 20.dp, vertical = 70.dp), // 좌우 패딩 추가
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Spacer(modifier = Modifier.height(100.dp))
-        Image(
-            painter = painterResource(R.drawable.lockkey_icon),
-            contentDescription = "Lock Key Icon",
-            modifier = Modifier.size(60.dp) // 아이콘 크기 조절
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "SelfBell 비밀번호를 입력해주세요.",
-            style = TextStyle(
-                fontFamily = Pretendard,
-                fontWeight = FontWeight.Medium,
-                fontSize = 18.sp // 폰트 크기 조절
-            )
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 숨겨진 BasicTextField: 실제 입력 처리
-        BasicTextField(
-            value = pinValue,
-            onValueChange = {
-                if (it.text.length <= PIN_LENGTH && it.text.all { char -> char.isDigit() }) {
-                    pinValue = it
-                }
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-            modifier = Modifier
-                .size(0.dp) // 화면에 보이지 않도록 크기를 0으로 설정
-                .focusRequester(focusRequester),
-            decorationBox = {
-                // 이 부분은 보이지 않으므로 비워둠
-            }
-        )
-
-        // PIN 입력 칸 UI
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically // 내부 요소들 수직 중앙 정렬
-        ) {
-            repeat(PIN_LENGTH) { index ->
-                val char = pinValue.text.getOrNull(index)
-                PinBox(
-                    hasChar = char != null,
-                    isFocused = index == pinValue.text.length // 현재 입력될 차례의 박스에 포커스 효과 (선택적)
+    Scaffold( // Scaffold로 감싸기
+        topBar = {
+            TopAppBar(
+                title = { },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateUp) { // 뒤로가기 버튼
+                        Icon(
+                            painter = painterResource(R.drawable.backstack_icon),
+                            contentDescription = "뒤로가기"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors( // 배경을 투명하게 하거나 앱의 테마에 맞게 설정
+                    containerColor = Color.Transparent // 예시: 투명한 배경
                 )
+            )
+        },
+        containerColor = Color(0xFFFCFCFF) // 기존 Column의 배경색을 Scaffold로 이동
+    ) { paddingValues -> // Scaffold로부터 content padding을 받음
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                // .background(Color(0xFFFCFCFF)) // 배경색은 Scaffold로 이동
+                .padding(paddingValues) // Scaffold의 패딩 적용 (TopAppBar 높이 등 고려)
+                .padding(horizontal = 20.dp), // 기존 좌우 패딩 유지
+            horizontalAlignment = Alignment.CenterHorizontally,
+            // verticalArrangement = Arrangement.Top // 상단 정렬은 유지되나, TopAppBar가 공간 차지
+        ) {
+            // Spacer(modifier = Modifier.height(100.dp)) // TopAppBar가 있으므로 조정 필요할 수 있음
+            // 디자인에 따라 이 Spacer의 높이를 줄이거나, TopAppBar와 컨텐츠 사이 간격을 다르게 조절
+            Spacer(modifier = Modifier.height(70.dp)) // 예시: 높이 조절
+
+            Image(
+                painter = painterResource(R.drawable.lockkey_icon),
+                contentDescription = "Lock Key Icon",
+                modifier = Modifier.size(60.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "SelfBell 비밀번호를 입력해주세요.",
+                style = TextStyle(
+                    fontFamily = Pretendard,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 18.sp
+                )
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+
+            BasicTextField(
+                value = pinValue,
+                onValueChange = {
+                    if (it.text.length <= PIN_LENGTH && it.text.all { char -> char.isDigit() }) {
+                        pinValue = it
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                modifier = Modifier
+                    .size(0.dp)
+                    .focusRequester(focusRequester),
+                decorationBox = {}
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(PIN_LENGTH) { index ->
+                    val char = pinValue.text.getOrNull(index)
+                    PinBox(
+                        hasChar = char != null,
+                        isFocused = index == pinValue.text.length && pinValue.text.length < PIN_LENGTH
+                        // 마지막 입력칸까지 채워졌을때는 isFocused 해제 (선택적)
+                    )
+                }
             }
         }
-        // 여기에 숫자 키패드 Composable을 추가하거나,
-        // 시스템 키보드가 올라오도록 BasicTextField에 포커스를 줍니다.
-        // 현재는 BasicTextField에 포커스를 주어 시스템 숫자 키패드를 사용합니다.
     }
 }
 
@@ -152,8 +177,6 @@ fun PinBox(
     isFocused: Boolean // 선택적: 현재 입력 포커스를 받은 박스 스타일링
 ) {
     val borderColor = if (isFocused) MaterialTheme.colorScheme.primary else GreyscaleGrey200
-    // MaterialTheme을 사용하지 않는다면 직접 Color 정의
-    // val focusedBorderColor = Color.Blue // 예시
 
     Box(
         modifier = Modifier
@@ -179,11 +202,4 @@ fun PinBox(
             )
         }
     }
-}
-
-
-@Preview
-@Composable
-fun LoginScreenPreview(){
-    LoginScreen()
 }

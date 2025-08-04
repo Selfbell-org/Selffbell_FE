@@ -16,6 +16,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState // currentBackSt
 import androidx.navigation.compose.rememberNavController
 import com.example.auth.ui.LandingScreen
 import com.example.auth.ui.LoginScreen
+import com.example.auth.ui.SignUpScreen
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.SelfBellBottomNavigation
 import com.selfbell.core.ui.theme.SelfBellTheme
@@ -45,6 +50,17 @@ fun AppNavHost(
         // 현재 라우트 상태를 가져와 바텀바 표시 여부 결정
         val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
+        // 바텀바를 표시하지 않을 라우트 목록
+        val routesWithoutBottomBar = remember {
+            setOf(
+                AppRoute.SPLASH_ROUTE,
+                AppRoute.LANDING_ROUTE,
+                AppRoute.LOGIN_ROUTE, // LOGIN_PIN_ROUTE 또는 LOGIN_ROUTE (AppRoute 정의에 따라)
+                AppRoute.SIGNUP_ROUTE
+                // 필요하다면 다른 라우트도 추가
+            )
+        }
+        val shouldShowBottomBar = currentRoute !in routesWithoutBottomBar
         Box(modifier = Modifier.fillMaxSize()) {
             Scaffold(
                 modifier = modifier.fillMaxSize(),
@@ -55,8 +71,11 @@ fun AppNavHost(
                     modifier = Modifier.padding(
                         top = paddingValues.calculateTopPadding(),
                         // 스플래시 화면이 아닐 때만 바텀바 높이를 고려
-                        bottom = if (currentRoute != AppRoute.SPLASH_ROUTE) paddingValues.calculateBottomPadding() + 96.dp else 0.dp
-                    )
+                        bottom = if (shouldShowBottomBar) {
+                            paddingValues.calculateBottomPadding() + 96.dp // 바텀바 높이만큼 패딩
+                        } else {
+                            paddingValues.calculateBottomPadding() // 또는 0.dp (시스템 네비게이션 바 패딩만 고려)
+                        })
                 ) {
                     // 스플래시 화면 라우트
                     composable(AppRoute.SPLASH_ROUTE) {
@@ -71,17 +90,25 @@ fun AppNavHost(
                     composable(AppRoute.FRIENDS_ROUTE) { Text(text = "친구 화면") }
                     composable(AppRoute.LANDING_ROUTE) { LandingScreen(
                         onLoginClick = {navController.navigate(AppRoute.LOGIN_ROUTE)},
-                        onSigninClick = {navController.navigate(AppRoute.SIGNUP_ROUTE)}) }
-                    composable(AppRoute.LOGIN_ROUTE) { LoginScreen(onPinCompleted = {pin ->
-                        println("입력된 PIN: $pin")
+                        onSignUpClick = {navController.navigate(AppRoute.SIGNUP_ROUTE)}) }
+                    composable(AppRoute.LOGIN_ROUTE) { LoginScreen(
+                        onNavigateUp = {navController.popBackStack()},
+                        onPinCompleted = {pin ->
+                            println("입력된 PIN: $pin")
                     }) }
-                    composable(AppRoute.SIGNUP_ROUTE) {  }
+                    composable(AppRoute.SIGNUP_ROUTE) {
+                        var nickname by remember{ mutableStateOf("") }
+                        SignUpScreen(nickname,
+                            onNicknameChange = {newNickname
+                                               -> nickname = newNickname},
+                            onRegister = {nickname = it},
+                            onNavigateUp = {navController.popBackStack()}) }
                 }
             }
 
             // 바텀 내비게이션 바를 Box의 하단 중앙에 배치
             // 현재 라우트가 스플래시 화면이 아닐 때만 바텀바를 표시
-            if (currentRoute != AppRoute.SPLASH_ROUTE) { // <-- 이 조건문을 추가
+            if (shouldShowBottomBar) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
