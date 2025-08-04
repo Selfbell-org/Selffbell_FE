@@ -54,7 +54,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-
+    implementation(libs.androidx.navigation.compose)
     // Networking (Retrofit, OkHttp)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson) // JSON 파싱 (Gson 사용 시)
