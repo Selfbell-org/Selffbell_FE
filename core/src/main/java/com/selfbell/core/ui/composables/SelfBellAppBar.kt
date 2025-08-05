@@ -1,38 +1,41 @@
 // core/src/main/java/com/selfbell/core/ui/composables/SelfBellAppBar.kt
 package com.selfbell.core.ui.composables
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape // CircleShape 임포트
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
-import com.selfbell.core.ui.theme.Black // Black 색상 임포트
+import com.selfbell.core.ui.theme.Black
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelfBellAppBar(
     modifier: Modifier = Modifier,
-    // title은 두 줄 텍스트를 담을 수 있는 별도 Composable로 정의
     titleContent: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {}
@@ -43,16 +46,16 @@ fun SelfBellAppBar(
         navigationIcon = navigationIcon,
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent, // 시안처럼 투명한 배경
+            containerColor = Color.Transparent,
             scrolledContainerColor = MaterialTheme.colorScheme.surface,
-            actionIconContentColor = Black, // 아이콘 색상
+            actionIconContentColor = Black,
             navigationIconContentColor = Black,
-            titleContentColor = Black // 텍스트 색상
+            titleContentColor = Black
         )
     )
 }
 
-// 홈 화면용 GreetingSection을 titleContent로 전달하기 위한 Composable
+// 제목 두 줄 처리를 위한 Composable
 @Composable
 fun AppBarTwoLineTitle(
     title: String,
@@ -65,27 +68,46 @@ fun AppBarTwoLineTitle(
     }
 }
 
-// 동행 친구 아이콘 (흰색 원 배경) Composable
+// Figma 스펙에 맞춰 수정된 AppBarCircleIcon Composable
 @Composable
 fun AppBarCircleIcon(
     icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit
 ) {
-    IconButton(onClick = onClick) {
-        Box(
-            modifier = Modifier
-                .size(36.dp) // 원의 크기 (조절 가능)
-                .clip(CircleShape) // 원형으로 자르기
-                .background(Color.White), // 흰색 배경
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = contentDescription,
-                modifier = Modifier.size(24.dp) // 아이콘 크기 (조절 가능)
+    // Figma Dev Mode에서 가져온 Modifier 스펙을 그대로 적용 [cite: image_6733ce.png, image_6733ea.png]
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .shadow(
+                elevation = 16.dp,
+                spotColor = Color(0x1A000000), // Figma에서 가져온 그림자 색상
+                ambientColor = Color(0x1A000000) // Figma에서 가져온 그림자 색상
             )
-        }
+            .shadow(
+                elevation = 8.dp,
+                spotColor = Color(0x14000000),
+                ambientColor = Color(0x14000000)
+            )
+            .border(
+                width = 1.dp,
+                color = Color(0x4DFFFFFF), // Figma에서 가져온 테두리 색상
+                shape = RoundedCornerShape(size = 99.dp) // Figma에서 가져온 모서리 둥글기
+            )
+            .size(48.dp) // Figma에서 가져온 크기
+            .background(
+                color = Color(0x80FFFFFF), // Figma에서 가져온 배경 색상
+                shape = RoundedCornerShape(size = 99.dp) // 배경도 동일하게 둥글게
+            )
+            .clip(CircleShape) // 원형으로 자르기 (RoundedCornerShape(99.dp)와 유사)
+            .padding(8.dp) // Figma에서 가져온 내부 패딩
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            // 내부 아이콘 크기는 패딩을 제외한 남은 공간을 차지하도록 설정
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
@@ -97,17 +119,9 @@ fun SelfBellAppBarPreview() {
             titleContent = {
                 AppBarTwoLineTitle(title = "반갑습니다.", subtitle = "오늘도 안전한 하루 되세요.")
             },
-            navigationIcon = {
-                IconButton(onClick = { /* Handle back click */ }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "뒤로 가기"
-                    )
-                }
-            },
             actions = {
                 AppBarCircleIcon(
-                    icon = Icons.Default.AccountBox,
+                    icon = Icons.Default.Group,
                     contentDescription = "동행 친구",
                     onClick = { /* Handle 동행 친구 click */ }
                 )

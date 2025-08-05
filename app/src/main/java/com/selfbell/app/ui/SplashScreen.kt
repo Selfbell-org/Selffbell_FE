@@ -25,12 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.selfbell.app.R
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.theme.Primary
 import com.selfbell.core.ui.theme.Typography
 import kotlinx.coroutines.delay
-
+import com.selfbell.core.R
 @Composable
 fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
 

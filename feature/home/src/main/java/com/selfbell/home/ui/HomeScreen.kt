@@ -110,13 +110,12 @@ private fun HomeTopBar(navController: NavController) {
         }
     }
 }
-
 @Composable
 private fun DepartureSection(
     navController: NavController,
     modifier: Modifier = Modifier,
-    addressName: String, // <-- 데이터 파라미터 추가
-    addressDetail: String // <-- 데이터 파라미터 추가
+    addressName: String,
+    addressDetail: String
 ) {
     Surface(
         modifier = modifier
@@ -129,31 +128,29 @@ private fun DepartureSection(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 집 아이콘
             Icon(
                 imageVector = Icons.Default.Home,
                 contentDescription = "집",
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            // 우리집 & 주소
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(text = addressName, style = Typography.titleMedium) // <-- 파라미터 사용
-                Text(text = addressDetail, style = Typography.bodyMedium) // <-- 파라미터 사용
+                Text(text = addressName, style = Typography.titleMedium)
+                Text(text = addressDetail, style = Typography.bodyMedium)
             }
-            // 출발 버튼
+            // "출발" 버튼
             SelfBellButton(
                 text = "출발",
                 onClick = { /* TODO: 동선 공유 시작 화면으로 이동 */ },
                 buttonType = SelfBellButtonType.PRIMARY_FILLED,
-                modifier = Modifier.width(80.dp)
+                isSmall = true, // <-- Use the new parameter
+                modifier = Modifier.wrapContentWidth() // <-- Ensure width is minimal
             )
         }
     }
 }
-
 @Composable
 private fun MapSection(modifier: Modifier = Modifier) {
     Box(
