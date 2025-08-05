@@ -30,20 +30,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-// Greeting Composable은 이제 AppNavHost 외부에서 사용되지 않으므로 제거 가능 (선택 사항)
-/*
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SelfBellTheme {
-        Greeting("Android")
-    }
-}
-*/
