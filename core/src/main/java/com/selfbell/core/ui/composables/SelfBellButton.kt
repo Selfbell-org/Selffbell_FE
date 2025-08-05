@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,13 +37,15 @@ fun SelfBellButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     buttonType: SelfBellButtonType = SelfBellButtonType.PRIMARY_FILLED,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    wrapContent: Boolean = false
+
 ) {
     val backgroundColor: Color
     val contentColor: Color
     val borderColor: Color?
     val buttonHeight: Int = 56 // Figma의 Large 버튼 높이 (예시)
-    val cornerRadius: Int = 8 // Figma의 Corner radius 8px
+    val cornerRadius: Int = 16 // Figma의 Corner radius 8px
 
     when (buttonType) {
         SelfBellButtonType.PRIMARY_FILLED -> {
@@ -64,6 +67,7 @@ fun SelfBellButton(
             backgroundColor = Primary
             contentColor = Color.White
             borderColor = null
+
             // FAB는 보통 텍스트 스타일이 다를 수 있지만, 여기서는 통일
         }
     }
@@ -71,27 +75,28 @@ fun SelfBellButton(
     Button(
         onClick = onClick,
         modifier = modifier
-            .fillMaxWidth() // 기본적으로 가로 전체 채우기
-            .height(buttonHeight.dp), // Figma에서 확인한 높이 적용
+            // wrapContent가 true일 경우, 크기 고정 Modifier 대신 wrapContentWidth 사용
+            .then(if (wrapContent) Modifier.wrapContentWidth() else Modifier.fillMaxWidth())
+            .height(56.dp), // 높이는 고정된 값을 사용하거나, wrapContentHeight()를 사용할 수 있음
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = backgroundColor,
             contentColor = contentColor,
-            disabledContainerColor = GrayInactivte, // 비활성화 시 색상 (Figma의 GrayInactive 사용)
+            disabledContainerColor = GrayInactivte,
             disabledContentColor = Color.White
         ),
-        shape = RoundedCornerShape(cornerRadius.dp), // 모서리 둥글게
-        border = borderColor?.let { BorderStroke(1.dp, it) }, // 외곽선 버튼에만 적용
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp) // Figma에서 확인한 내부 패딩 (예시)
+        shape = RoundedCornerShape(cornerRadius.dp),
+        border = borderColor?.let { BorderStroke(1.dp, it) },
+        // 버튼의 내부 패딩을 글자 크기에 맞춰 조절
+        contentPadding = if (wrapContent) PaddingValues(horizontal = 24.dp, vertical = 8.dp) else PaddingValues(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Text(
             text = text,
-            style = Typography.titleMedium, // Figma Title, Semibold, 18 폰트 스타일 사용
+            style = Typography.titleMedium,
             color = contentColor
         )
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun SelfBellButtonPreview() {
