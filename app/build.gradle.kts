@@ -13,7 +13,14 @@ plugins {
     alias(libs.plugins.kotlin.kapt) // Hilt 사용을 위해 kapt 플러그인 추가
     alias(libs.plugins.hilt.android) // Hilt Gradle 플러그인 추가
 }
-
+// app/build.gradle.kts
+kapt {
+    correctErrorTypes = true
+    arguments {
+        // Hilt fastInit 옵션을 추가합니다.
+        arg("dagger.fastInit", "true")
+    }
+}
 android {
     namespace = "com.selfbell.app"
     compileSdk = 35
@@ -104,4 +111,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+
 }

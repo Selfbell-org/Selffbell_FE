@@ -52,7 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.auth.R
-import com.selfbell.core.ui.theme.GreyscaleGrey200
+import com.selfbell.core.ui.theme.GrayInactive
 import com.selfbell.core.ui.theme.Pretendard
 import com.selfbell.core.ui.theme.White
 import kotlin.text.all
@@ -176,7 +176,7 @@ fun PinBox(
     hasChar: Boolean,
     isFocused: Boolean // 선택적: 현재 입력 포커스를 받은 박스 스타일링
 ) {
-    val borderColor = if (isFocused) MaterialTheme.colorScheme.primary else GreyscaleGrey200
+    val borderColor = if (isFocused) MaterialTheme.colorScheme.primary else GrayInactive
 
     Box(
         modifier = Modifier

@@ -25,10 +25,12 @@ val Gabarito = FontFamily(
 
 val Typography = Typography(
     // Header, Pretendard, Semibold, 24
-    headlineMedium = TextStyle(
+    headlineMedium = TextStyle( // <-- 이 부분이 정확히 정의되어 있어야 합니다.
         fontFamily = Pretendard,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp
+        fontWeight = FontWeight.SemiBold, // Weight: 600
+        fontSize = 24.sp, // Size: 24px
+        lineHeight = 24.sp * 1.4f, // Line height: 140%
+        letterSpacing = 0.sp // Letter spacing: 0%
     ),
     // Title, Pretendard, Semibold, 18
     titleMedium = TextStyle(
