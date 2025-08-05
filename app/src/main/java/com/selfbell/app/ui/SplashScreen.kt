@@ -61,7 +61,6 @@ fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
                 style = Typography.displayLarge,
                     color = Color(0xFFFFFFFF)
                 )
-
         }
     }
 }
