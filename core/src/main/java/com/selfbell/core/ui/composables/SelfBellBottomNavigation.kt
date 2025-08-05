@@ -35,7 +35,7 @@ import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Primary
 import com.selfbell.core.ui.theme.Black
 import com.selfbell.core.ui.theme.Typography
-import com.selfbell.core.ui.theme.GrayInactivte
+import com.selfbell.core.ui.theme.GrayInactive
 
 
 data class BottomNavItem(
@@ -111,8 +111,8 @@ fun SelfBellBottomNavigation(
                         selectedIconColor = Primary,
                         selectedTextColor = Primary,
                         indicatorColor = Color.Transparent,
-                        unselectedIconColor = GrayInactivte,
-                        unselectedTextColor = GrayInactivte
+                        unselectedIconColor = GrayInactive,
+                        unselectedTextColor = GrayInactive
                     ),
                     modifier = Modifier.weight(1f) //  아이템이 공간을 균등하게 차지하도록 weight 적용
                 )
@@ -181,8 +181,8 @@ fun SelfBellBottomNavigationPreview() {
                                 selectedIconColor = Primary,
                                 selectedTextColor = Primary,
                                 indicatorColor = Color.Transparent,
-                                unselectedIconColor = GrayInactivte,
-                                unselectedTextColor = GrayInactivte
+                                unselectedIconColor = GrayInactive,
+                                unselectedTextColor = GrayInactive
                             ),
                             modifier = Modifier.weight(1f)
                         )

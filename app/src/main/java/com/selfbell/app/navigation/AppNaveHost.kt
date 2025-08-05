@@ -52,7 +52,7 @@ fun AppNavHost(
                     modifier = Modifier.padding(
                         top = paddingValues.calculateTopPadding(),
                         // 스플래시 화면이 아닐 때만 바텀바 높이를 고려
-                        bottom = if (currentRoute != AppRoute.SPLASH_ROUTE) paddingValues.calculateBottomPadding() + 96.dp else 0.dp
+                        bottom = if (currentRoute != AppRoute.SPLASH_ROUTE && currentRoute != AppRoute.HOME_ROUTE) paddingValues.calculateBottomPadding() + 96.dp else 0.dp
                     )
                 ) {
                     // 스플래시 화면 라우트
@@ -72,7 +72,7 @@ fun AppNavHost(
 
             // 바텀 내비게이션 바를 Box의 하단 중앙에 배치
             // 현재 라우트가 스플래시 화면이 아닐 때만 바텀바를 표시
-            if (currentRoute != AppRoute.SPLASH_ROUTE) { // <-- 이 조건문을 추가
+            if (currentRoute != AppRoute.SPLASH_ROUTE && currentRoute != AppRoute.HOME_ROUTE ) { // <-- 이 조건문을 추가
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)

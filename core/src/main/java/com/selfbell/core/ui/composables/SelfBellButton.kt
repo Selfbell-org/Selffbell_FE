@@ -23,7 +23,7 @@ import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.theme.Primary
 import com.selfbell.core.ui.theme.Black
-import com.selfbell.core.ui.theme.GrayInactivte
+import com.selfbell.core.ui.theme.GrayInactive
 
 // SelfBellButtonType enum (동일)
 enum class SelfBellButtonType {
@@ -86,7 +86,7 @@ fun SelfBellButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = backgroundColor,
             contentColor = contentColor,
-            disabledContainerColor = GrayInactivte,
+            disabledContainerColor = GrayInactive,
             disabledContentColor = Color.White
         ),
         shape = RoundedCornerShape(cornerRadius.dp),

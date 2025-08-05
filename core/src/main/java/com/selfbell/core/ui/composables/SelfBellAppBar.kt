@@ -1,10 +1,8 @@
 // core/src/main/java/com/selfbell/core/ui/composables/SelfBellAppBar.kt
 package com.selfbell.core.ui.composables
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,25 +10,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.theme.Black
+import com.selfbell.core.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,14 +57,14 @@ fun AppBarTwoLineTitle(
 ) {
     Column(modifier = modifier) {
         Text(text = title, style = Typography.headlineMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(text = subtitle, style = Typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(text = subtitle, style = Typography.headlineMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
 // Figma 스펙에 맞춰 수정된 AppBarCircleIcon Composable
 @Composable
 fun AppBarCircleIcon(
-    icon: ImageVector,
+    iconResId: Int,
     contentDescription: String,
     onClick: () -> Unit
 ) {
@@ -103,7 +96,7 @@ fun AppBarCircleIcon(
             .padding(8.dp) // Figma에서 가져온 내부 패딩
     ) {
         Icon(
-            imageVector = icon,
+            painter = painterResource(id = iconResId), // <-- painterResource를 사용하여 리소스 ID 참조
             contentDescription = contentDescription,
             // 내부 아이콘 크기는 패딩을 제외한 남은 공간을 차지하도록 설정
             modifier = Modifier.fillMaxSize()
@@ -121,7 +114,7 @@ fun SelfBellAppBarPreview() {
             },
             actions = {
                 AppBarCircleIcon(
-                    icon = Icons.Default.Group,
+                    iconResId = R.drawable.ic_fellow, // <-- R.drawable로 변경한 예시
                     contentDescription = "동행 친구",
                     onClick = { /* Handle 동행 친구 click */ }
                 )
