@@ -38,6 +38,7 @@ import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.SelfBellBottomNavigation
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.app.ui.SplashScreen
+import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.selfbell.feature.home.ui.HomeScreen // HomeScreen 임포트
 
 
@@ -91,11 +92,12 @@ fun AppNavHost(
                     composable(AppRoute.LANDING_ROUTE) { LandingScreen(
                         onLoginClick = {navController.navigate(AppRoute.LOGIN_ROUTE)},
                         onSignUpClick = {navController.navigate(AppRoute.SIGNUP_ROUTE)}) }
-                    composable(AppRoute.LOGIN_ROUTE) { LoginScreen(
+                    composable(AppRoute.LOGIN_ROUTE) { /*LoginScreen(
                         onNavigateUp = {navController.popBackStack()},
                         onPinCompleted = {pin ->
                             println("입력된 PIN: $pin")
-                    }) }
+                    })*/ ReusableNaverMap()
+                    }
                     composable(AppRoute.SIGNUP_ROUTE) {
                         var nickname by remember{ mutableStateOf("") }
                         SignUpScreen(nickname,

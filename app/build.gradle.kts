@@ -1,3 +1,11 @@
+import java.io.FileInputStream
+import java.util.Properties
+
+// Load local.properties
+val properties = Properties().apply {
+    load(FileInputStream(rootProject.file("local.properties")))
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -18,6 +26,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Manifest Placeholder 설정
+        addManifestPlaceholders(mapOf("NAVER_MAPS_CLIENT_ID" to properties.getProperty("NAVER_MAPS_CLIENT_ID")))
+        resValue("string", "naver_maps_client_id_from_gradle", properties.getProperty("NAVER_MAPS_CLIENT_ID"))
+
     }
 
     buildTypes {
@@ -39,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true // Compose 사용 설정
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get() // libs.versions에서 가져옴
@@ -79,6 +92,9 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    //Naver Maps api
+    implementation("com.naver.maps:map-sdk:3.22.1")
 
     // 테스트 관련
     testImplementation(libs.junit)
