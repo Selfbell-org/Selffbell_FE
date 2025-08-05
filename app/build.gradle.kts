@@ -1,3 +1,11 @@
+import java.io.FileInputStream
+import java.util.Properties
+
+// Load local.properties
+val properties = Properties().apply {
+    load(FileInputStream(rootProject.file("local.properties")))
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -25,6 +33,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Manifest Placeholder 설정
+        addManifestPlaceholders(mapOf("NAVER_MAPS_CLIENT_ID" to properties.getProperty("NAVER_MAPS_CLIENT_ID")))
+        resValue("string", "naver_maps_client_id_from_gradle", properties.getProperty("NAVER_MAPS_CLIENT_ID"))
+
     }
 
     buildTypes {
@@ -46,6 +58,7 @@ android {
     }
     buildFeatures {
         compose = true // Compose 사용 설정
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get() // libs.versions에서 가져옴
@@ -57,11 +70,12 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":domain"))
-    implementation(project(":feature:home"))     // <-- 이 라인이 핵심입니다! (추가 또는 확인)
-    implementation(project(":feature:alerts"))   // <-- 다른 feature 모듈들도 추가했는지 확인
+    implementation(project(":feature:home"))
+    implementation(project(":feature:alerts"))
     implementation(project(":feature:emergency"))
     implementation(project(":feature:escort"))
     implementation(project(":feature:settings"))
+    implementation(project(":feature:auth"))
 
 
     // Android 기본 라이브러리!
@@ -85,6 +99,9 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    //Naver Maps api
+    implementation("com.naver.maps:map-sdk:3.22.1")
 
     // 테스트 관련
     testImplementation(libs.junit)

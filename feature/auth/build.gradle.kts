@@ -37,6 +37,7 @@ android {
 dependencies {
     // domain 모듈 의존성 (필수)
     implementation(project(":domain"))
+    implementation(project(":core"))
 
     // Compose UI
     implementation(platform(libs.androidx.compose.bom)) // Compose BOM

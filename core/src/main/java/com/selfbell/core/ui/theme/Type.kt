@@ -44,7 +44,7 @@ val Typography = Typography(
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp
     ),
-    // Caption, Pretendard, Medium, 14ㄴ
+    // Caption, Pretendard, Medium, 14
     labelSmall = TextStyle(
         fontFamily = Pretendard,
         fontWeight = FontWeight.Medium,
