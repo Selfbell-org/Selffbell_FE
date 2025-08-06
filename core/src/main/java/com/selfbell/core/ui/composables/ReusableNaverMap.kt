@@ -76,7 +76,7 @@ fun ReusableNaverMap(
             Text("지도 로딩 중...", modifier = Modifier.align(Alignment.Center))
         } // ... (이하 모든 조건부 Text 주석 처리)
         */
-        Text("지도 표시 테스트", modifier = Modifier.align(Alignment.Center)) // 간단한 확인용 텍스트
+        //Text("지도 표시 테스트", modifier = Modifier.align(Alignment.Center)) // 간단한 확인용 텍스트
     }
 }
     
