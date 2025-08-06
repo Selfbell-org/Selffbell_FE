@@ -1,0 +1,8 @@
+R_DEF: Internal format may change without notice
+local
+drawable backstack_icon
+drawable google__g__icon
+drawable kakao_icon
+drawable lockkey_icon
+drawable logo_img_blue
+drawable user_profile

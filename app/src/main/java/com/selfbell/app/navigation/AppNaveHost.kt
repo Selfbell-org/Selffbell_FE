@@ -37,6 +37,8 @@ import com.selfbell.feature.home.ui.HomeScreen
 import com.example.auth.ui.LandingScreen
 import com.example.auth.ui.LoginScreen
 import com.example.auth.ui.SignUpScreen
+import com.selfbell.core.ui.composables.ReusableNaverMap
+
 @Composable
 fun AppNavHost(
     navController: NavHostController,
@@ -84,10 +86,10 @@ fun AppNavHost(
                         composable(AppRoute.SETTINGS_ROUTE) { Text(text = "설정 화면") }
                         composable(AppRoute.FRIENDS_ROUTE) { Text(text = "친구 화면") }
                         composable(AppRoute.LANDING_ROUTE) { LandingScreen(
-                            onLoginClick = { navController.navigate(AppRoute.HOME_ROUTE) },
+                            onLoginClick = { navController.navigate(AppRoute.REUSABEL_MAP) },
                             onSignUpClick = { navController.navigate(AppRoute.SIGNUP_ROUTE) }
                         )}
-                        composable(AppRoute.LOGIN_ROUTE) { Text("Login Screen") } // Placeholder for Login
+                        composable(AppRoute.LOGIN_ROUTE) { LoginScreen() } // Placeholder for Login
                         composable(AppRoute.SIGNUP_ROUTE) {
                             var nickname by remember { mutableStateOf("") }
                             SignUpScreen(
@@ -97,6 +99,7 @@ fun AppNavHost(
                                 onNavigateUp = { navController.popBackStack() }
                             )
                         }
+                        composable(AppRoute.REUSABEL_MAP) { ReusableNaverMap() }
                     }
                 }
             )

@@ -16,6 +16,6 @@ class SelfBellApplication : Application() {
         super.onCreate()
         val clientId = getString(R.string.naver_maps_client_id_from_gradle) // 생성한 리소스 ID 사용
         NaverMapSdk.getInstance(this).client =
-            NaverMapSdk.NaverCloudPlatformClient(clientId)
+            NaverMapSdk.NcpKeyClient(clientId)
     }
 }
