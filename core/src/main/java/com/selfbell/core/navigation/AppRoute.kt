@@ -22,5 +22,6 @@ object AppRoute {
     const val ONBOARDING_ROUTE = "onboarding_route" // 온보딩
     const val LOGIN_ROUTE = "login_route" // 로그인
     const val SIGNUP_ROUTE = "signup_route" // 회원가입
+    const val REUSABEL_MAP = "reusable_map" // 지도
 
 }
