@@ -48,7 +48,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.ui.test.manifest)
 
-
+    //네비게이션
+    implementation(libs.androidx.navigation.compose)
     // Android 기본 라이브러리 !!
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
