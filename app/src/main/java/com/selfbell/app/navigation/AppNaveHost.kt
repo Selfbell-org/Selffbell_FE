@@ -36,6 +36,9 @@ import com.selfbell.app.ui.SplashScreen
 import com.selfbell.feature.home.ui.HomeScreen
 import com.example.auth.ui.LandingScreen
 import com.example.auth.ui.LoginScreen
+import com.example.auth.ui.PermissionScreen
+import com.example.auth.ui.ProfileRegisterScreen
+import com.example.auth.ui.SignUpScreen
 import com.example.auth.ui.SignUpScreen
 import com.selfbell.core.ui.composables.ReusableNaverMap
 
@@ -90,6 +93,12 @@ fun AppNavHost(
                             onSignUpClick = { navController.navigate(AppRoute.SIGNUP_ROUTE) }
                         )}
                         composable(AppRoute.LOGIN_ROUTE) { LoginScreen() } // Placeholder for Login
+                        composable(AppRoute.PROFILE_REGISTER_ROUTE) {
+                            ProfileRegisterScreen(navController = navController)
+                        }
+                        composable(AppRoute.PERMISSION_ROUTE) {
+                            PermissionScreen(navController = navController)
+                        }
                         composable(AppRoute.SIGNUP_ROUTE) {
                             var nickname by remember { mutableStateOf("") }
                             SignUpScreen(
