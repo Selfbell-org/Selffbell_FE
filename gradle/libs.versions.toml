@@ -44,6 +44,7 @@ appcompat = "1.6.1"
 material = "1.10.0"
 runtimeAndroid = "1.8.3"
 uiAndroid = "1.8.3"
+playServicesLocation = "21.3.0"
 
 
 [libraries]
@@ -96,6 +97,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime-android", version.ref = "runtimeAndroid" }
 androidx-ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 
 [plugins]

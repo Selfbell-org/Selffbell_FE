@@ -69,6 +69,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
+    //Naver Maps api
+    implementation("com.naver.maps:map-sdk:3.22.1")
+
     // Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)

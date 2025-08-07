@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.data.position
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -33,10 +34,14 @@ import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.SelfBellBottomNavigation
 import com.selfbell.app.ui.SplashScreen
-import com.selfbell.feature.home.ui.HomeScreen
 import com.example.auth.ui.LandingScreen
 import com.example.auth.ui.LoginScreen
+import com.example.auth.ui.PermissionScreen
 import com.example.auth.ui.SignUpScreen
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.CameraUpdate
+import com.naver.maps.map.NaverMap
+import com.naver.maps.map.overlay.Marker
 import com.selfbell.core.ui.composables.ReusableNaverMap
 
 @Composable
@@ -58,6 +63,10 @@ fun AppNavHost(
             )
         }
         val shouldShowBottomBar = currentRoute !in routesWithoutBottomBar
+        var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
+        // 지도 화면에서 사용할 마커 참조 (선택적)
+        var currentMapMarker by remember { mutableStateOf<Marker?>(null) }
+
 
         Box(modifier = Modifier.fillMaxSize()) {
             Scaffold(
@@ -80,13 +89,13 @@ fun AppNavHost(
                         composable(AppRoute.SPLASH_ROUTE) {
                             SplashScreen(navController = navController)
                         }
-                        composable(AppRoute.HOME_ROUTE) { HomeScreen(navController = navController) }
+//                        composable(AppRoute.HOME_ROUTE) { HomeScreen(navController = navController) }
                         composable(AppRoute.ALERTS_ROUTE) { Text(text = "알림 화면") }
                         composable(AppRoute.ESCORT_ROUTE) { Text(text = "동행 화면") }
                         composable(AppRoute.SETTINGS_ROUTE) { Text(text = "설정 화면") }
                         composable(AppRoute.FRIENDS_ROUTE) { Text(text = "친구 화면") }
                         composable(AppRoute.LANDING_ROUTE) { LandingScreen(
-                            onLoginClick = { navController.navigate(AppRoute.REUSABEL_MAP) },
+                            onLoginClick = { navController.navigate(AppRoute.PERMISSTION_ROUTE) },
                             onSignUpClick = { navController.navigate(AppRoute.SIGNUP_ROUTE) }
                         )}
                         composable(AppRoute.LOGIN_ROUTE) { LoginScreen() } // Placeholder for Login
@@ -95,11 +104,52 @@ fun AppNavHost(
                             SignUpScreen(
                                 nickname = nickname,
                                 onNicknameChange = { nickname = it },
-                                onRegister = { nickname = it },
+                                onRegister = { navController.navigate((AppRoute.HOME_ROUTE))},
                                 onNavigateUp = { navController.popBackStack() }
                             )
                         }
-                        composable(AppRoute.REUSABEL_MAP) { ReusableNaverMap() }
+                        composable(AppRoute.REUSABEL_MAP) { ReusableNaverMap(
+                            modifier = Modifier.fillMaxSize(),
+                            onMapReady = { map ->
+                                naverMapInstance = map // NaverMap 객체 저장
+                                println("NaverMap 준비 완료 in AppNavHost!")
+
+                                // 예시: 지도 준비 시 초기 설정
+                                map.uiSettings.isCompassEnabled = true
+                                map.uiSettings.isZoomControlEnabled = true
+                                map.uiSettings.isLocationButtonEnabled = true // 위치 권한 및 LocationSource 설정 필요
+
+                                // 예시: 특정 위치로 카메라 이동
+                                val initialPosition = LatLng(37.5665, 126.9780)
+                                map.moveCamera(CameraUpdate.scrollTo(initialPosition))
+
+                                // 예시: 초기 마커 추가
+                                val marker = Marker()
+                                marker.position = initialPosition
+                                marker.captionText = "초기 위치"
+                                marker.map = map
+                                currentMapMarker = marker
+
+                                // 필요하다면 추가적인 지도 설정 수행
+                            }
+                        ) }
+                        composable(AppRoute.PERMISSTION_ROUTE){ PermissionScreen { address, type, latLng ->
+                            // 이 람다 함수가 onAddressSet 콜백입니다.
+                            // PermissionScreen -> MainAddressSetupScreen 에서 주소 설정이 완료되면 호출됩니다.
+
+                            println("주소 설정 완료 in AppNavHost:")
+                            println("주소: $address")
+                            println("유형: $type")
+                            println("좌표: $latLng")
+
+                            // TODO: 여기서 ViewModel에 주소 정보를 저장하거나 다른 작업 수행
+
+                            // 예시: 주소 설정 후 홈 화면으로 이동하고 이전 스택을 정리
+                            navController.navigate(AppRoute.HOME_ROUTE) {
+                                popUpTo(AppRoute.PERMISSTION_ROUTE) { inclusive = true } // 권한 화면은 스택에서 제거
+                                // 필요하다면 Landing/SignUp 등도 스택에서 제거
+                                // popUpTo(AppRoute.LANDING_ROUTE) { inclusive = true }
+                            }  } }
                     }
                 }
             )

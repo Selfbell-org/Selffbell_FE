@@ -23,5 +23,6 @@ object AppRoute {
     const val LOGIN_ROUTE = "login_route" // 로그인
     const val SIGNUP_ROUTE = "signup_route" // 회원가입
     const val REUSABEL_MAP = "reusable_map" // 지도
+    const val PERMISSTION_ROUTE = "permission_route" // 권한
 
 }

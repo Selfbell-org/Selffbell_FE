@@ -67,6 +67,7 @@ dependencies {
 
     // Hilt (core 모듈이 Hilt를 사용하거나 DI 모듈이 있다면)
     implementation(libs.hilt.android)
+    implementation(libs.play.services.location)
     kapt(libs.hilt.compiler)
 
     //Naver Maps api
