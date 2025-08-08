@@ -21,6 +21,7 @@ object AppRoute {
     const val LOGIN_ROUTE = "login_route" // 로그인
     const val SIGNUP_ROUTE = "signup_route" // 회원가입
     const val ADDRESS_REGISTER_ROUTE = "address_register_route" // 주소 등록
+
     // 그 외 상세 화면 경로 (예시)
     const val ALERT_DETAIL_ROUTE = "alert_detail_route/{alertId}" // 알림 상세 (ID를 인자로 받음)
     const val EMERGENCY_CALL_ROUTE = "emergency_call_route"     // 112 신고 화면

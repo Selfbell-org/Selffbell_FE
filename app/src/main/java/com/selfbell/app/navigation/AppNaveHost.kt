@@ -41,6 +41,7 @@ import com.example.auth.ui.ProfileRegisterScreen
 import com.example.auth.ui.SignUpScreen
 import com.example.auth.ui.SignUpScreen
 import com.selfbell.core.ui.composables.ReusableNaverMap
+import com.selfbell.feature.auth.ui.AddressRegisterScreen
 
 @Composable
 fun AppNavHost(
@@ -95,6 +96,9 @@ fun AppNavHost(
                         composable(AppRoute.LOGIN_ROUTE) { LoginScreen() } // Placeholder for Login
                         composable(AppRoute.PROFILE_REGISTER_ROUTE) {
                             ProfileRegisterScreen(navController = navController)
+                        }
+                        composable(AppRoute.ADDRESS_REGISTER_ROUTE) {
+                            AddressRegisterScreen(navController = navController)
                         }
                         composable(AppRoute.PERMISSION_ROUTE) {
                             PermissionScreen(navController = navController)

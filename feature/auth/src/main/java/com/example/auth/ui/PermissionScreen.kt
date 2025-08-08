@@ -98,8 +98,8 @@ fun PermissionScreen(
             text = "다음으로",
             onClick = {
                 // 모든 권한 요청이 끝났으면 다음 단계인 주소 등록 페이지로 이동
-                if (currentPermissionCount == 4) {
-                    navController.navigate(AppRoute.HOME_ROUTE)
+                if (currentPermissionCount == 4) { // 모든 권한 요청이 끝난 후
+                    navController.navigate(AppRoute.ADDRESS_REGISTER_ROUTE) // <-- 주소 등록 페이지로 이동
                 }
             },
             modifier = Modifier.padding(bottom = 20.dp),
