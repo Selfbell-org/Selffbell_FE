@@ -39,6 +39,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Notifications
 import com.selfbell.core.ui.composables.SelfBellBottomNavigation
+import com.selfbell.core.ui.composables.ReusableNaverMap // ReusableNaverMap 임포트
+
 
 @Composable
 fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
@@ -90,7 +92,7 @@ fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
                         .fillMaxSize()
                 ) {
                     // 1. 네이버 지도 API 영역 (가장 아래 레이어)
-                    MapSection(modifier = Modifier.fillMaxSize())
+                    ReusableNaverMap(modifier = Modifier.fillMaxSize()) // <-- MapSection 대신 ReusableNaverMap 사용
 
                     // 2. 지도 위에 겹쳐지는 UI들을 Column으로 배치
                     Column(
