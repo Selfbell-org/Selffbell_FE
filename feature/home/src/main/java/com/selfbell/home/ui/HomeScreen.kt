@@ -1,298 +1,247 @@
-package com.selfbell.feature.home.ui
+package com.selfbell.home.ui // 실제 HomeScreen.kt의 패키지 경로
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.selfbell.core.navigation.AppRoute
-import com.selfbell.core.ui.composables.SelfBellButton
-import com.selfbell.core.ui.composables.SelfBellButtonType
-import com.selfbell.core.ui.theme.SelfBellTheme
-import com.selfbell.core.ui.theme.Typography
-import com.selfbell.core.R
-import com.selfbell.core.ui.theme.Primary
-import com.selfbell.core.ui.composables.AppBarTwoLineTitle
-import com.selfbell.core.ui.composables.AppBarCircleIcon
-import com.selfbell.core.ui.composables.SelfBellAppBar
-import com.selfbell.core.ui.theme.GrayInactive as Gray100
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Notifications
-import com.selfbell.core.ui.composables.SelfBellBottomNavigation
-
+import androidx.compose.ui.window.Popup
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.CameraUpdate
+import com.naver.maps.map.NaverMap
+import com.naver.maps.map.overlay.Marker
+import com.selfbell.core.ui.composables.ReusableNaverMap // ReusableNaverMap 경로
+import com.selfbell.home.model.MapMarkerData // MapMarkerData 경로
+import com.selfbell.core.ui.theme.Typography // Typography 경로 (AddressSearchModal에서 사용)
+import com.selfbell.feature.home.R // R 파일 경로 (ic_search, sos_icon, criminal_icon 등)
+import kotlinx.coroutines.launch
 @Composable
-fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
-    SelfBellTheme {
-        Scaffold(
-            topBar = {
-                SelfBellAppBar(
-                    titleContent = {
-                        AppBarTwoLineTitle(
-                            title = "반갑습니다.",
-                            subtitle = "오늘도 안전한 하루 되세요."
-                        )
-                    },
-                    actions = {
-                        AppBarCircleIcon(
-                            iconResId = R.drawable.ic_fellow,
-                            contentDescription = "동행 친구",
-                            onClick = { navController.navigate(AppRoute.ESCORT_ROUTE) }
-                        )
-                    }
-                )
-            },
-            bottomBar = {
-                // Scaffold의 bottomBar 슬롯에 SelfBellBottomNavigation을 연결합니다.
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                        .padding(horizontal = 24.dp)
-                        .navigationBarsPadding(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .widthIn(max = 600.dp)
-                            .clip(RoundedCornerShape(40.dp)),
-                        color = Color.White,
-                        shadowElevation = 8.dp
-                    ) {
-                        SelfBellBottomNavigation(navController = navController)
-                    }
-                }
-            },
-            containerColor = Color.Transparent, // <- Scaffold의 배경색을 투명하게 설정
-            content = { paddingValues ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    // 1. 네이버 지도 API 영역 (가장 아래 레이어)
-                    MapSection(modifier = Modifier.fillMaxSize())
-
-                    // 2. 지도 위에 겹쳐지는 UI들을 Column으로 배치
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues) // Scaffold의 padding을 Column에 적용
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        // DepartureSection 등의 상위 UI는 TopBar에 의해 밀려나게 됩니다.
-                        // 이전에 Box에 직접 배치했던 UI들을 여기에 넣습니다.
-                        DepartureSection(
-                            navController = navController,
-                            addressName = remember { mutableStateOf("우리집") }.value,
-                            addressDetail = remember { mutableStateOf("서울 특별시 서초구 반포본동...") }.value
-                        )
-
-                        MapControlButtons()
-
-                        // Spacer를 사용하여 남은 공간을 모두 차지하게 만들어,
-                        // TodaysAlertSummarySection을 바텀바 위로 밀어냅니다.
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        TodaysAlertSummarySection()
-                    }
-                }
-            }
-        )
-    }
-}
-// -------------------------------------------------------------
-// 하위 섹션 Composable 함수들
-// -------------------------------------------------------------
-@Composable
-private fun DepartureSection(
-    navController: NavController,
-    modifier: Modifier = Modifier,
-    addressName: String,
-    addressDetail: String
+fun HomeScreen(
+    userLatLng: LatLng,
+    userAddress: String,
+    userProfileImg: Int,
+    userProfileName: String,
+    criminalMarkers: List<MapMarkerData>,     // 범죄자 마커 리스트
+    safetyBellMarkers: List<MapMarkerData>,   // 안심벨 마커 리스트
+    searchText: String,
+    onSearchTextChange: (String) -> Unit,
+    onSearchClick: () -> Unit,
+    // alertList: List<AlertItem>, // << 제거
+    // onAlertClick: (AlertItem) -> Unit, // << 제거
+    onModalMarkerItemClick: (MapMarkerData) -> Unit, // AddressSearchModal의 아이템 클릭 콜백
+    searchedLatLng: LatLng?,
+    onMsgReportClick: () -> Unit
 ) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .widthIn(max = 400.dp)
-            .padding(top = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        shadowElevation = 4.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_home),
-                contentDescription = "집",
-                modifier = Modifier.size(52.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(text = addressName, style = Typography.titleMedium)
-                Text(text = addressDetail, style = Typography.bodyMedium)
+    var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
+    var cameraPosition by remember {
+        mutableStateOf(
+            searchedLatLng ?: if (userLatLng.latitude != 0.0 || userLatLng.longitude != 0.0) {
+                userLatLng
+            } else {
+                LatLng(37.5665, 126.9780)
             }
-            SelfBellButton(
-                text = "출발",
-                onClick = { /* TODO: 동선 공유 시작 화면으로 이동 */ },
-                buttonType = SelfBellButtonType.PRIMARY_FILLED,
-                isSmall = true,
-                modifier = Modifier.wrapContentWidth()
-            )
+        )
+    }
+    var infoWindowData by remember { mutableStateOf<Pair<LatLng, String>?>(null) }
+
+    // AddressSearchModal에 표시할 마커 리스트 (ViewModel에서 미리 준비하는 것이 더 좋음)
+    val modalMapMarkers = remember(criminalMarkers, safetyBellMarkers) {
+        // 필요에 따라 필터링, 정렬, 거리 계산 등을 여기서 또는 ViewModel에서 수행
+        // 예시: 단순히 합치기. 실제로는 거리순 정렬 등이 필요할 수 있음
+        (criminalMarkers + safetyBellMarkers).sortedBy {
+            // 사용자 위치와 마커 위치 간의 거리를 계산하여 정렬할 수 있음
+            // 여기서는 임시로 타입으로 정렬하거나, MapMarkerData에 distance 필드가 있다면 그걸로 정렬
+            it.distance // 또는 it.latLng.distanceTo(userLatLng) 등을 사용 (거리 계산 로직 필요)
         }
     }
-}
-@Composable
-private fun MapSection(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.map_placeholder),
-            contentDescription = "지도 배경",
-            modifier = Modifier.fillMaxSize()
+
+    Box(Modifier.fillMaxSize()) {
+        ReusableNaverMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPosition = cameraPosition,
+            onMapReady = { map ->
+                naverMapInstance = map
+                if (searchedLatLng != null) map.moveCamera(CameraUpdate.scrollTo(searchedLatLng))
+                else if (userLatLng.latitude != 0.0 || userLatLng.longitude != 0.0) map.moveCamera(CameraUpdate.scrollTo(userLatLng))
+
+                addOrUpdateMarker(map, userLatLng, MapMarkerData(userLatLng, userAddress,
+                    MapMarkerData.MarkerType.USER, "현재 위치")) { infoWindowData = it }
+                criminalMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { infoWindowData = it } }
+                safetyBellMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { infoWindowData = it } }
+            }
+        )
+
+        infoWindowData?.let { (latLngValue, addressValue) ->
+            MapInfoBalloon(address = addressValue, latLng = latLngValue, onDismissRequest = { infoWindowData = null })
+        }
+
+        // ===== 상단 박스 (프로필 UI) =====
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 36.dp)
+                .fillMaxWidth(0.85f)
+                .height(56.dp)
+                .shadow(6.dp, RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(20.dp)),
+            color = Color.White.copy(alpha = 0.95f)
+        ) {
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(userProfileImg),
+                    contentDescription = "프로필",
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(999.dp)) // 원형 이미지
+                )
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("profile", style = Typography.labelSmall, color = Color(0xFF949494))
+                    Text(userProfileName, style = Typography.bodyMedium, fontWeight = FontWeight.Bold)
+                }
+                IconButton(
+                    onClick = onMsgReportClick
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.msg_report_icon),
+                        contentDescription = "메시지 신고",
+                        tint = Color.Unspecified
+                    )
+                }
+            }
+        }
+
+        // ===== 하단 모달 (AddressSearchModal) =====
+        AddressSearchModal(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp),
+            searchText = searchText,
+            onSearchTextChange = onSearchTextChange,
+            onSearchClick = onSearchClick,
+            mapMarkers = modalMapMarkers, // 수정된 마커 리스트 전달
+            onMarkerItemClick = onModalMarkerItemClick // 수정된 콜백 전달
         )
     }
 }
 
+
+// MapInfoBalloon Composable (별도 파일 또는 HomeScreen 하단에 정의)
 @Composable
-private fun MapControlButtons(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+fun MapInfoBalloon(
+    modifier: Modifier = Modifier,
+    address: String,
+    latLng: LatLng, // 마커 위치 정보 (필요시 사용)
+    onDismissRequest: () -> Unit
+) {
+    // Popup을 사용하여 지도 위에 오버레이 형태로 표시
+    // Popup의 위치는 직접 계산하거나, Alignment를 사용할 수 있습니다.
+    // 여기서는 간단하게 화면 중앙 근처에 나타나도록 합니다. (실제로는 마커 위치 기반으로 조정 필요)
+    Popup(
+        alignment = Alignment.Center, // 또는 다른 정렬, offset 사용 가능
+        onDismissRequest = onDismissRequest
     ) {
-        // TODO: '현위치' 버튼 구현
-    }
-}
-
-
-@Composable
-fun TodaysAlertSummarySection(modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 16.dp,
-                spotColor = Color(0x1A000000),
-                ambientColor = Color(0x1A000000)
-            )
-            .shadow(
-                elevation = 8.dp,
-                spotColor = Color(0x14000000),
-                ambientColor = Color(0x14000000)
-            )
-            .clip(RoundedCornerShape(24.dp))
-            .background(Color(0x80FFFFFF))
-            .border(
-                width = 1.dp,
-                color = Color(0x4DFFFFFF),
-                shape = RoundedCornerShape(24.dp)
-            ),
-        color = Color.Transparent
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // '내주변탐색' 검색 버튼
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "내 주변 탐색",
-                    color = Color.Black,
-                    style = Typography.bodyMedium
-                )
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_search),
-                    contentDescription = "검색",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 긴급신고-선유공원앞 SOS 레이아웃
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_sos_map),
-                    contentDescription = "SOS 아이콘",
-                    modifier = Modifier.size(40.dp)
-                )
-                Text(
-                    text = "긴급신고-선유공원앞",
-                    style = Typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    modifier = Modifier.weight(1f).padding(start = 16.dp)
-                )
-                Text(
-                    text = "358m",
-                    style = Typography.bodyMedium
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 범죄자 위치정보 레이아웃 (SOS와 동일한 구조)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_crime_map),
-                    contentDescription = "경고 아이콘",
-                    modifier = Modifier.size(40.dp)
-                )
-                Text(
-                    text = "범죄자 위치정보",
-                    style = Typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    modifier = Modifier.weight(1f).padding(start = 16.dp)
-                )
-                Text(
-                    text = "421m",
-                    style = Typography.bodyMedium
-                )
+        Surface(
+            modifier = modifier
+                .wrapContentSize()
+                .shadow(4.dp, RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.White)
+                .clickable(onClick = onDismissRequest), // 말풍선 클릭 시 닫기
+            color = Color.White // Surface 자체 색상
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = "주소", style = Typography.labelSmall)
+                Text(text = address, style = Typography.bodyLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                // 필요시 추가 정보 (예: "상세보기 버튼 등")
             }
         }
     }
 }
 
-@Preview(showBackground = true)
+
+fun addOrUpdateMarker(
+    naverMap: NaverMap,
+    latLng: LatLng,
+    data: MapMarkerData,
+    onClick: (Pair<LatLng, String>) -> Unit
+) {
+    Marker().apply {
+        position = latLng
+        map = naverMap
+        iconTintColor = when (data.type) {
+            MapMarkerData.MarkerType.USER -> Color(0xFF2962FF).hashCode() // 파랑
+            MapMarkerData.MarkerType.CRIMINAL -> Color(0xFFD32F2F).hashCode() // 빨강
+            MapMarkerData.MarkerType.SAFETY_BELL -> Color(0xFF43A047).hashCode() // 초록
+        }
+        setOnClickListener {
+            onClick(latLng to data.address)
+            true
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 fun HomeScreenPreview() {
-    SelfBellTheme {
-        HomeScreen(rememberNavController())
-    }
+    val sampleUserLatLng = LatLng(37.5665, 126.9780)
+    val sampleUserAddress = "서울 중구 세종대로 110"
+    val sampleUserProfileImg = R.drawable.usre_profileimg_icon // 실제 리소스 ID로 교체
+    val sampleUserProfileName = "홍길동"
+
+    // MapMarkerData에 distance 필드가 있다면 채워주거나, 동적으로 계산하는 로직이 ViewModel에 있다고 가정
+    val sampleCriminalMarkers = listOf(
+        MapMarkerData(LatLng(37.5600, 126.9750), "위험 지역 A: 강남역 부근",
+            MapMarkerData.MarkerType.CRIMINAL, "150m"),
+        MapMarkerData(LatLng(37.5700, 126.9800), "주의 인물 B: 시청 앞",
+            MapMarkerData.MarkerType.CRIMINAL, "300m")
+    )
+    val sampleSafetyBellMarkers = listOf(
+        MapMarkerData(LatLng(37.5650, 126.9700), "안심벨 X: 광화문 광장",
+            MapMarkerData.MarkerType.SAFETY_BELL, "200m")
+    )
+
+    var sampleSearchText by remember { mutableStateOf("") }
+
+    // MaterialTheme { // 실제 앱의 테마로 감싸주세요
+    HomeScreen(
+        userLatLng = sampleUserLatLng,
+        userAddress = sampleUserAddress,
+        userProfileImg = sampleUserProfileImg,
+        userProfileName = sampleUserProfileName,
+        criminalMarkers = sampleCriminalMarkers,
+        safetyBellMarkers = sampleSafetyBellMarkers,
+        searchText = sampleSearchText,
+        onSearchTextChange = { sampleSearchText = it },
+        onSearchClick = { println("Preview Search Clicked: $sampleSearchText") },
+        onModalMarkerItemClick = { markerData -> println("Preview Marker Item Clicked: ${markerData.address}") },
+        searchedLatLng = null,
+        onMsgReportClick = { println("Preview Message Report Clicked") }
+    )
+    // }
 }

@@ -64,12 +64,21 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.androidx.runtime.android)
     implementation(libs.androidx.ui.android)
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.navigation.runtime.android)
     kapt(libs.room.compiler)
     implementation(libs.room.ktx) // 코루틴 지원
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+
+    //Naver Maps api
+    implementation("com.naver.maps:map-sdk:3.22.1")
+
+    //permission
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
 
     // Hilt
     implementation(libs.hilt.android)

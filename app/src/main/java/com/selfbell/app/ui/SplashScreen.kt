@@ -38,7 +38,7 @@ fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
 
         // 현재는 임시로 홈 화면으로 바로 이동
         navController.popBackStack() // 스플래시 화면을 백스택에서 제거
-        navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE) // <-- 홈 화면으로 이동
+        navController.navigate(AppRoute.LANDING_ROUTE) // <-- 홈 화면으로 이동
     }
     Box(
         modifier = modifier
