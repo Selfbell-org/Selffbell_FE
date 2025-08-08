@@ -36,8 +36,8 @@ class AddressRegisterViewModel @Inject constructor(
         }
     }
 
-    fun selectAddress(address: AddressModel) {
-        _searchAddress.value = address.roadAddress // 선택된 주소를 검색창에 표시
+    fun selectAddress(address: AddressModel) { // 인자 타입을 AddressModel로 변경
+        _searchAddress.value = address.roadAddress // 주소 객체의 roadAddress 속성 사용
         _isAddressSelected.value = true
     }
 

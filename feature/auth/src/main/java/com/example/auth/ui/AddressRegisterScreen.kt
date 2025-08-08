@@ -4,15 +4,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.auth.R
@@ -33,16 +34,8 @@ import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.theme.Black
 import com.selfbell.core.ui.theme.Primary
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.foundation.layout.widthIn
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import com.selfbell.core.ui.theme.GrayInactive
-import com.selfbell.data.api.response.AddressResponse
 import com.selfbell.domain.model.AddressModel
+import com.example.auth.ui.AddressResultItem
 
 @Composable
 fun AddressRegisterScreen(
@@ -50,7 +43,11 @@ fun AddressRegisterScreen(
     modifier: Modifier = Modifier,
     viewModel: AddressRegisterViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    // ViewModel의 개별 StateFlow 변수들을 사용합니다.
+    val searchAddress by viewModel.searchAddress.collectAsState()
+    val addressResults by viewModel.addressResults.collectAsState()
+    val isAddressSelected by viewModel.isAddressSelected.collectAsState()
+
     val totalOnboardingSteps = 3
     val currentOnboardingStep = 3
 
@@ -58,7 +55,6 @@ fun AddressRegisterScreen(
         modifier = modifier.fillMaxSize()
     ) {
         // 1. 네이버 지도 API 영역 (가장 아래 레이어)
-        // TODO: ReusableNaverMap 컴포넌트에 주소 데이터 전달 로직 구현
 
         // 2. 지도 위에 겹쳐지는 UI들을 Column으로 배치
         Column(
@@ -82,9 +78,9 @@ fun AddressRegisterScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // 주소 검색 UI
-                if (!uiState.isAddressSelected) {
+                if (!isAddressSelected) {
                     TextField(
-                        value = uiState.searchAddress,
+                        value = searchAddress,
                         onValueChange = { viewModel.updateSearchAddress(it) },
                         label = { Text("주소 검색") },
                         modifier = Modifier.fillMaxWidth(),
@@ -102,7 +98,7 @@ fun AddressRegisterScreen(
             }
 
             // 검색 결과 또는 주소 선택 후 UI
-            if (uiState.isAddressSelected) {
+            if (isAddressSelected) {
                 // 주소 선택 후 UI
                 Column(
                     modifier = Modifier
@@ -112,7 +108,7 @@ fun AddressRegisterScreen(
                 ) {
                     Text(text = "선택된 주소", style = Typography.bodyMedium)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = uiState.searchAddress, style = Typography.titleMedium)
+                    Text(text = searchAddress, style = Typography.titleMedium)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
@@ -144,16 +140,16 @@ fun AddressRegisterScreen(
                 }
             } else {
                 // 검색 결과 목록 UI
-                if (uiState.addressResults.isNotEmpty()) {
+                if (addressResults.isNotEmpty()) {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color.White, shape = RoundedCornerShape(16.dp))
                             .padding(16.dp)
                     ) {
-                        items(uiState.addressResults) { address ->
+                        items(addressResults) { address ->
                             AddressResultItem(address = address) {
-                                viewModel.selectAddress(address.roadAddress)
+                                viewModel.selectAddress(address)
                             }
                         }
                     }
@@ -178,29 +174,16 @@ fun AddressRegisterScreen(
             SelfBellButton(
                 text = "다음으로",
                 onClick = {
-                    // 주소 등록 완료 후 홈 화면으로 이동
-                    navController.navigate(AppRoute.HOME_ROUTE)
+                    // 주소 등록 완료 후 ContactRegistrationScreen으로 이동
+                    navController.navigate(AppRoute.CONTACT_REGISTER_ROUTE)
                 },
                 modifier = Modifier.padding(bottom = 20.dp),
-                enabled = uiState.isAddressSelected // 주소 선택 시에만 활성화
+                enabled = true // 주소 선택 시에만 활성화
             )
         }
     }
 }
 
-// 주소 검색 결과 아이템 컴포넌트 (UI를 깔끔하게 분리)
-@Composable
-fun AddressResultItem(address: AddressModel, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp)
-    ) {
-        Text(text = address.roadAddress, style = Typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
-        Text(text = address.jibunAddress, style = Typography.bodySmall.copy(color = Color.Gray))
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
