@@ -1,5 +1,3 @@
-package com.example.auth.ui
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -60,29 +58,56 @@ fun PermissionItem(
 ) {
     // 상태에 따라 컨테이너 색상 결정
     val containerColor = when (state) {
+
         PermissionState.INACTIVE -> Gray50
-        PermissionState.ACTIVE, PermissionState.COMPLETED -> Third
-    }
-    // 상태에 따라 텍스트 및 아이콘 색상 결정
-    val contentColor = when (state) {
-        PermissionState.INACTIVE -> Black
-        PermissionState.ACTIVE, PermissionState.COMPLETED -> Black
-    }
-    // 상태에 따라 오른쪽 아이콘 리소스 결정
-    val rightIconResId = when (state) {
-        PermissionState.COMPLETED -> R.drawable.check_icon
-        else -> R.drawable.arrow_icon
+
+        PermissionState.ACTIVE -> Gray50
+        PermissionState.COMPLETED -> Third
+
     }
 
-    Row(
-        modifier = modifier
+    // 상태에 따라 텍스트 및 아이콘 색상 결정
+    val contentColor = when (state) {
+
+        PermissionState.INACTIVE -> Black
+
+        PermissionState.ACTIVE, PermissionState.COMPLETED -> Black
+
+    }
+
+    // 상태에 따라 오른쪽 아이콘 리소스 결정
+    val rightIconResId = when (state) {
+
+        PermissionState.COMPLETED -> R.drawable.check_icon
+
+        else -> R.drawable.arrow_icon
+
+    }
+
+    // **수정된 부분**
+    // ACTIVE 상태일 때, 테두리(border)를 추가하여 시각적으로 강조합니다.
+    val itemModifier = if (state == PermissionState.ACTIVE) {
+        modifier
+            .fillMaxWidth()
+            .height(72.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(containerColor)
+            //.border(2.dp, Primary, RoundedCornerShape(12.dp)) // 강조 테두리 추가
+            .clickable(onClick = onClick)
+            .padding(16.dp)
+    } else {
+        modifier
             .fillMaxWidth()
             .height(72.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(containerColor)
             .clickable(onClick = onClick)
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp), // 아이템 간 간격 추가
+            .padding(16.dp)
+    }
+
+    Row(
+        modifier = itemModifier, // 수정된 Modifier 사용
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 왼쪽 아이콘 (원형 배경)
