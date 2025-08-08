@@ -35,11 +35,22 @@ import com.selfbell.core.ui.theme.Black
 import com.selfbell.core.ui.theme.Primary
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.foundation.layout.widthIn
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import com.selfbell.core.ui.theme.GrayInactive
+import com.selfbell.data.api.response.AddressResponse
+import com.selfbell.domain.model.AddressModel
 
 @Composable
-fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Modifier) {
-    var searchAddress by remember { mutableStateOf("") }
-    var isAddressSelected by remember { mutableStateOf(false) } // 주소 선택 상태
+fun AddressRegisterScreen(
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewModel: AddressRegisterViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
     val totalOnboardingSteps = 3
     val currentOnboardingStep = 3
 
@@ -47,6 +58,7 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
         modifier = modifier.fillMaxSize()
     ) {
         // 1. 네이버 지도 API 영역 (가장 아래 레이어)
+        // TODO: ReusableNaverMap 컴포넌트에 주소 데이터 전달 로직 구현
 
         // 2. 지도 위에 겹쳐지는 UI들을 Column으로 배치
         Column(
@@ -69,11 +81,11 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
                 )
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // 주소 검색 전 상태 UI
-                if (!isAddressSelected) {
+                // 주소 검색 UI
+                if (!uiState.isAddressSelected) {
                     TextField(
-                        value = searchAddress,
-                        onValueChange = { searchAddress = it },
+                        value = uiState.searchAddress,
+                        onValueChange = { viewModel.updateSearchAddress(it) },
                         label = { Text("주소 검색") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "검색 아이콘") },
@@ -90,7 +102,7 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
             }
 
             // 검색 결과 또는 주소 선택 후 UI
-            if (isAddressSelected) {
+            if (uiState.isAddressSelected) {
                 // 주소 선택 후 UI
                 Column(
                     modifier = Modifier
@@ -100,7 +112,7 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
                 ) {
                     Text(text = "선택된 주소", style = Typography.bodyMedium)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = searchAddress, style = Typography.titleMedium)
+                    Text(text = uiState.searchAddress, style = Typography.titleMedium)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
@@ -131,18 +143,34 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
                     }
                 }
             } else {
-                // 검색 예시 안내
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White, shape = RoundedCornerShape(16.dp))
-                        .padding(16.dp)
-                ) {
-                    Text(text = "이렇게 검색해 보세요", style = Typography.bodyMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "・도로명 + 건물번호 (위례성대로 2)", style = Typography.bodyMedium.copy(color = Color.Gray))
-                    Text(text = "・건물명 + 번지 (방이동 44-2)", style = Typography.bodyMedium.copy(color = Color.Gray))
-                    Text(text = "・건물명 + 아파트명 (반포 자이, 분당 주공 1차)", style = Typography.bodyMedium.copy(color = Color.Gray))
+                // 검색 결과 목록 UI
+                if (uiState.addressResults.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White, shape = RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                    ) {
+                        items(uiState.addressResults) { address ->
+                            AddressResultItem(address = address) {
+                                viewModel.selectAddress(address.roadAddress)
+                            }
+                        }
+                    }
+                } else {
+                    // 검색 예시 안내
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White, shape = RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                    ) {
+                        Text(text = "이렇게 검색해 보세요", style = Typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "・도로명 + 건물번호 (위례성대로 2)", style = Typography.bodyMedium.copy(color = Color.Gray))
+                        Text(text = "・건물명 + 번지 (방이동 44-2)", style = Typography.bodyMedium.copy(color = Color.Gray))
+                        Text(text = "・건물명 + 아파트명 (반포 자이, 분당 주공 1차)", style = Typography.bodyMedium.copy(color = Color.Gray))
+                    }
                 }
             }
 
@@ -154,9 +182,23 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
                     navController.navigate(AppRoute.HOME_ROUTE)
                 },
                 modifier = Modifier.padding(bottom = 20.dp),
-                enabled = isAddressSelected // 주소 선택 시에만 활성화
+                enabled = uiState.isAddressSelected // 주소 선택 시에만 활성화
             )
         }
+    }
+}
+
+// 주소 검색 결과 아이템 컴포넌트 (UI를 깔끔하게 분리)
+@Composable
+fun AddressResultItem(address: AddressModel, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp)
+    ) {
+        Text(text = address.roadAddress, style = Typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+        Text(text = address.jibunAddress, style = Typography.bodySmall.copy(color = Color.Gray))
     }
 }
 
