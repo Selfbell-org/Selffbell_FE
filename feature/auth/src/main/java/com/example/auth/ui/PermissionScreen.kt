@@ -13,13 +13,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import com.google.accompanist.permissions.*
 import com.naver.maps.geometry.LatLng
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionScreen(
-    onAddressSet: (String, String, LatLng?) -> Unit
+    onAddressSet: (String, String, LatLng?) -> Unit,
+    navController: NavController
 ) {
     val locationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
     var showMap by remember { mutableStateOf(false) }
@@ -33,7 +35,7 @@ fun PermissionScreen(
     }
 
     if (showMap) {
-        MainAddressSetupScreen (onAddressSet = onAddressSet)
+        MainAddressSetupScreen (onAddressSet = onAddressSet, navController = navController)
     } else {
         // 권한 안내 UI
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

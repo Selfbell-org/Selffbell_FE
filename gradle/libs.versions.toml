@@ -45,6 +45,7 @@ material = "1.10.0"
 runtimeAndroid = "1.8.3"
 uiAndroid = "1.8.3"
 playServicesLocation = "21.3.0"
+navigationRuntimeAndroid = "2.9.3"
 
 
 [libraries]
@@ -98,6 +99,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime-android", version.ref = "runtimeAndroid" }
 androidx-ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+androidx-navigation-runtime-android = { group = "androidx.navigation", name = "navigation-runtime-android", version.ref = "navigationRuntimeAndroid" }
 
 
 [plugins]

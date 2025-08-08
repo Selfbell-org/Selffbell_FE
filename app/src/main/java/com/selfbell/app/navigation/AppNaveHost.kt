@@ -14,6 +14,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.data.position
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -43,6 +45,8 @@ import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.overlay.Marker
 import com.selfbell.core.ui.composables.ReusableNaverMap
+import com.selfbell.home.ui.HomeScreen
+import com.selfbell.home.ui.HomeViewModel
 
 @Composable
 fun AppNavHost(
@@ -59,7 +63,7 @@ fun AppNavHost(
                 AppRoute.LANDING_ROUTE,
                 AppRoute.LOGIN_ROUTE,
                 AppRoute.SIGNUP_ROUTE,
-                AppRoute.HOME_ROUTE // Home 화면도 바텀바가 없는 경로로 추가
+                AppRoute.PERMISSTION_ROUTE
             )
         }
         val shouldShowBottomBar = currentRoute !in routesWithoutBottomBar
@@ -86,25 +90,69 @@ fun AppNavHost(
                             }
                         )
                     ) {
-                        composable(AppRoute.SPLASH_ROUTE) {
-                            SplashScreen(navController = navController)
+                        composable(AppRoute.SPLASH_ROUTE) { SplashScreen(navController = navController) }
+
+
+
+                        composable(AppRoute.HOME_ROUTE) {
+                            val homeViewModel: HomeViewModel = hiltViewModel()
+
+                            // ViewModel의 StateFlow들을 Composable이 관찰할 수 있는 State로 변환
+                            val userLatLng by homeViewModel.userLatLng.collectAsState()
+                            val userAddress by homeViewModel.userAddress.collectAsState()
+                            val userProfileImg by homeViewModel.userProfileImg.collectAsState()
+                            val userProfileName by homeViewModel.userProfileName.collectAsState()
+                            val criminalMarkers by homeViewModel.criminalMarkers.collectAsState()
+                            val safetyBellMarkers by homeViewModel.safetyBellMarkers.collectAsState()
+                            val searchedLatLng by homeViewModel.searchedLatLng.collectAsState()
+
+                            // AddressSearchModal에서 사용될 상태 및 콜백 (ViewModel에서 가져온다고 가정)
+                            val searchText by homeViewModel.searchText.collectAsState() // ViewModel에 searchText: StateFlow<String> 필요
+                            // val searchResults by homeViewModel.searchResults.collectAsState() // 필요하다면 검색 결과도 ViewModel에서 관리
+
+                            HomeScreen(
+                                userLatLng = userLatLng,
+                                userAddress = userAddress,
+                                userProfileImg = userProfileImg,
+                                userProfileName = userProfileName,
+                                criminalMarkers = criminalMarkers,
+                                safetyBellMarkers = safetyBellMarkers,
+                                searchText = searchText, // ViewModel의 searchText 전달
+                                onSearchTextChange = { newText -> // ViewModel의 함수 호출
+                                    homeViewModel.onSearchTextChanged(newText) // ViewModel에 onSearchTextChanged(String) 함수 필요
+                                },
+                                onSearchClick = { // ViewModel의 함수 호출
+                                    homeViewModel.onSearchConfirmed()       // ViewModel에 onSearchConfirmed() 함수 필요
+                                },
+                                onModalMarkerItemClick = { mapMarkerData -> // ViewModel의 함수 호출 또는 지도 직접 제어
+                                    // 예시: 클릭된 마커의 위치로 지도 이동
+                                    homeViewModel.onMapMarkerClicked(mapMarkerData) // ViewModel에 onMapMarkerClicked(MapMarkerData) 함수 필요
+                                    // 또는 navController.navigate(...) 등으로 상세 화면 이동
+                                    println("Marker clicked in NavHost: ${mapMarkerData.address}")
+                                },
+                                searchedLatLng = searchedLatLng,
+                                onMsgReportClick = {
+                                    // TODO: 메시지 신고 기능 구현 (ViewModel 함수 호출 등)
+                                    homeViewModel.onReportMessageClicked() // ViewModel에 onReportMessageClicked() 함수 필요 (예시)
+                                    println("Message report clicked in NavHost")
+                                }
+                            )
                         }
-//                        composable(AppRoute.HOME_ROUTE) { HomeScreen(navController = navController) }
                         composable(AppRoute.ALERTS_ROUTE) { Text(text = "알림 화면") }
                         composable(AppRoute.ESCORT_ROUTE) { Text(text = "동행 화면") }
                         composable(AppRoute.SETTINGS_ROUTE) { Text(text = "설정 화면") }
                         composable(AppRoute.FRIENDS_ROUTE) { Text(text = "친구 화면") }
                         composable(AppRoute.LANDING_ROUTE) { LandingScreen(
-                            onLoginClick = { navController.navigate(AppRoute.PERMISSTION_ROUTE) },
+                            onLoginClick = { navController.navigate(AppRoute.LOGIN_ROUTE) },
                             onSignUpClick = { navController.navigate(AppRoute.SIGNUP_ROUTE) }
                         )}
-                        composable(AppRoute.LOGIN_ROUTE) { LoginScreen() } // Placeholder for Login
+                        composable(AppRoute.LOGIN_ROUTE) { LoginScreen( onNavigateUp ={navController.popBackStack()}) } // Placeholder for Login
                         composable(AppRoute.SIGNUP_ROUTE) {
                             var nickname by remember { mutableStateOf("") }
                             SignUpScreen(
                                 nickname = nickname,
                                 onNicknameChange = { nickname = it },
-                                onRegister = { navController.navigate((AppRoute.HOME_ROUTE))},
+                                onRegister = { navController.navigate((AppRoute.PERMISSTION_ROUTE))},
                                 onNavigateUp = { navController.popBackStack() }
                             )
                         }
@@ -133,7 +181,7 @@ fun AppNavHost(
                                 // 필요하다면 추가적인 지도 설정 수행
                             }
                         ) }
-                        composable(AppRoute.PERMISSTION_ROUTE){ PermissionScreen { address, type, latLng ->
+                        composable(AppRoute.PERMISSTION_ROUTE){ PermissionScreen(navController = navController, onAddressSet = { address, type, latLng ->
                             // 이 람다 함수가 onAddressSet 콜백입니다.
                             // PermissionScreen -> MainAddressSetupScreen 에서 주소 설정이 완료되면 호출됩니다.
 
@@ -149,7 +197,7 @@ fun AppNavHost(
                                 popUpTo(AppRoute.PERMISSTION_ROUTE) { inclusive = true } // 권한 화면은 스택에서 제거
                                 // 필요하다면 Landing/SignUp 등도 스택에서 제거
                                 // popUpTo(AppRoute.LANDING_ROUTE) { inclusive = true }
-                            }  } }
+                            }  } )}
                     }
                 }
             )
@@ -185,22 +233,4 @@ fun AppNavHost(
 @Composable
 fun AppNavHostPreview() {
     AppNavHost(navController = rememberNavController())
-}
-
-@Composable
-fun SignUpScreen(
-    nickname: String,
-    onNicknameChange: (String) -> Unit,
-    onRegister: (String) -> Unit,
-    onNavigateUp: () -> Unit
-) {
-    Text("Sign Up Screen")
-}
-
-@Composable
-fun LandingScreen(
-    onLoginClick: () -> Unit,
-    onSignUpClick: () -> Unit
-) {
-    Text("Landing Screen")
 }

@@ -26,17 +26,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.LocationTrackingMode
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.overlay.Marker
+import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.selfbell.core.ui.composables.moveOrAddMarker
 
 @Composable
 fun MainAddressSetupScreen(
-    onAddressSet: (String, String, LatLng?) -> Unit
+    onAddressSet: (String, String, LatLng?) -> Unit,
+    navController: NavController
 ) {
     val context = LocalContext.current
     var userLatLng by remember { mutableStateOf<LatLng?>(null) }
@@ -87,7 +90,8 @@ fun MainAddressSetupScreen(
                 }
                 Spacer(Modifier.height(16.dp))
                 Button(
-                    onClick = { onAddressSet(address.trim(), addrType, userLatLng) },
+                    onClick = { onAddressSet(address.trim(), addrType, userLatLng)
+                              navController.navigate(AppRoute.HOME_ROUTE)},
                     enabled = address.isNotBlank() && userLatLng != null,
                     modifier = Modifier.fillMaxWidth()
                 ) {
