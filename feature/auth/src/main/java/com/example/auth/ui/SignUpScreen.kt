@@ -25,7 +25,7 @@ import com.selfbell.core.ui.theme.Pretendard
 fun SignUpScreen(
     nickname: String,
     onNicknameChange: (String) -> Unit,
-    onRegister: (nickname: String) -> Unit,
+    onRegister: () -> Unit,
     onNavigateUp: () -> Unit = {}
 ) {
     Scaffold( // Scaffold로 전체 화면 구조를 감쌈
@@ -117,7 +117,7 @@ fun SignUpScreen(
 
             // 등록 버튼
             Button(
-                onClick = { onRegister(nickname) },
+                onClick = { onRegister() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),

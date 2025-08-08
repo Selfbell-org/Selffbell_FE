@@ -114,7 +114,7 @@ fun SelfBellAppBarPreview() {
             },
             actions = {
                 AppBarCircleIcon(
-                    iconResId = R.drawable.ic_fellow, // <-- R.drawable로 변경한 예시
+                    iconResId = R.drawable.msg_report_icon, // <-- R.drawable로 변경한 예시
                     contentDescription = "동행 친구",
                     onClick = { /* Handle 동행 친구 click */ }
                 )

@@ -1,13 +1,11 @@
 package com.example.auth.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -18,13 +16,10 @@ import androidx.navigation.compose.rememberNavController
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.OnboardingProgressBar
 import com.selfbell.core.ui.composables.SelfBellButton
-import com.selfbell.core.ui.composables.SelfBellButtonType
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.theme.Black
 import com.example.auth.R
-import kotlinx.coroutines.delay
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable

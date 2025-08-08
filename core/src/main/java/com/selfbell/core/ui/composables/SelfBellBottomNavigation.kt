@@ -17,19 +17,25 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.selfbell.core.R
+import com.selfbell.core.model.BottomNavItem
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Primary
@@ -38,11 +44,7 @@ import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.theme.GrayInactive
 
 
-data class BottomNavItem(
-    val route: String,
-    val icon: ImageVector,
-    val label: String
-)
+
 
 @Composable
 fun SelfBellBottomNavigation(
@@ -50,50 +52,59 @@ fun SelfBellBottomNavigation(
     modifier: Modifier = Modifier
 ) {
     val items = listOf(
-        BottomNavItem(AppRoute.HOME_ROUTE, Icons.Default.Home, "홈"),
-        BottomNavItem(AppRoute.ALERTS_ROUTE, Icons.Default.Info, "알림"),
-        BottomNavItem(AppRoute.ESCORT_ROUTE, Icons.Default.AccountBox, "동행"),
-        BottomNavItem(AppRoute.SETTINGS_ROUTE, Icons.Default.Settings, "설정"),
-        BottomNavItem(AppRoute.FRIENDS_ROUTE, Icons.Default.Settings, "친구")
+        // 홈 아이콘을 core/drawable 리소스로 변경
+        BottomNavItem(AppRoute.HOME_ROUTE, R.drawable.nav_home_icon, "홈"), // 예시: nav_home_icon.xml
+        BottomNavItem(AppRoute.ALERTS_ROUTE, R.drawable.nav_location_icon, "알림" ),
+        BottomNavItem(AppRoute.ESCORT_ROUTE, R.drawable.nav_map_icon, "동행"),
+        BottomNavItem(AppRoute.SETTINGS_ROUTE, R.drawable.nav_setting_icon, "설정")
     )
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     NavigationBar(
-        modifier = modifier.height(80.dp), // 바텀바 자체의 높이 유지 ㅋ
-        containerColor = Color.Transparent, // 바깥 Surface가 배경색을 담당
-        contentColor = Black, // 기본 콘텐츠 색상 (아이템의 colors 파라미터가 오버라이드)
-        tonalElevation = 0.dp // 그림자 제거
+        modifier = modifier.height(80.dp),
+        containerColor = Color.Transparent,
+        contentColor = Black,
+        tonalElevation = 0.dp
     ) {
-        // NavigationBar 내부의 모든 아이템을 감싸는 Row에 horizontal padding 적용
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp), //  아이템들을 안쪽으로 밀어 넣음
-            horizontalArrangement = Arrangement.SpaceAround, // 아이템 균등 배치
+                .padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
                 val selected = currentRoute == item.route
+                val iconAlpha = if (selected) 1f else 0.2f // 선택 시 100%, 미선택 시 20%
+
                 NavigationBarItem(
                     icon = {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(vertical = 0.dp) // Column의 세로 패딩 조절
+                            modifier = Modifier.padding(vertical = 0.dp)
                         ) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label,
-                                modifier = Modifier.size(32.dp) // 아이콘 크기
-                            )
+                            val iconModifier = Modifier
+                                .size(32.dp)
+                                .alpha(iconAlpha) // 아이콘에 alpha 적용
+
+                            if (item.icon != null) {
+                                Icon(
+                                    painter = painterResource(id = item.icon),
+                                    contentDescription = item.label,
+                                    modifier = iconModifier
+                                )
+                            }
                             Text(
                                 text = item.label,
                                 fontSize = 12.sp,
-                                modifier = Modifier.padding(top = 2.dp) // 아이콘과 텍스트 사이 패딩
+                                // 텍스트의 투명도는 colors에서 unselectedTextColor로 관리되므로
+                                // 여기서는 별도 alpha 적용 안 함. 만약 아이콘과 동일하게 하고 싶다면 추가 가능
+                                modifier = Modifier.padding(top = 2.dp)
                             )
                         }
                     },
-                    label = null, // Text 컴포넌트가 icon 슬롯 안으로 이동
+                    label = null,
                     selected = selected,
                     onClick = {
                         if (currentRoute != item.route) {
@@ -107,14 +118,15 @@ fun SelfBellBottomNavigation(
                         }
                     },
                     alwaysShowLabel = true,
-                    colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
-                        selectedIconColor = Primary,
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Primary, // 선택된 아이콘 색상 (alpha는 위에서 직접 제어)
                         selectedTextColor = Primary,
                         indicatorColor = Color.Transparent,
+                        // unselectedIconColor의 alpha는 위에서 직접 제어하므로, 여기서는 기본 색상만 지정
                         unselectedIconColor = GrayInactive,
-                        unselectedTextColor = GrayInactive
+                        unselectedTextColor = GrayInactive.copy(alpha = 0.5f) // 예시: 미선택 텍스트도 약간 투명하게
                     ),
-                    modifier = Modifier.weight(1f) //  아이템이 공간을 균등하게 차지하도록 weight 적용
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -125,6 +137,8 @@ fun SelfBellBottomNavigation(
 @Composable
 fun SelfBellBottomNavigationPreview() {
     SelfBellTheme {
+        // Preview용 NavController 추가
+        val navController = rememberNavController()
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -133,62 +147,8 @@ fun SelfBellBottomNavigationPreview() {
             color = Color.White,
             shadowElevation = 8.dp
         ) {
-            NavigationBar(
-                modifier = Modifier.height(80.dp),
-                containerColor = Color.Transparent,
-                contentColor = Black,
-                tonalElevation = 0.dp
-            ) {
-                // 미리보기에서도 Row에 horizontal padding 적용
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val items = listOf(
-                        BottomNavItem(AppRoute.HOME_ROUTE, Icons.Default.Home, "홈"),
-                        BottomNavItem(AppRoute.ALERTS_ROUTE, Icons.Default.Info, "알림"),
-                        BottomNavItem(AppRoute.ESCORT_ROUTE, Icons.Default.AccountBox, "동행"),
-                        BottomNavItem(AppRoute.SETTINGS_ROUTE, Icons.Default.Settings, "설정"),
-                        BottomNavItem(AppRoute.FRIENDS_ROUTE, Icons.Default.Settings, "친구")
-                    )
-                    items.forEach { item ->
-                        NavigationBarItem(
-                            icon = {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.padding(vertical = 0.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = item.icon,
-                                        contentDescription = item.label,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Text(
-                                        text = item.label,
-                                        fontSize = 12.sp,
-                                        modifier = Modifier.padding(top = 2.dp)
-                                    )
-                                }
-                            },
-                            label = null,
-                            selected = item.route == AppRoute.HOME_ROUTE,
-                            onClick = {},
-                            alwaysShowLabel = true,
-                            colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
-                                selectedIconColor = Primary,
-                                selectedTextColor = Primary,
-                                indicatorColor = Color.Transparent,
-                                unselectedIconColor = GrayInactive,
-                                unselectedTextColor = GrayInactive
-                            ),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
+            // SelfBellBottomNavigation에 navController 전달
+            SelfBellBottomNavigation(navController = navController)
         }
     }
 }

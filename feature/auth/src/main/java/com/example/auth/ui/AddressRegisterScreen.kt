@@ -1,4 +1,4 @@
-package com.selfbell.feature.auth.ui
+package com.example.auth.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,7 +47,6 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
         modifier = modifier.fillMaxSize()
     ) {
         // 1. 네이버 지도 API 영역 (가장 아래 레이어)
-        ReusableNaverMap(modifier = Modifier.fillMaxSize())
 
         // 2. 지도 위에 겹쳐지는 UI들을 Column으로 배치
         Column(
