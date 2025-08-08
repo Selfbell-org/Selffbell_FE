@@ -47,6 +47,8 @@ import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.overlay.Marker
 import com.selfbell.core.ui.composables.ReusableNaverMap
+import com.example.auth.ui.AddressRegisterScreen
+import com.example.auth.ui.ContactRegistrationScreen
 import com.selfbell.home.ui.HomeScreen
 import com.selfbell.home.ui.HomeViewModel
 
@@ -152,6 +154,13 @@ fun AppNavHost(
                         composable(AppRoute.LOGIN_ROUTE) { LoginScreen(onNavigateUp = { navController.popBackStack() }) } // Placeholder for Login
                         composable(AppRoute.PROFILE_REGISTER_ROUTE) {
                             ProfileRegisterScreen(navController = navController)
+                        }
+                        // 새로 추가된 보호자 연락처 등록 화면
+                        composable(AppRoute.CONTACT_REGISTER_ROUTE) {
+                            ContactRegistrationScreen(navController =navController)
+                        }
+                        composable(AppRoute.ADDRESS_REGISTER_ROUTE) {
+                            AddressRegisterScreen(navController = navController)
                         }
                         composable(AppRoute.PERMISSION_ROUTE) {
                             PermissionScreen(navController = navController)

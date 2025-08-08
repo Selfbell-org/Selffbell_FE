@@ -49,6 +49,7 @@ fun HomeScreen(
     onModalMarkerItemClick: (MapMarkerData) -> Unit, // AddressSearchModal의 아이템 클릭 콜백
     searchedLatLng: LatLng?,
     onMsgReportClick: () -> Unit
+
 ) {
     var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
     var cameraPosition by remember {
