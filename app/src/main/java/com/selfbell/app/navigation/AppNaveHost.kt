@@ -41,7 +41,6 @@ import com.example.auth.ui.LoginScreen
 import com.example.auth.ui.PermissionScreen
 import com.example.auth.ui.ProfileRegisterScreen
 import com.example.auth.ui.SignUpScreen
-import com.example.auth.ui.SignUpScreen
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.NaverMap
@@ -49,6 +48,7 @@ import com.naver.maps.map.overlay.Marker
 import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.example.auth.ui.AddressRegisterScreen
 import com.example.auth.ui.ContactRegistrationScreen
+import com.example.auth.ui.OnboardingCompleteScreen
 import com.selfbell.home.ui.HomeScreen
 import com.selfbell.home.ui.HomeViewModel
 
@@ -68,7 +68,10 @@ fun AppNavHost(
                 AppRoute.LOGIN_ROUTE,
                 AppRoute.PROFILE_REGISTER_ROUTE,
                 AppRoute.PERMISSTION_ROUTE,
-                AppRoute.HOME_ROUTE
+                AppRoute.HOME_ROUTE,
+                AppRoute.ADDRESS_REGISTER_ROUTE,
+                AppRoute.CONTACT_REGISTER_ROUTE,
+                AppRoute.ONBOARDING_COMPLETE_ROUTE
             )
         }
         val shouldShowBottomBar = currentRoute !in routesWithoutBottomBar
@@ -158,6 +161,9 @@ fun AppNavHost(
                         // 새로 추가된 보호자 연락처 등록 화면
                         composable(AppRoute.CONTACT_REGISTER_ROUTE) {
                             ContactRegistrationScreen(navController =navController)
+                        }
+                        composable(AppRoute.ONBOARDING_COMPLETE_ROUTE) {
+                            OnboardingCompleteScreen(navController = navController)
                         }
                         composable(AppRoute.ADDRESS_REGISTER_ROUTE) {
                             AddressRegisterScreen(navController = navController)

@@ -58,17 +58,16 @@ fun AddressRegisterScreen(
 
         // 2. 지도 위에 겹쳐지는 UI들을 Column으로 배치
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                OnboardingProgressBar(currentStep = currentOnboardingStep, totalSteps = totalOnboardingSteps)
+        ){
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // 온보딩 프로그레스바 배치
+                Spacer(modifier = Modifier.height(20.dp))
+                OnboardingProgressBar(currentStep = 3, totalSteps = 4) // 총 5단계 중 1단계
                 Spacer(modifier = Modifier.height(40.dp))
                 Text(
                     text = "자주 이용하는 메인주소를\n등록해 주세요.",
