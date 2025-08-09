@@ -1,6 +1,7 @@
 // feature/escort/ui/EscortScreen.kt
 package com.selfbell.escort.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,10 +11,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,7 +26,9 @@ import com.selfbell.core.ui.composables.SelfBellButton
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.theme.Primary
-import com.selfbell.core.ui.theme.Black
+import com.selfbell.core.model.Contact
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 
 @Composable
 fun EscortScreen(
@@ -38,6 +38,23 @@ fun EscortScreen(
     val destinationLocation by viewModel.destinationLocation.collectAsState()
     val arrivalMode by viewModel.arrivalMode.collectAsState()
     val timerMinutes by viewModel.timerMinutes.collectAsState()
+
+    val allContacts by viewModel.allContacts.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val filteredContacts = remember(searchQuery, allContacts) {
+        if (searchQuery.isEmpty()) {
+            allContacts
+        } else {
+            allContacts.filter { it.name.contains(searchQuery, ignoreCase = true) }
+        }
+    }
+
+    var showShareRouteSheet by remember { mutableStateOf(false) }
+    var isEscorting by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = showShareRouteSheet) {
+        showShareRouteSheet = false
+    }
 
     val mapCenter = remember(startLocation, destinationLocation) {
         val lat = (startLocation.latLng.latitude + destinationLocation.latLng.latitude) / 2
@@ -50,78 +67,99 @@ fun EscortScreen(
             modifier = Modifier.fillMaxSize(),
             cameraPosition = mapCenter,
             onMapReady = { naverMap ->
-                // 마커 추가 로직 (출발지, 도착지)
+                // 마커 추가 로직
             }
         )
 
-        Card(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 24.dp)
-                .fillMaxWidth(0.9f)
-                .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp)),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                // 출발지/도착지 입력 UI를 가로로 배치
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp) // 두 칸 사이의 간격
-                ) {
-                    // 출발지 입력
-                    LocationInputRow(
-                        label = "출발지 입력하기",
-                        locationName = startLocation.name,
-                        onClick = { /* TODO: 출발지 주소 검색 화면으로 이동 */ },
-                        modifier = Modifier.weight(1f)
-                    )
-                    // 도착지 입력
-                    LocationInputRow(
-                        label = "도착지 입력하기",
-                        locationName = destinationLocation.name,
-                        onClick = { /* TODO: 도착지 주소 검색 화면으로 이동 */ },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 도착 시간 설정
-                ArrivalTimerSection(
-                    arrivalMode = arrivalMode,
-                    timerMinutes = timerMinutes,
-                    onModeChange = { viewModel.setArrivalMode(it) },
-                    onTimerChange = { viewModel.setTimerMinutes(it) }
-                )
-            }
+        if (showShareRouteSheet) {
+            ShareRouteTopSheet(
+                searchQuery = searchQuery,
+                onSearchQueryChange = { viewModel.updateSearchQuery(it) },
+                filteredContacts = filteredContacts,
+                // contact를 받는 onShareClick 람다 전달
+                onShareClick = { contact ->
+                    println("동선 공유: ${contact.name}")
+                    // 창을 닫지 않고 상태 업데이트
+                },
+                onCloseClick = { showShareRouteSheet = false }
+            )
         }
 
-        // 하단 '출발' 버튼
-        SelfBellButton(
-            text = "출발",
-            onClick = { /* TODO: 안심귀가 서비스 시작 */ },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
-                .fillMaxWidth(0.9f)
-        )
+        if (isEscorting) {
+            EscortingTopBar(
+                modifier = Modifier.align(Alignment.TopCenter),
+                onShareClick = {
+                    showShareRouteSheet = true
+                }
+            )
+        } else {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 24.dp)
+                    .fillMaxWidth(0.9f)
+                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp)),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        LocationInputRow(
+                            label = "출발지 입력하기",
+                            locationName = startLocation.name,
+                            onClick = { /* TODO */ },
+                            modifier = Modifier.weight(1f)
+                        )
+                        LocationInputRow(
+                            label = "도착지 입력하기",
+                            locationName = destinationLocation.name,
+                            onClick = { /* TODO */ },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ArrivalTimerSection(
+                        arrivalMode = arrivalMode,
+                        timerMinutes = timerMinutes,
+                        onModeChange = { viewModel.setArrivalMode(it) },
+                        onTimerChange = { viewModel.setTimerMinutes(it) }
+                    )
+                }
+            }
+
+            SelfBellButton(
+                text = "출발",
+                onClick = {
+                    isEscorting = true
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp)
+                    .fillMaxWidth(0.9f)
+            )
+        }
     }
 }
+
+// LocationInputRow 등 나머지 컴포저블 코드
+// ...
 
 @Composable
 fun LocationInputRow(
     label: String,
     locationName: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier // modifier를 추가하여 부모 컴포넌트에서 제어 가능하게 함
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier // modifier를 적용
+        modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(Color(0xFFF5F5F5))
             .clickable(onClick = onClick)
@@ -135,7 +173,6 @@ fun LocationInputRow(
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
