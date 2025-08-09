@@ -68,7 +68,7 @@ fun AppNavHost(
                 AppRoute.LOGIN_ROUTE,
                 AppRoute.PROFILE_REGISTER_ROUTE,
                 AppRoute.PERMISSTION_ROUTE,
-                AppRoute.HOME_ROUTE,
+                //AppRoute.HOME_ROUTE,
                 AppRoute.ADDRESS_REGISTER_ROUTE,
                 AppRoute.CONTACT_REGISTER_ROUTE,
                 AppRoute.ONBOARDING_COMPLETE_ROUTE
@@ -154,7 +154,17 @@ fun AppNavHost(
                             onLoginClick = { navController.navigate(AppRoute.LOGIN_ROUTE) },
                             onSignUpClick = { navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE ) }
                         )}
-                        composable(AppRoute.LOGIN_ROUTE) { LoginScreen(onNavigateUp = { navController.popBackStack() }) } // Placeholder for Login
+                        composable(AppRoute.LOGIN_ROUTE) { LoginScreen(
+                            onPinCompleted = { pin ->
+                                // PIN 입력 완료 시 홈 화면으로 이동
+                                // AppRoute.Home은 홈 화면의 경로(route)입니다.
+                                navController.navigate(AppRoute.HOME_ROUTE) {
+                                    popUpTo(AppRoute.LOGIN_ROUTE) {
+                                        inclusive = true
+                                    }
+                                }
+                            }
+                        ) } // Placeholder for Login
                         composable(AppRoute.PROFILE_REGISTER_ROUTE) {
                             ProfileRegisterScreen(navController = navController)
                         }
