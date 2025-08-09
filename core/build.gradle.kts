@@ -76,8 +76,9 @@ dependencies {
     //permission
     implementation("com.google.accompanist:accompanist-permissions:0.30.1") // 예시 버전, 최신 확인
 
+    // ModalBottomSheetLayout을 위한 Material 라이브러리 추가
 
-
+    implementation("androidx.compose.material:material:1.6.8")
     // 테스트 관련 (필요시)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

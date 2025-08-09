@@ -76,6 +76,7 @@ dependencies {
 
     //Naver Maps api
     implementation("com.naver.maps:map-sdk:3.22.1")
+    implementation("androidx.compose.material:material:1.6.8") // 최신 버전으로 변경 가능
 
     // Hilt
     implementation(libs.hilt.android)

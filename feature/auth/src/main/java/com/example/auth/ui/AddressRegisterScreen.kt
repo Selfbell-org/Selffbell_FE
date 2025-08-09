@@ -4,15 +4,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.auth.R
@@ -33,13 +34,20 @@ import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.theme.Black
 import com.selfbell.core.ui.theme.Primary
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.foundation.layout.widthIn
+import com.selfbell.domain.model.AddressModel
+import com.example.auth.ui.AddressResultItem
 
 @Composable
-fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Modifier) {
-    var searchAddress by remember { mutableStateOf("") }
-    var isAddressSelected by remember { mutableStateOf(false) } // 주소 선택 상태
+fun AddressRegisterScreen(
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewModel: AddressRegisterViewModel = hiltViewModel()
+) {
+    // ViewModel의 개별 StateFlow 변수들을 사용합니다.
+    val searchAddress by viewModel.searchAddress.collectAsState()
+    val addressResults by viewModel.addressResults.collectAsState()
+    val isAddressSelected by viewModel.isAddressSelected.collectAsState()
+
     val totalOnboardingSteps = 3
     val currentOnboardingStep = 3
 
@@ -50,17 +58,16 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
 
         // 2. 지도 위에 겹쳐지는 UI들을 Column으로 배치
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                OnboardingProgressBar(currentStep = currentOnboardingStep, totalSteps = totalOnboardingSteps)
+        ){
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // 온보딩 프로그레스바 배치
+                Spacer(modifier = Modifier.height(20.dp))
+                OnboardingProgressBar(currentStep = 3, totalSteps = 4) // 총 5단계 중 1단계
                 Spacer(modifier = Modifier.height(40.dp))
                 Text(
                     text = "자주 이용하는 메인주소를\n등록해 주세요.",
@@ -69,11 +76,11 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
                 )
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // 주소 검색 전 상태 UI
+                // 주소 검색 UI
                 if (!isAddressSelected) {
                     TextField(
                         value = searchAddress,
-                        onValueChange = { searchAddress = it },
+                        onValueChange = { viewModel.updateSearchAddress(it) },
                         label = { Text("주소 검색") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "검색 아이콘") },
@@ -131,18 +138,34 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
                     }
                 }
             } else {
-                // 검색 예시 안내
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White, shape = RoundedCornerShape(16.dp))
-                        .padding(16.dp)
-                ) {
-                    Text(text = "이렇게 검색해 보세요", style = Typography.bodyMedium)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "・도로명 + 건물번호 (위례성대로 2)", style = Typography.bodyMedium.copy(color = Color.Gray))
-                    Text(text = "・건물명 + 번지 (방이동 44-2)", style = Typography.bodyMedium.copy(color = Color.Gray))
-                    Text(text = "・건물명 + 아파트명 (반포 자이, 분당 주공 1차)", style = Typography.bodyMedium.copy(color = Color.Gray))
+                // 검색 결과 목록 UI
+                if (addressResults.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White, shape = RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                    ) {
+                        items(addressResults) { address ->
+                            AddressResultItem(address = address) {
+                                viewModel.selectAddress(address)
+                            }
+                        }
+                    }
+                } else {
+                    // 검색 예시 안내
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White, shape = RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                    ) {
+                        Text(text = "이렇게 검색해 보세요", style = Typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "・도로명 + 건물번호 (위례성대로 2)", style = Typography.bodyMedium.copy(color = Color.Gray))
+                        Text(text = "・건물명 + 번지 (방이동 44-2)", style = Typography.bodyMedium.copy(color = Color.Gray))
+                        Text(text = "・건물명 + 아파트명 (반포 자이, 분당 주공 1차)", style = Typography.bodyMedium.copy(color = Color.Gray))
+                    }
                 }
             }
 
@@ -150,15 +173,16 @@ fun AddressRegisterScreen(navController: NavController, modifier: Modifier = Mod
             SelfBellButton(
                 text = "다음으로",
                 onClick = {
-                    // 주소 등록 완료 후 홈 화면으로 이동
-                    navController.navigate(AppRoute.HOME_ROUTE)
+                    // 주소 등록 완료 후 ContactRegistrationScreen으로 이동
+                    navController.navigate(AppRoute.CONTACT_REGISTER_ROUTE)
                 },
                 modifier = Modifier.padding(bottom = 20.dp),
-                enabled = isAddressSelected // 주소 선택 시에만 활성화
+                enabled = true // 주소 선택 시에만 활성화
             )
         }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
