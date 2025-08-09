@@ -215,7 +215,7 @@ fun AlertsModal(
                 )
                 Spacer(Modifier.width(8.dp))
                 Icon(
-                    painter = painterResource(id = R.drawable.alerts_icon),
+                    painter = painterResource(id = R.drawable.ic_search),
                     contentDescription = "검색",
                     modifier = Modifier
                         .size(24.dp)
