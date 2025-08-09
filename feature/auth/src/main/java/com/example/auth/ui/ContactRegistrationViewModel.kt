@@ -11,13 +11,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.selfbell.core.model.Contact
 import com.example.auth.ui.ProfileRegisterScreen
 
-data class Contact(
-    val id: Long,
-    val name: String,
-    val phoneNumber: String
-)
+//data class Contact(
+//    val id: Long,
+//    val name: String,
+//    val phoneNumber: String
+//)
 
 @HiltViewModel
 class ContactRegistrationViewModel @Inject constructor(
