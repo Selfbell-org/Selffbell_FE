@@ -53,7 +53,7 @@ import com.selfbell.alerts.ui.AlertsScreen
 import com.selfbell.escort.ui.EscortScreen
 import com.selfbell.home.ui.HomeScreen
 import com.selfbell.home.ui.HomeViewModel
-
+import com.selfbell.settings.ui.SettingsScreen
 @Composable
 fun AppNavHost(
     navController: NavHostController,
@@ -211,6 +211,8 @@ fun AppNavHost(
                             }
                         ) }
                         composable(AppRoute.PERMISSTION_ROUTE){ PermissionScreen(navController = navController)}
+                        composable(AppRoute.SETTINGS_ROUTE){ SettingsScreen(navController = navController)}
+
                     }
                 }
             )

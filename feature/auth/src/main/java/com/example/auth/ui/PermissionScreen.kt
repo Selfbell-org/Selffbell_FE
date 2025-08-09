@@ -124,11 +124,11 @@ fun PermissionScreen(navController: NavController,modifier: Modifier = Modifier)
     }
 
     // 모든 권한이 허용되면 다음 화면으로 이동
-    LaunchedEffect(locationPermissionGranted, backgroundLocationPermissionGranted, pushNotificationPermissionGranted, contactsPermissionGranted) {
-        if (locationPermissionGranted && backgroundLocationPermissionGranted && pushNotificationPermissionGranted && contactsPermissionGranted) {
-            navController.navigate(AppRoute.ADDRESS_REGISTER_ROUTE)
-        }
-    }
+//    LaunchedEffect(locationPermissionGranted, backgroundLocationPermissionGranted, pushNotificationPermissionGranted, contactsPermissionGranted) {
+//        if (locationPermissionGranted && backgroundLocationPermissionGranted && pushNotificationPermissionGranted && contactsPermissionGranted) {
+//            navController.navigate(AppRoute.ADDRESS_REGISTER_ROUTE)
+//        }
+//    }
 
     // `shouldShowRequestPermissionRationale()` 함수로 권한 요청 로직을 분기하는 헬퍼 함수
     fun requestPermissionOrOpenSettings(permission: String, launcher: ActivityResultLauncher<String>, granted: Boolean) {
