@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.core.content.ContextCompat
 import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.CameraAnimation
 import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.overlay.Marker
@@ -42,6 +43,7 @@ import com.selfbell.core.ui.theme.Typography
 import com.selfbell.feature.home.R
 import com.selfbell.home.model.MapMarkerData
 import kotlinx.coroutines.launch
+import com.naver.maps.map.overlay.OverlayImage
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -234,8 +236,14 @@ fun HomeScreen(
                 onSearchTextChange = onSearchTextChange,
                 onSearchClick = onSearchClick,
                 mapMarkers = modalMapMarkers,
-                onMarkerItemClick = onModalMarkerItemClick
-            )
+                onMarkerItemClick = { markerData ->
+                    naverMapInstance?.moveCamera(
+                        CameraUpdate.scrollTo(markerData.latLng).animate(
+                            CameraAnimation.Easing
+                        )
+                    )
+                }
+                    )
         }
     }
 }
@@ -275,7 +283,6 @@ fun MapInfoBalloon(
     }
 }
 
-
 fun addOrUpdateMarker(
     naverMap: NaverMap,
     latLng: LatLng,
@@ -285,11 +292,8 @@ fun addOrUpdateMarker(
     Marker().apply {
         position = latLng
         map = naverMap
-        iconTintColor = when (data.type) {
-            MapMarkerData.MarkerType.USER -> Color(0xFF2962FF).hashCode() // 파랑
-            MapMarkerData.MarkerType.CRIMINAL -> Color(0xFFD32F2F).hashCode() // 빨강
-            MapMarkerData.MarkerType.SAFETY_BELL -> Color(0xFF43A047).hashCode() // 초록
-        }
+        // 아이콘 리소스를 OverlayImage로 설정
+        icon = OverlayImage.fromResource(data.getIconResource())
         setOnClickListener {
             onClick(latLng to data.address)
             true
