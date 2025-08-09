@@ -95,6 +95,11 @@ dependencies {
     // Compose Navigation (최상위 내비게이션)
     implementation(libs.androidx.navigation.compose)
 
+    //안드로이드 m3테마
+//    implementation(libs.androidx.material3)
+//    implementation("com.google.android.material:material:1.12.0") // Or a similar version
+
+
     // Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
@@ -102,6 +107,9 @@ dependencies {
 
     //Naver Maps api
     implementation("com.naver.maps:map-sdk:3.22.1")
+
+    //안드로이드 기본 스플래시 지우기
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // 테스트 관련
     testImplementation(libs.junit)

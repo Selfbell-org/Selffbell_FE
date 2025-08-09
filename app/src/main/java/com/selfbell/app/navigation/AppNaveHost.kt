@@ -49,6 +49,7 @@ import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.example.auth.ui.AddressRegisterScreen
 import com.example.auth.ui.ContactRegistrationScreen
 import com.example.auth.ui.OnboardingCompleteScreen
+import com.selfbell.escort.ui.EscortScreen
 import com.selfbell.home.ui.HomeScreen
 import com.selfbell.home.ui.HomeViewModel
 
@@ -68,7 +69,7 @@ fun AppNavHost(
                 AppRoute.LOGIN_ROUTE,
                 AppRoute.PROFILE_REGISTER_ROUTE,
                 AppRoute.PERMISSTION_ROUTE,
-                AppRoute.HOME_ROUTE,
+                //AppRoute.HOME_ROUTE,
                 AppRoute.ADDRESS_REGISTER_ROUTE,
                 AppRoute.CONTACT_REGISTER_ROUTE,
                 AppRoute.ONBOARDING_COMPLETE_ROUTE
@@ -147,14 +148,25 @@ fun AppNavHost(
                             )
                         }
                         composable(AppRoute.ALERTS_ROUTE) { Text(text = "알림 화면") }
-                        composable(AppRoute.ESCORT_ROUTE) { Text(text = "동행 화면") }
+                        composable(AppRoute.ESCORT_ROUTE) { EscortScreen()
+                        }
                         composable(AppRoute.SETTINGS_ROUTE) { Text(text = "설정 화면") }
                         composable(AppRoute.FRIENDS_ROUTE) { Text(text = "친구 화면") }
                         composable(AppRoute.LANDING_ROUTE) { LandingScreen(
                             onLoginClick = { navController.navigate(AppRoute.LOGIN_ROUTE) },
                             onSignUpClick = { navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE ) }
                         )}
-                        composable(AppRoute.LOGIN_ROUTE) { LoginScreen(onNavigateUp = { navController.popBackStack() }) } // Placeholder for Login
+                        composable(AppRoute.LOGIN_ROUTE) { LoginScreen(
+                            onPinCompleted = { pin ->
+                                // PIN 입력 완료 시 홈 화면으로 이동
+                                // AppRoute.Home은 홈 화면의 경로(route)입니다.
+                                navController.navigate(AppRoute.HOME_ROUTE) {
+                                    popUpTo(AppRoute.LOGIN_ROUTE) {
+                                        inclusive = true
+                                    }
+                                }
+                            }
+                        ) } // Placeholder for Login
                         composable(AppRoute.PROFILE_REGISTER_ROUTE) {
                             ProfileRegisterScreen(navController = navController)
                         }
