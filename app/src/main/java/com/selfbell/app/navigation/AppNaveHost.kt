@@ -49,6 +49,7 @@ import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.example.auth.ui.AddressRegisterScreen
 import com.example.auth.ui.ContactRegistrationScreen
 import com.example.auth.ui.OnboardingCompleteScreen
+import com.selfbell.alerts.ui.AlertsScreen
 import com.selfbell.escort.ui.EscortScreen
 import com.selfbell.home.ui.HomeScreen
 import com.selfbell.home.ui.HomeViewModel
@@ -147,7 +148,7 @@ fun AppNavHost(
                                 }
                             )
                         }
-                        composable(AppRoute.ALERTS_ROUTE) { Text(text = "알림 화면") }
+                        composable(AppRoute.ALERTS_ROUTE) { AlertsScreen() }
                         composable(AppRoute.ESCORT_ROUTE) { EscortScreen()
                         }
                         composable(AppRoute.SETTINGS_ROUTE) { Text(text = "설정 화면") }

@@ -37,6 +37,10 @@ android {
 dependencies {
     // domain 모듈 의존성 (필수) !
     implementation(project(":domain"))
+    implementation(project(":core"))
+
+    //네이버 의존성
+    implementation("com.naver.maps:map-sdk:3.22.1")
 
     // Compose UI
     implementation(platform(libs.androidx.compose.bom)) // Compose BOM
@@ -46,6 +50,15 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.ui.test.manifest)
+
+    //clickable 의존성
+    implementation("androidx.compose.foundation:foundation:1.6.8") // 최신 버전으로 변경 가능
+
+    //ModalBottomSheet
+    implementation("androidx.compose.material:material:1.6.8")
+
+    //hilt
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
 
     // Android 기본 라이브러리 !!
