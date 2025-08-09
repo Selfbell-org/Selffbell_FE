@@ -40,24 +40,20 @@ fun EscortScreen(
     val timerMinutes by viewModel.timerMinutes.collectAsState()
 
     val mapCenter = remember(startLocation, destinationLocation) {
-        // 출발지와 도착지의 중간 지점을 지도의 중심으로 설정
         val lat = (startLocation.latLng.latitude + destinationLocation.latLng.latitude) / 2
         val lng = (startLocation.latLng.longitude + destinationLocation.latLng.longitude) / 2
         LatLng(lat, lng)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 배경 네이버 지도
         ReusableNaverMap(
             modifier = Modifier.fillMaxSize(),
             cameraPosition = mapCenter,
             onMapReady = { naverMap ->
                 // 마커 추가 로직 (출발지, 도착지)
-                // TODO: 마커 추가 및 경로 그리기
             }
         )
 
-        // 상단 출발지/도착지 UI 카드
         Card(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -72,20 +68,29 @@ fun EscortScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                // 출발지 입력
-                LocationInputRow(
-                    label = "출발지 입력하기",
-                    locationName = startLocation.name,
-                    onClick = { /* TODO: 출발지 주소 검색 화면으로 이동 */ }
-                )
+                // 출발지/도착지 입력 UI를 가로로 배치
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp) // 두 칸 사이의 간격
+                ) {
+                    // 출발지 입력
+                    LocationInputRow(
+                        label = "출발지 입력하기",
+                        locationName = startLocation.name,
+                        onClick = { /* TODO: 출발지 주소 검색 화면으로 이동 */ },
+                        modifier = Modifier.weight(1f)
+                    )
+                    // 도착지 입력
+                    LocationInputRow(
+                        label = "도착지 입력하기",
+                        locationName = destinationLocation.name,
+                        onClick = { /* TODO: 도착지 주소 검색 화면으로 이동 */ },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
-                // 도착지 입력
-                LocationInputRow(
-                    label = "도착지 입력하기",
-                    locationName = destinationLocation.name,
-                    onClick = { /* TODO: 도착지 주소 검색 화면으로 이동 */ }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+
                 // 도착 시간 설정
                 ArrivalTimerSection(
                     arrivalMode = arrivalMode,
@@ -112,11 +117,11 @@ fun EscortScreen(
 fun LocationInputRow(
     label: String,
     locationName: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier // modifier를 추가하여 부모 컴포넌트에서 제어 가능하게 함
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier // modifier를 적용
             .clip(RoundedCornerShape(12.dp))
             .background(Color(0xFFF5F5F5))
             .clickable(onClick = onClick)
@@ -131,50 +136,6 @@ fun LocationInputRow(
     }
 }
 
-@Composable
-fun ArrivalTimerSection(
-    arrivalMode: ArrivalMode,
-    timerMinutes: Int,
-    onModeChange: (ArrivalMode) -> Unit,
-    onTimerChange: (Int) -> Unit
-) {
-    // TODO: UI 이미지에 맞춰 디자인을 더 개선할 수 있습니다.
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = "도착 시간", style = Typography.bodyMedium, color = Color.Gray)
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = { onModeChange(ArrivalMode.TIMER) },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (arrivalMode == ArrivalMode.TIMER) Primary else Color.LightGray
-                )
-            ) {
-                Text(text = "타이머", color = if (arrivalMode == ArrivalMode.TIMER) Color.White else Black)
-            }
-            Button(
-                onClick = { onModeChange(ArrivalMode.SCHEDULED_TIME) },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (arrivalMode == ArrivalMode.SCHEDULED_TIME) Primary else Color.LightGray
-                )
-            ) {
-                Text(text = "도착 예정 시간", color = if (arrivalMode == ArrivalMode.SCHEDULED_TIME) Color.White else Black)
-            }
-        }
-
-        if (arrivalMode == ArrivalMode.TIMER) {
-            Spacer(modifier = Modifier.height(16.dp))
-            // 타이머 시간 선택 UI (더미로 표시)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                Text(text = "$timerMinutes 분", style = Typography.titleMedium)
-            }
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable

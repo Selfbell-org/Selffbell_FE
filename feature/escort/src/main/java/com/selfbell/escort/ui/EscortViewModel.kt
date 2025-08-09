@@ -16,7 +16,7 @@ class EscortViewModel @Inject constructor() : ViewModel() {
     val startLocation = _startLocation.asStateFlow()
 
     // 도착지 상태
-    private val _destinationLocation = MutableStateFlow(LocationState("메인 주소 (더미)", LatLng(37.5665, 126.9780)))
+    private val _destinationLocation = MutableStateFlow(LocationState("메인 주소", LatLng(37.5665, 126.9780)))
     val destinationLocation = _destinationLocation.asStateFlow()
 
     // 도착 시간 모드 (타이머 vs 도착 예정 시간)
