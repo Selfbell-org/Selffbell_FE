@@ -1,0 +1,72 @@
+package com.selfbell.app.ui
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.selfbell.core.navigation.AppRoute
+import com.selfbell.core.ui.theme.Primary
+import com.selfbell.core.ui.theme.Typography
+import kotlinx.coroutines.delay
+import com.selfbell.core.R
+@Composable
+fun SplashScreen(navController: NavController, modifier: Modifier = Modifier) {
+
+    LaunchedEffect(key1 = true) {
+        delay(2500L) // 2.5초 지연
+
+        // 현재는 임시로 홈 화면으로 바로 이동
+        navController.popBackStack() // 스플래시 화면을 백스택에서 제거
+        navController.navigate(AppRoute.LANDING_ROUTE) // <-- 홈 화면으로 이동
+    }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Primary),
+        contentAlignment = Alignment.Center
+    ){
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter = painterResource(R.drawable.logo_img_white),
+                contentDescription = "SelfBell logo white",
+                contentScale = ContentScale.None
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "SelfBell",
+                style = Typography.displayLarge,
+                    color = Color(0xFFFFFFFF)
+                )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun SplashScreenPreview() {
+    SplashScreen(navController = rememberNavController())
+}

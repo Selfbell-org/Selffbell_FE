@@ -44,15 +44,21 @@ android {
 
 dependencies {
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-
-    // Compose 관련
+    // Compose UI
     implementation(platform(libs.androidx.compose.bom)) // Compose BOM
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.ui.tooling)
+    implementation(libs.androidx.ui.test.manifest)
+
+
+    // Android 기본 라이브러리 !!
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+
     //최상위 네비게이션
     implementation(libs.androidx.navigation.compose)
     // Coroutines!
@@ -61,9 +67,18 @@ dependencies {
 
     // Hilt (core 모듈이 Hilt를 사용하거나 DI 모듈이 있다면)
     implementation(libs.hilt.android)
+    implementation(libs.play.services.location)
     kapt(libs.hilt.compiler)
 
+    //Naver Maps api
+    implementation("com.naver.maps:map-sdk:3.22.1")
 
+    //permission
+    implementation("com.google.accompanist:accompanist-permissions:0.30.1") // 예시 버전, 최신 확인
+
+    // ModalBottomSheetLayout을 위한 Material 라이브러리 추가
+
+    implementation("androidx.compose.material:material:1.6.8")
     // 테스트 관련 (필요시)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -16,8 +16,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://repository.map.naver.com/archive/maven")
     }
-
 }
 
 rootProject.name = "SelfBell"
@@ -30,3 +30,4 @@ include(":feature:alerts")
 include(":feature:emergency")
 include(":feature:settings")
 include(":feature:escort")
+include(":feature:auth")

@@ -42,6 +42,11 @@ espressoCore = "3.6.1"
 # Existing (often for View-based projects, can be removed if not used)
 appcompat = "1.6.1"
 material = "1.10.0"
+runtimeAndroid = "1.8.3"
+uiAndroid = "1.8.3"
+playServicesLocation = "21.3.0"
+navigationRuntimeAndroid = "2.9.3"
+playServicesMaps = "19.2.0"
 
 
 [libraries]
@@ -92,6 +97,11 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 # Existing (often for View-based projects)
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime-android", version.ref = "runtimeAndroid" }
+androidx-ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+androidx-navigation-runtime-android = { group = "androidx.navigation", name = "navigation-runtime-android", version.ref = "navigationRuntimeAndroid" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 
 
 [plugins]

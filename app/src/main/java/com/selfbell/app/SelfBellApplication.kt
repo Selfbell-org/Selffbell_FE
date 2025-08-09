@@ -2,6 +2,7 @@
 package com.selfbell.app
 
 import android.app.Application
+import com.naver.maps.map.NaverMapSdk
 import dagger.hilt.android.HiltAndroidApp // HiltAndroidApp 어노테이션 임포트
 
 /**
@@ -13,7 +14,8 @@ import dagger.hilt.android.HiltAndroidApp // HiltAndroidApp 어노테이션 임�
 class SelfBellApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // 앱 초기화에 필요한 추가적인 코드 (예: 서드파티 SDK 초기화 등)
-        // 이 곳은 앱 프로세스가 생성될 때 가장 먼저 실행되는 지점입니다.
+        val clientId = getString(R.string.naver_maps_client_id_from_gradle) // 생성한 리소스 ID 사용
+        NaverMapSdk.getInstance(this).client =
+            NaverMapSdk.NcpKeyClient(clientId)
     }
 }

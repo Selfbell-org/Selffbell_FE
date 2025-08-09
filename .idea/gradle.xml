@@ -16,6 +16,7 @@
             <option value="$PROJECT_DIR$/domain" />
             <option value="$PROJECT_DIR$/feature" />
             <option value="$PROJECT_DIR$/feature/alerts" />
+            <option value="$PROJECT_DIR$/feature/auth" />
             <option value="$PROJECT_DIR$/feature/emergency" />
             <option value="$PROJECT_DIR$/feature/escort" />
             <option value="$PROJECT_DIR$/feature/home" />

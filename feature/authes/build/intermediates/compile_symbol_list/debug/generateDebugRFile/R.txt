@@ -1,0 +1,6 @@
+int drawable backstack_icon 0x0
+int drawable google__g__icon 0x0
+int drawable kakao_icon 0x0
+int drawable lockkey_icon 0x0
+int drawable logo_img_blue 0x0
+int drawable user_profile 0x0
