@@ -3,30 +3,63 @@ package com.selfbell.data.api.response
 import com.google.gson.annotations.SerializedName
 
 data class NaverGeocodeResponse(
-    val status: String,
-    val meta: Meta,
-    val addresses: List<AddressResponse>
+    @SerializedName("status")
+    val status: String?, // "OK", "INVALID_REQUEST", "SYSTEM_ERROR" 등
+
+    @SerializedName("meta")
+    val meta: Meta?,
+
+    @SerializedName("addresses")
+    val addresses: List<AddressResponse>?,
+
+    @SerializedName("errorMessage")
+    val errorMessage: String?
 )
 
 data class Meta(
-    val totalCount: Int,
-    val page: Int,
-    val count: Int
+    @SerializedName("totalCount")
+    val totalCount: Int?,
+
+    @SerializedName("page")
+    val page: Int?,
+
+    @SerializedName("count")
+    val count: Int?
 )
 
 data class AddressResponse(
-    val roadAddress: String,
-    val jibunAddress: String,
-    val englishAddress: String,
-    val addressElements: List<AddressElement>,
-    val x: String,
-    val y: String,
-    val distance: Double
+    @SerializedName("roadAddress")
+    val roadAddress: String?,
+
+    @SerializedName("jibunAddress")
+    val jibunAddress: String?,
+
+    @SerializedName("englishAddress")
+    val englishAddress: String?,
+
+    @SerializedName("addressElements")
+    val addressElements: List<AddressElement>?,
+
+    @SerializedName("x")
+    val x: String?,
+
+    @SerializedName("y")
+    val y: String?,
+
+    @SerializedName("distance")
+    val distance: Double?
 )
 
 data class AddressElement(
-    val types: List<String>,
-    val longName: String,
-    val shortName: String,
-    val code: String
+    @SerializedName("types")
+    val types: List<String>?,
+
+    @SerializedName("longName")
+    val longName: String?,
+
+    @SerializedName("shortName")
+    val shortName: String?,
+
+    @SerializedName("code") // 주소 요소 코드 (선택적)
+    val code: String?
 )

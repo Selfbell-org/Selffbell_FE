@@ -1,7 +1,16 @@
+import java.util.Properties // Properties 클래스를 사용하기 위해 import 추가
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
+}
+
+// local.properties 파일 로드
+val properties = Properties() // 'new' 키워드 없이 사용
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    properties.load(localPropertiesFile.inputStream()) // newDataInputStream() 대신 inputStream() 사용
 }
 
 android {
@@ -13,6 +22,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
+        // Manifest Placeholders 추가
+        manifestPlaceholders["NAVER_MAPS_CLIENT_ID"] = properties.getProperty("NAVER_MAPS_CLIENT_ID", "YOUR_DEFAULT_ID")
+        manifestPlaceholders["NAVER_MAPS_CLIENT_SECRET"] = properties.getProperty("NAVER_MAPS_CLIENT_SECRET", "YOUR_DEFAULT_SECRET")
     }
 
     buildTypes {
@@ -31,8 +44,10 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        buildConfig = true
+    }
 }
-
 dependencies {
     // domain 모듈 의존성 (필수)!
     implementation(project(":domain"))
