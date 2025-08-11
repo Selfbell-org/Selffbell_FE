@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -47,7 +48,7 @@ import com.selfbell.core.ui.theme.Typography
 //enum class PermissionState { ACTIVE, INACTIVE, COMPLETED }
 
 @Composable
-fun PermissionScreen(navController: NavController) {
+fun PermissionScreen(navController: NavController,modifier: Modifier = Modifier) {
     val totalOnboardingSteps = 3
     val currentOnboardingStep = 2
 
@@ -123,11 +124,11 @@ fun PermissionScreen(navController: NavController) {
     }
 
     // 모든 권한이 허용되면 다음 화면으로 이동
-    LaunchedEffect(locationPermissionGranted, backgroundLocationPermissionGranted, pushNotificationPermissionGranted, contactsPermissionGranted) {
-        if (locationPermissionGranted && backgroundLocationPermissionGranted && pushNotificationPermissionGranted && contactsPermissionGranted) {
-            navController.navigate(AppRoute.ADDRESS_REGISTER_ROUTE)
-        }
-    }
+//    LaunchedEffect(locationPermissionGranted, backgroundLocationPermissionGranted, pushNotificationPermissionGranted, contactsPermissionGranted) {
+//        if (locationPermissionGranted && backgroundLocationPermissionGranted && pushNotificationPermissionGranted && contactsPermissionGranted) {
+//            navController.navigate(AppRoute.ADDRESS_REGISTER_ROUTE)
+//        }
+//    }
 
     // `shouldShowRequestPermissionRationale()` 함수로 권한 요청 로직을 분기하는 헬퍼 함수
     fun requestPermissionOrOpenSettings(permission: String, launcher: ActivityResultLauncher<String>, granted: Boolean) {
@@ -145,30 +146,20 @@ fun PermissionScreen(navController: NavController) {
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 70.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        OnboardingProgressBar(currentStep = currentOnboardingStep, totalSteps = totalOnboardingSteps)
-        Spacer(modifier = Modifier.height(40.dp))
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "권한을 확인해주세요",
-                style = Typography.headlineMedium,
-                color = Black
-            )
+        verticalArrangement = Arrangement.SpaceBetween
+    ){
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // 온보딩 프로그레스바 배치
+            Spacer(modifier = Modifier.height(20.dp))
+            OnboardingProgressBar(currentStep = 2, totalSteps = 4) // 총 5단계 중 1단계
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(text = "권한을 확인해주세요", style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "원활한 앱 사용을 위해\n아래 권한을 확인해 주세요.",
-                style = Typography.bodyMedium,
-                color = Black
-            )
+            Text(text = "원활한 앱 사용을 위해\n아래 권한을 확인해 주세요.", style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(40.dp))
 
             PermissionItem(

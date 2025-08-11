@@ -62,14 +62,21 @@ class HomeViewModel @Inject constructor(
     private fun loadDummyMarkers() {
         _criminalMarkers.value = listOf(
             MapMarkerData(LatLng(37.5650, 126.9760), "범죄 발생 지역 A", MapMarkerData.MarkerType.CRIMINAL, "250m"),
-            MapMarkerData(LatLng(37.5680, 126.9790), "범죄 발생 지역 B", MapMarkerData.MarkerType.CRIMINAL, "350m")
+            MapMarkerData(LatLng(37.5680, 126.9790), "범죄 발생 지역 B", MapMarkerData.MarkerType.CRIMINAL, "350m"),
+            MapMarkerData(LatLng(37.5750, 126.9950), "범죄 발생 지역 C", MapMarkerData.MarkerType.CRIMINAL, "1.2km"),
+            MapMarkerData(LatLng(37.5500, 126.9700), "범죄 발생 지역 D", MapMarkerData.MarkerType.CRIMINAL, "1.8km"),
+            MapMarkerData(LatLng(37.5610, 126.9850), "범죄 발생 지역 E", MapMarkerData.MarkerType.CRIMINAL, "700m"),
+            MapMarkerData(LatLng(37.5700, 127.0000), "범죄 발생 지역 F", MapMarkerData.MarkerType.CRIMINAL, "1.5km")
         )
         _safetyBellMarkers.value = listOf(
             MapMarkerData(LatLng(37.5655, 126.9770), "안심벨 1", MapMarkerData.MarkerType.SAFETY_BELL, "150m"),
-            MapMarkerData(LatLng(37.5675, 126.9785), "안심벨 2", MapMarkerData.MarkerType.SAFETY_BELL, "50m")
+            MapMarkerData(LatLng(37.5675, 126.9785), "안심벨 2", MapMarkerData.MarkerType.SAFETY_BELL, "50m"),
+            MapMarkerData(LatLng(37.5800, 126.9800), "안심벨 3", MapMarkerData.MarkerType.SAFETY_BELL, "2.0km"),
+            MapMarkerData(LatLng(37.5600, 126.9900), "안심벨 4", MapMarkerData.MarkerType.SAFETY_BELL, "1.1km"),
+            MapMarkerData(LatLng(37.5720, 126.9750), "안심벨 5", MapMarkerData.MarkerType.SAFETY_BELL, "900m"),
+            MapMarkerData(LatLng(33.2500, 126.5600), "제주도 안심벨", MapMarkerData.MarkerType.SAFETY_BELL, "제주") // 제주도 위치
         )
     }
-
     fun updateUserLocation(latLng: LatLng, address: String) {
         _userLatLng.value = latLng
         _userAddress.value = address
