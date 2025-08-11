@@ -81,7 +81,7 @@ dependencies {
     implementation("com.naver.maps:map-sdk:3.22.1")
 
     //permission
-    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.30.1")
 
 
     // Hilt
