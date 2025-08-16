@@ -28,10 +28,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.SelfBellBottomNavigation
@@ -49,6 +51,8 @@ import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.example.auth.ui.AddressRegisterScreen
 import com.example.auth.ui.ContactRegistrationScreen
 import com.example.auth.ui.OnboardingCompleteScreen
+import com.example.auth.ui.PasswordScreen
+import com.example.auth.ui.PhoneNumberScreen
 import com.selfbell.alerts.ui.AlertsScreen
 import com.selfbell.escort.ui.EscortScreen
 import com.selfbell.home.ui.HomeScreen
@@ -73,7 +77,8 @@ fun AppNavHost(
                 //AppRoute.HOME_ROUTE,
                 AppRoute.ADDRESS_REGISTER_ROUTE,
                 AppRoute.CONTACT_REGISTER_ROUTE,
-                AppRoute.ONBOARDING_COMPLETE_ROUTE
+                AppRoute.ONBOARDING_COMPLETE_ROUTE,
+                AppRoute.PHONE_NUMBER_ROUTE
             )
         }
         val shouldShowBottomBar = currentRoute !in routesWithoutBottomBar
@@ -155,8 +160,30 @@ fun AppNavHost(
                         composable(AppRoute.FRIENDS_ROUTE) { Text(text = "친구 화면") }
                         composable(AppRoute.LANDING_ROUTE) { LandingScreen(
                             onLoginClick = { navController.navigate(AppRoute.LOGIN_ROUTE) },
-                            onSignUpClick = { navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE ) }
+                            onSignUpClick = { navController.navigate(AppRoute.PHONE_NUMBER_ROUTE) }
                         )}
+                        composable(AppRoute.PHONE_NUMBER_ROUTE) {
+                            PhoneNumberScreen(
+                                onConfirmClick = { phoneNumber ->
+                                    navController.navigate("${AppRoute.PASSWORD_ROUTE}/$phoneNumber")
+                                }
+                            )
+                        }
+                        composable(
+                            route = AppRoute.PASSWORD_ROUTE_WITH_ARGS,
+                            arguments = listOf(navArgument("phoneNumber") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val phoneNumber = backStackEntry.arguments?.getString("phoneNumber")
+                            if (phoneNumber != null) {
+                                PasswordScreen(
+                                    phoneNumber = phoneNumber,
+                                    onConfirmClick = { password ->
+                                        // 비밀번호 입력 후 프로필 등록 화면으로 이동
+                                        navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE)
+                                    }
+                                )
+                            }
+                        }
                         composable(AppRoute.LOGIN_ROUTE) { LoginScreen(
                             onPinCompleted = { pin ->
                                 // PIN 입력 완료 시 홈 화면으로 이동
