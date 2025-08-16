@@ -8,8 +8,7 @@ import retrofit2.http.Query
 interface NaverApiService {
     @GET("map-geocode/v2/geocode")
     suspend fun getGeocode(
-        @Header("X-NCP-APIGW-API-KEY-ID") clientId: String,
-        @Header("X-NCP-APIGW-API-KEY") clientSecret: String,
-        @Query("query") query: String
+        @Query("query") query: String,
+        @Query("count") count: Int = 3 // 반환할 검색 결과 개수
     ): NaverGeocodeResponse
 }
