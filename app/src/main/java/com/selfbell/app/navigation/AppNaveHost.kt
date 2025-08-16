@@ -76,7 +76,9 @@ fun AppNavHost(
                 //AppRoute.HOME_ROUTE,
                 AppRoute.ADDRESS_REGISTER_ROUTE,
                 AppRoute.CONTACT_REGISTER_ROUTE,
-                AppRoute.ONBOARDING_COMPLETE_ROUTE
+                AppRoute.ONBOARDING_COMPLETE_ROUTE,
+                AppRoute.MAIN_ADDRESS_SETUP_ROUTE_WITH_ARGS,
+                AppRoute.MAIN_ADDRESS_SETUP_ROUTE
             )
         }
         val shouldShowBottomBar = currentRoute !in routesWithoutBottomBar
