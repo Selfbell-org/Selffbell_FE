@@ -210,7 +210,7 @@ fun MainAddressSetupScreen(
                     .fillMaxWidth()
                     .padding(bottom = 20.dp)
                     .navigationBarsPadding(),
-                enabled = uiState.address.isNotBlank() || uiState.userLatLng != null
+                enabled = (selectedAddrType == "직접 입력" && directInputName.isNotBlank() )|| (selectedAddrType != "직접 입력")
             )
         }
     }
