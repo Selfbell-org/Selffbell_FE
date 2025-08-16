@@ -114,11 +114,8 @@ class AddressRegisterViewModel @Inject constructor(
     fun selectAddress(address: AddressModel) {
         _searchAddress.value = address.roadAddress.ifEmpty { address.jibunAddress } // TextField에 선택된 주소 표시
         _addressResults.value = listOf(address) // 선택된 주소만 남기거나, 혹은 그대로 둘 수도 있음 (UI/UX 결정)
-        // _addressResults.value = emptyList() // 선택 후 목록 숨기기
+        _selectedLatLng.value = LatLng(address.y.toDouble(), address.x.toDouble())
         _isAddressSelected.value = true
-        // _selectedAddressDetail.value = address // 상세 정보 저장
-        // 지도 업데이트 로직 호출 (좌표 사용)
-        // updateMapLocation(address.latitude, address.longitude)
     }
 
     // 외부에서 호출 가능한 선택 해제 함수

@@ -58,8 +58,7 @@ fun HomeScreen(
     onSearchTextChange: (String) -> Unit,
     onSearchClick: () -> Unit,
     onModalMarkerItemClick: (MapMarkerData) -> Unit,
-    searchedLatLng: LatLng?,
-    onMsgReportClick: () -> Unit // 이 파라미터는 이제 사용하지 않으므로 무시해도 됩니다.
+    searchedLatLng: LatLng?
 ) {
     var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
     var cameraPosition by remember {
@@ -335,8 +334,7 @@ fun HomeScreenPreview() {
         onSearchTextChange = { sampleSearchText = it },
         onSearchClick = { println("Preview Search Clicked: $sampleSearchText") },
         onModalMarkerItemClick = { markerData -> println("Preview Marker Item Clicked: ${markerData.address}") },
-        searchedLatLng = null,
-        onMsgReportClick = { println("Preview Message Report Clicked") }
+        searchedLatLng = null
     )
     // }
 }

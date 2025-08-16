@@ -22,7 +22,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DataModule {
 
-
     @Provides
     @Singleton
     fun provideOkHttpClient(
@@ -50,7 +49,7 @@ object DataModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit { // OkHttpClient를 주입받도록 수정
         return Retrofit.Builder()
-            .baseUrl("https://naveropenapi.apigw.ntruss.com/")
+            .baseUrl("https://maps.apigw.ntruss.com/")
             .client(okHttpClient) // 생성한 OkHttpClient 설정
             .addConverterFactory(GsonConverterFactory.create())
             .build()

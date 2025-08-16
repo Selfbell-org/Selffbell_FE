@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraUpdate
@@ -38,15 +40,12 @@ import com.selfbell.core.ui.composables.moveOrAddMarker
 
 @Composable
 fun MainAddressSetupScreen(
-    onAddressSet: (String, String, LatLng?) -> Unit,
-    navController: NavController
+    navController: NavController,
+    viewModel: MainAddressSetupViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-    var userLatLng by remember { mutableStateOf<LatLng?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
     var marker by remember { mutableStateOf<Marker?>(null) }
     var naverMap by remember { mutableStateOf<NaverMap?>(null) }
-    var address by remember { mutableStateOf("") }
-    var addrType by remember { mutableStateOf("집") }
 
     Box(Modifier.fillMaxSize()) {
         // 지도 Composable
@@ -54,14 +53,14 @@ fun MainAddressSetupScreen(
             modifier = Modifier.matchParentSize(),
             onMapReady = { map ->
                 naverMap = map
-                userLatLng?.let { pos -> 
+                uiState.userLatLng?.let { pos ->
                     marker = moveOrAddMarker(map, pos, marker)
                     map.moveCamera(CameraUpdate.scrollTo(pos))
                 }
             },
             onLocationChanged = { pos ->
-                userLatLng = pos
-                naverMap?.let { map -> 
+                viewModel.updateUserLatLng(pos) // 지도가 움직일 때마다 ViewModel 업데이트
+                naverMap?.let { map ->
                     marker = moveOrAddMarker(map, pos, marker)
                 }
             }
@@ -80,8 +79,8 @@ fun MainAddressSetupScreen(
                 Text("메인주소 설정하기", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
-                    value = address,
-                    onValueChange = { address = it },
+                    value = uiState.address,
+                    onValueChange = { viewModel.updateAddress(it)},
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("주소를 입력해 주세요") }
                 )
@@ -90,9 +89,8 @@ fun MainAddressSetupScreen(
                 }
                 Spacer(Modifier.height(16.dp))
                 Button(
-                    onClick = { onAddressSet(address.trim(), addrType, userLatLng)
-                              navController.navigate(AppRoute.HOME_ROUTE)},
-                    enabled = address.isNotBlank() && userLatLng != null,
+                    onClick = { viewModel.setMainAddress()},
+                    enabled = uiState.address.isNotBlank() && uiState.userLatLng != null,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("설정")
