@@ -20,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -40,7 +39,8 @@ fun LandingScreen(
     modifier: Modifier = Modifier) {
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
             .background(Color.White)
             .padding(vertical = 70.dp),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -57,7 +57,7 @@ fun LandingScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "SelfBell",
+                text = "SafeBell",
                 color = Primary,
                 fontFamily = FontFamily(Font(com.selfbell.core.R.font.gabarito_variablefont_wght)),
                 fontSize = 40.sp,
@@ -69,48 +69,50 @@ fun LandingScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Box(
-                Modifier.border(width = 0.8.dp,
-                    color = Primary,
-                    shape = RoundedCornerShape(size = 16.dp))
+                Modifier
                     .width(343.dp)
                     .height(48.dp)
                     .background(color = Primary, shape = RoundedCornerShape(size = 16.dp))
-                    .clickable { onLoginClick() }
-                    .padding(start = 27.dp, top = 12.dp, end = 27.dp, bottom = 12.dp),
-
-            ){
-                Text(
-                    text = "로그인 하기",
-                    modifier = Modifier.align(Alignment.Center),
-                    fontFamily = FontFamily(Font(com.selfbell.core.R.font.gabarito_variablefont_wght)),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight(700),
-                    color = White
-                )
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-            Box(
-                Modifier.border(width = 0.8.dp,
-                    color = Color(0xFF797479),
-                    shape = RoundedCornerShape(size = 16.dp))
-                    .width(343.dp)
-                    .height(48.dp)
-                    .background(color = White, shape = RoundedCornerShape(size = 16.dp))
                     .clickable { onSignUpClick() }
                     .padding(start = 27.dp, top = 12.dp, end = 27.dp, bottom = 12.dp)
             ){
                 Text(
-                    text = "회원가입 하기",
+                    text = "회원가입",
                     modifier = Modifier.align(Alignment.Center),
                     fontFamily = FontFamily(Font(com.selfbell.core.R.font.gabarito_variablefont_wght)),
-                    fontSize = 16.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight(700),
-                    color = Black
+                    color = White
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "이미 계정이 있으신가요?",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(com.selfbell.core.R.font.gabarito_variablefont_wght)),
+                        fontWeight = FontWeight(500),
+                        color = Color(0xFF797479)
+                    )
+                )
+                Text(
+                    text = "로그인하기",
+                    modifier = Modifier.clickable { onLoginClick() },
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(com.selfbell.core.R.font.gabarito_variablefont_wght)),
+                        fontWeight = FontWeight(700),
+                        color = Primary
+                    )
                 )
             }
         }
         Text(
-            text = "Developed By Team SelfBell",
+            text = "Developed By Team SafeBell",
             style = TextStyle(
                 fontSize = 14.sp,
                 fontFamily = FontFamily(Font(com.selfbell.core.R.font.gabarito_variablefont_wght)),
