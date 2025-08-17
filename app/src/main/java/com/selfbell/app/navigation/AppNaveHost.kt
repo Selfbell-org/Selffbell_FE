@@ -50,6 +50,7 @@ import com.naver.maps.map.overlay.Marker
 import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.example.auth.ui.AddressRegisterScreen
 import com.example.auth.ui.ContactRegistrationScreen
+import com.example.auth.ui.MainAddressSetupScreen
 import com.example.auth.ui.OnboardingCompleteScreen
 import com.example.auth.ui.PasswordScreen
 import com.example.auth.ui.PhoneNumberScreen
@@ -78,7 +79,9 @@ fun AppNavHost(
                 AppRoute.ADDRESS_REGISTER_ROUTE,
                 AppRoute.CONTACT_REGISTER_ROUTE,
                 AppRoute.ONBOARDING_COMPLETE_ROUTE,
-                AppRoute.PHONE_NUMBER_ROUTE
+                AppRoute.PHONE_NUMBER_ROUTE,
+                AppRoute.MAIN_ADDRESS_SETUP_ROUTE_WITH_ARGS,
+                AppRoute.MAIN_ADDRESS_SETUP_ROUTE
             )
         }
         val shouldShowBottomBar = currentRoute !in routesWithoutBottomBar
@@ -119,7 +122,7 @@ fun AppNavHost(
                             val userProfileName by homeViewModel.userProfileName.collectAsState()
                             val criminalMarkers by homeViewModel.criminalMarkers.collectAsState()
                             val safetyBellMarkers by homeViewModel.safetyBellMarkers.collectAsState()
-                            val searchedLatLng by homeViewModel.searchedLatLng.collectAsState()
+                            val searchedLatLng by homeViewModel.cameraTargetLatLng.collectAsState()
 
                             // AddressSearchModal에서 사용될 상태 및 콜백 (ViewModel에서 가져온다고 가정)
                             val searchText by homeViewModel.searchText.collectAsState() // ViewModel에 searchText: StateFlow<String> 필요
@@ -145,12 +148,8 @@ fun AppNavHost(
                                     // 또는 navController.navigate(...) 등으로 상세 화면 이동
                                     println("Marker clicked in NavHost: ${mapMarkerData.address}")
                                 },
-                                searchedLatLng = searchedLatLng,
-                                onMsgReportClick = {
-                                    // TODO: 메시지 신고 기능 구현 (ViewModel 함수 호출 등)
-                                    homeViewModel.onReportMessageClicked() // ViewModel에 onReportMessageClicked() 함수 필요 (예시)
-                                    println("Message report clicked in NavHost")
-                                }
+                                onMsgReportClick = { println("Msg report clicked in Navhost") },
+                                searchedLatLng = searchedLatLng
                             )
                         }
                         composable(AppRoute.ALERTS_ROUTE) { AlertsScreen() }
@@ -197,6 +196,16 @@ fun AppNavHost(
                         ) } // Placeholder for Login
                         composable(AppRoute.PROFILE_REGISTER_ROUTE) {
                             ProfileRegisterScreen(navController = navController)
+                        }
+                        composable(
+                            route = AppRoute.MAIN_ADDRESS_SETUP_ROUTE_WITH_ARGS,
+                            arguments = listOf(
+                                navArgument("address") { type = NavType.StringType },
+                                navArgument("lat") { type = NavType.FloatType },
+                                navArgument("lng") { type = NavType.FloatType }
+                            )
+                        ) {
+                            MainAddressSetupScreen(navController = navController)
                         }
                         // 새로 추가된 보호자 연락처 등록 화면
                         composable(AppRoute.CONTACT_REGISTER_ROUTE) {

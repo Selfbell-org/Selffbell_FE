@@ -3,6 +3,8 @@ package com.selfbell.home.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
+import com.selfbell.domain.model.AddressModel
+import com.selfbell.domain.repository.AddressRepository
 import com.selfbell.feature.home.R
 import com.selfbell.home.model.MapMarkerData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.text.ifEmpty
+import kotlin.text.toDoubleOrNull
 
 // 임시 기본 위치 (예: 서울 시청)
 val DEFAULT_LAT_LNG = LatLng(37.5665, 126.9780)
@@ -19,7 +23,7 @@ val DEFAULT_LAT_LNG = LatLng(37.5665, 126.9780)
 class HomeViewModel @Inject constructor(
     // 필요한 Repository 또는 UseCase 주입
     // private val locationRepository: LocationRepository,
-    // private val addressRepository: AddressRepository,
+     private val addressRepository: AddressRepository
     // private val markerRepository: MarkerRepository
 ) : ViewModel() {
 
@@ -41,21 +45,30 @@ class HomeViewModel @Inject constructor(
     private val _safetyBellMarkers = MutableStateFlow<List<MapMarkerData>>(emptyList())
     val safetyBellMarkers: StateFlow<List<MapMarkerData>> = _safetyBellMarkers.asStateFlow()
 
-    private val _searchedLatLng = MutableStateFlow<LatLng?>(null)
-    val searchedLatLng: StateFlow<LatLng?> = _searchedLatLng.asStateFlow()
+    private val _cameraTargetLatLng = MutableStateFlow<LatLng?>(null)
+    val cameraTargetLatLng: StateFlow<LatLng?> = _cameraTargetLatLng.asStateFlow()
 
-    // --- 새로운 상태 및 콜백을 위한 멤버 추가 ---
+    // 검색된 위치의 마커를 위한 StateFlow 추가
+    private val _searchedLocationMarker = MutableStateFlow<MapMarkerData?>(null)
+    val searchedLocationMarker: StateFlow<MapMarkerData?> = _searchedLocationMarker.asStateFlow()
+
+
     private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText.asStateFlow()
+
+    // 검색 결과가 없을 때나 오류 발생 시 사용자에게 알릴 메시지
+    private val _searchResultMessage = MutableStateFlow<String?>(null)
+    val searchResultMessage: StateFlow<String?> = _searchResultMessage.asStateFlow()
+
 
     init {
         loadInitialData()
     }
 
     private fun loadInitialData() {
-        // ... (기존 loadInitialData 내용 유지) ...
-        _userLatLng.value = LatLng(37.5645, 126.9780)
+        _userLatLng.value = DEFAULT_LAT_LNG
         _userAddress.value = "서울특별시 중구 세종대로 110"
+        _cameraTargetLatLng.value = _userLatLng.value
         loadDummyMarkers()
     }
 
@@ -80,69 +93,90 @@ class HomeViewModel @Inject constructor(
     fun updateUserLocation(latLng: LatLng, address: String) {
         _userLatLng.value = latLng
         _userAddress.value = address
+        if (_searchedLocationMarker.value == null) {
+            _cameraTargetLatLng.value = latLng
+        }
         // loadMarkersNearby(latLng)
     }
 
     // --- 검색 관련 함수들 ---
     fun onSearchTextChanged(newText: String) {
         _searchText.value = newText
-        // 필요에 따라, 텍스트 변경 시 실시간 검색 결과 로드 로직 추가
-        // 예: if (newText.length > 2) { searchAddressRealtime(newText) }
+        if (newText.isBlank()) {
+            _searchedLocationMarker.value = null
+            _searchResultMessage.value = null
+            // 검색창이 비었을 때 카메라를 현재 사용자 위치로 돌릴 수 있음
+            // _cameraTargetLatLng.value = _userLatLng.value
+        }
     }
 
     fun onSearchConfirmed() {
         val query = _searchText.value.trim()
         if (query.isNotBlank()) {
-            // 기존 주소 검색 로직 호출
             searchAddress(query)
         } else {
-            // 검색어가 비어있을 경우의 처리 (예: 알림 표시 또는 _searchedLatLng 초기화)
-            // _searchedLatLng.value = null // 검색창이 비었을 때 지도 포커스를 현재 위치로 돌리고 싶다면
+            _searchedLocationMarker.value = null
+            _searchResultMessage.value = "검색어를 입력해주세요."
+            // 검색어가 비었을 때 카메라를 현재 사용자 위치로 돌리고 싶다면
+            _cameraTargetLatLng.value = _userLatLng.value
         }
     }
 
     // 기존 onAddressSearch를 내부 검색 로직 함수로 변경 (이름 변경 또는 private으로)
     private fun searchAddress(query: String) {
         viewModelScope.launch {
-            // 실제 주소 검색 로직 (예: Geocoding API 호출)
-            // try {
-            //     val resultLatLng = addressRepository.getLatLngFromAddress(query)
-            //     _searchedLatLng.value = resultLatLng
-            //     if (resultLatLng == null) {
-            //         // 검색 결과 없음 처리 (예: 사용자에게 알림)
-            //     }
-            // } catch (e: Exception) {
-            //     // 오류 처리
-            //     _searchedLatLng.value = null // 오류 발생 시
-            // }
+            try {
+                // 이전에 표시된 검색 결과 마커 및 메시지 초기화
+                _searchedLocationMarker.value = null
+                _searchResultMessage.value = null
 
-            println("ViewModel: Address search triggered for query: $query")
-            // --- 임시 로직 시작 ---
-            // 실제 구현에서는 API 호출 결과를 사용해야 합니다.
-            // 여기서는 임의로 더미 마커 중 하나의 위치로 이동하거나, 사용자 현재 위치로 설정합니다.
-            val foundMarker = (_criminalMarkers.value + _safetyBellMarkers.value)
-                .find { it.address.contains(query, ignoreCase = true) }
+                val addresses: List<AddressModel> = addressRepository.searchAddress(query)
 
-            if (foundMarker != null) {
-                _searchedLatLng.value = foundMarker.latLng
-            } else {
-                _searchedLatLng.value = _userLatLng.value // 검색 결과 없으면 사용자 위치로 (임시)
-                // 또는 _searchedLatLng.value = null; 사용자에게 알림
+                if (addresses.isNotEmpty()) {
+                    // 첫 번째 검색 결과를 사용
+                    val firstAddress = addresses[0]
+                    val lat = firstAddress.y.toDoubleOrNull() // y 좌표가 위도(latitude)
+                    val lng = firstAddress.x.toDoubleOrNull() // x 좌표가 경도(longitude)
+
+                    if (lat != null && lng != null) {
+                        val searchedLatLng = LatLng(lat, lng)
+                        // 검색된 위치에 표시할 마커 데이터 생성
+                        // MapMarkerData.MarkerType에 SEARCH_RESULT와 같은 타입을 추가하거나 기존 타입 활용
+                        // 여기서는 임시로 CRIMINAL 타입을 사용하고, 주소를 title로 사용
+                        _searchedLocationMarker.value = MapMarkerData(
+                            latLng = searchedLatLng,
+                            // title: 도로명 주소가 있으면 사용, 없으면 지번 주소 사용
+                            address = firstAddress.roadAddress.ifEmpty { firstAddress.jibunAddress },
+                            type = MapMarkerData.MarkerType.USER, // TODO: 검색 결과용 마커 타입으로 변경
+                            distance = "" // 거리 계산 함수 사용
+                        )
+                        // 검색된 위치로 카메라 이동
+                        _cameraTargetLatLng.value = searchedLatLng
+                        _searchResultMessage.value = "검색 결과: ${firstAddress.roadAddress.ifEmpty { firstAddress.jibunAddress }}"
+                    } else {
+                        // 좌표 변환 실패 처리
+                        _searchResultMessage.value = "주소의 좌표 정보를 가져올 수 없습니다."
+                        _cameraTargetLatLng.value = _userLatLng.value // 기본 위치로 카메라 이동
+                    }
+                } else {
+                    // 검색 결과가 없는 경우
+                    _searchResultMessage.value = "검색 결과가 없습니다. 다른 검색어를 시도해보세요."
+                    _cameraTargetLatLng.value = _userLatLng.value // 기본 위치로 카메라 이동
+                }
+            } catch (e: Exception) {
+                // API 호출 중 오류 발생 처리 (네트워크 오류 등)
+                _searchResultMessage.value = "주소 검색 중 오류가 발생했습니다: ${e.message}"
+                _cameraTargetLatLng.value = _userLatLng.value // 기본 위치로 카메라 이동
+                // 예외 로깅
+                e.printStackTrace()
             }
-            // --- 임시 로직 끝 ---
-
-            // 검색 후 _searchText를 비울 필요는 없음. 사용자가 검색어를 유지하고 싶어할 수 있음.
-            // 검색 후 _searchedLatLng를 null로 바로 바꾸면 카메라 이동이 일어나지 않을 수 있음.
-            // 카메라 이동 애니메이션이 완료된 후 HomeScreen에서 콜백을 통해 null로 설정하거나,
-            // 일정 시간 뒤에 null로 설정하는 방식을 고려할 수 있습니다.
-            // 혹은, searchedLatLng의 변경을 1회성 이벤트로 처리하는 Event Wrapper 클래스 사용도 고려.
         }
     }
 
     // --- 모달 아이템 클릭 관련 함수 ---
     fun onMapMarkerClicked(markerData: MapMarkerData) {
         // 클릭된 마커의 위치로 지도를 이동시키기 위해 _searchedLatLng 업데이트
-        _searchedLatLng.value = markerData.latLng
+        _cameraTargetLatLng.value = markerData.latLng
         // 검색창 텍스트를 클릭된 마커의 주소로 업데이트 할 수도 있음 (선택 사항)
         // _searchText.value = markerData.address
         println("ViewModel: Modal marker item clicked - Address: ${markerData.address}, LatLng: ${markerData.latLng}")

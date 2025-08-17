@@ -52,8 +52,10 @@ fun HomeScreen(
     onSearchTextChange: (String) -> Unit,
     onSearchClick: () -> Unit,
     onModalMarkerItemClick: (MapMarkerData) -> Unit,
+
     searchedLatLng: LatLng?,
     onMsgReportClick: () -> Unit
+
 ) {
     var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
     var cameraPosition by remember {
@@ -87,6 +89,27 @@ fun HomeScreen(
 
     val modalMapMarkers = remember(criminalMarkers, safetyBellMarkers) {
         (criminalMarkers + safetyBellMarkers).sortedBy { it.distance }
+    }
+    // `searchedLatLng`가 변경될 때마다 지도 카메라를 이동하고 마커를 추가합니다.
+    var searchedMarker by remember { mutableStateOf<Marker?>(null) }
+    LaunchedEffect(searchedLatLng) {
+        searchedLatLng?.let { latLng ->
+            naverMapInstance?.let { map ->
+                map.moveCamera(CameraUpdate.scrollTo(latLng).animate(CameraAnimation.Easing))
+                if (searchedMarker == null) {
+                    searchedMarker = Marker().apply {
+                        position = latLng
+                        this.map = map // 마커를 지도에 추가
+                        setOnClickListener {
+                            infoWindowData = latLng to "검색 위치" // 실제 주소 정보로 대체
+                            true
+                        }
+                    }
+                } else {
+                    searchedMarker?.position = latLng // 기존 마커의 위치만 업데이트
+                }
+            }
+        }
     }
 
     // Replace ModalBottomSheetLayout with a conditional ModalBottomSheet
@@ -236,4 +259,44 @@ fun addOrUpdateMarker(
             true
         }
     }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Composable
+fun HomeScreenPreview() {
+    val sampleUserLatLng = LatLng(37.5665, 126.9780)
+    val sampleUserAddress = "서울 중구 세종대로 110"
+    val sampleUserProfileImg = R.drawable.usre_profileimg_icon // 실제 리소스 ID로 교체
+    val sampleUserProfileName = "홍길동"
+
+    // MapMarkerData에 distance 필드가 있다면 채워주거나, 동적으로 계산하는 로직이 ViewModel에 있다고 가정
+    val sampleCriminalMarkers = listOf(
+        MapMarkerData(LatLng(37.5600, 126.9750), "위험 지역 A: 강남역 부근",
+            MapMarkerData.MarkerType.CRIMINAL, "150m"),
+        MapMarkerData(LatLng(37.5700, 126.9800), "주의 인물 B: 시청 앞",
+            MapMarkerData.MarkerType.CRIMINAL, "300m")
+    )
+    val sampleSafetyBellMarkers = listOf(
+        MapMarkerData(LatLng(37.5650, 126.9700), "안심벨 X: 광화문 광장",
+            MapMarkerData.MarkerType.SAFETY_BELL, "200m")
+    )
+
+    var sampleSearchText by remember { mutableStateOf("") }
+
+    // MaterialTheme { // 실제 앱의 테마로 감싸주세요
+    HomeScreen(
+        userLatLng = sampleUserLatLng,
+        userAddress = sampleUserAddress,
+        userProfileImg = sampleUserProfileImg,
+        sampleUserProfileName,
+        criminalMarkers = sampleCriminalMarkers,
+        safetyBellMarkers = sampleSafetyBellMarkers,
+        searchText = sampleSearchText,
+        onSearchTextChange = { sampleSearchText = it },
+        onSearchClick = { println("Preview Search Clicked: $sampleSearchText") },
+        onModalMarkerItemClick = { markerData -> println("Preview Marker Item Clicked: ${markerData.address}") },
+        onMsgReportClick = {println("preview msg report click")},
+        searchedLatLng = null
+    )
+    // }
 }

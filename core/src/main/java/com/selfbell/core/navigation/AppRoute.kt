@@ -1,5 +1,7 @@
 package com.selfbell.core.navigation
 
+import android.net.Uri
+
 /**
  * 앱의 모든 내비게이션 경로를 정의하는 객체.
  * 각 경로는 고유한 문자열 ID를 가집니다.
@@ -21,6 +23,13 @@ object AppRoute {
     const val LOGIN_ROUTE = "login_route" // 로그인
     const val PHONE_NUMBER_ROUTE = "phone_number_route" // 로그인
     const val ADDRESS_REGISTER_ROUTE = "address_register_route" // 주소 등록
+    const val MAIN_ADDRESS_SETUP_ROUTE = "main_address_setup_route" // 주소 등록
+    const val MAIN_ADDRESS_SETUP_ROUTE_WITH_ARGS = "main_address_setup_route/{address}/{lat}/{lng}" // 주소 등록 지정
+    fun mainAddressSetupRoute(address: String, lat: Float, lng: Float): String {
+        // URL 인코딩을 통해 특수문자 문제를 해결합니다.
+        val encodedAddress = Uri.encode(address)
+        return "main_address_setup_route/$encodedAddress/$lat/$lng"
+    }
     const val CONTACT_REGISTER_ROUTE = "contact_register_route" // 보호자 연락처 등록
     const val ONBOARDING_COMPLETE_ROUTE = "onboarding_complete_route" // 온보딩 완료
     const val PASSWORD_ROUTE = "password_route"

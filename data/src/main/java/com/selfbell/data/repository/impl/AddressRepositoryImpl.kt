@@ -18,6 +18,7 @@ class AddressRepositoryImpl @Inject constructor(
     override suspend fun searchAddress(query: String): List<AddressModel> {
         return try {
             Log.d("AddressSearch", "Requesting geocode for query: $query, ClientID: $clientId") // 요청 직전 로그 추가
+            Log.d("AddressSearch", "Requesting geocode for query: $query, ClientSecret: $clientSecret")
 
             val response = naverApiService.getGeocode(
                 query = query,
