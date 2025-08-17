@@ -58,8 +58,7 @@ fun HomeScreen(
     onSearchTextChange: (String) -> Unit,
     onSearchClick: () -> Unit,
     onModalMarkerItemClick: (MapMarkerData) -> Unit,
-    searchedLatLng: LatLng?,
-    onMsgReportClick: () -> Unit // 이 파라미터는 이제 사용하지 않으므로 무시해도 됩니다.
+    searchedLatLng: LatLng?
 ) {
     var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
     var cameraPosition by remember {
@@ -142,6 +141,27 @@ fun HomeScreen(
 
     val modalMapMarkers = remember(criminalMarkers, safetyBellMarkers) {
         (criminalMarkers + safetyBellMarkers).sortedBy { it.distance }
+    }
+    // `searchedLatLng`가 변경될 때마다 지도 카메라를 이동하고 마커를 추가합니다.
+    var searchedMarker by remember { mutableStateOf<Marker?>(null) }
+    LaunchedEffect(searchedLatLng) {
+        searchedLatLng?.let { latLng ->
+            naverMapInstance?.let { map ->
+                map.moveCamera(CameraUpdate.scrollTo(latLng).animate(CameraAnimation.Easing))
+                if (searchedMarker == null) {
+                    searchedMarker = Marker().apply {
+                        position = latLng
+                        this.map = map // 마커를 지도에 추가
+                        setOnClickListener {
+                            infoWindowData = latLng to "검색 위치" // 실제 주소 정보로 대체
+                            true
+                        }
+                    }
+                } else {
+                    searchedMarker?.position = latLng // 기존 마커의 위치만 업데이트
+                }
+            }
+        }
     }
 
     ModalBottomSheetLayout(
@@ -248,41 +268,6 @@ fun HomeScreen(
     }
 }
 
-
-//// MapInfoBalloon Composable (별도 파일 또는 HomeScreen 하단에 정의)
-//@Composable
-//fun MapInfoBalloon(
-//    modifier: Modifier = Modifier,
-//    address: String,
-//    latLng: LatLng, // 마커 위치 정보 (필요시 사용)
-//    onDismissRequest: () -> Unit
-//) {
-//    // Popup을 사용하여 지도 위에 오버레이 형태로 표시
-//    // Popup의 위치는 직접 계산하거나, Alignment를 사용할 수 있습니다.
-//    // 여기서는 간단하게 화면 중앙 근처에 나타나도록 합니다. (실제로는 마커 위치 기반으로 조정 필요)
-//    Popup(
-//        alignment = Alignment.Center, // 또는 다른 정렬, offset 사용 가능
-//        onDismissRequest = onDismissRequest
-//    ) {
-//        Surface(
-//            modifier = modifier
-//                .wrapContentSize()
-//                .shadow(4.dp, RoundedCornerShape(8.dp))
-//                .clip(RoundedCornerShape(8.dp))
-//                .background(Color.White)
-//                .clickable(onClick = onDismissRequest), // 말풍선 클릭 시 닫기
-//            color = Color.White // Surface 자체 색상
-//        ) {
-//            Column(modifier = Modifier.padding(16.dp)) {
-//                Text(text = "주소", style = Typography.labelSmall)
-//                Text(text = address, style = Typography.bodyLarge)
-//                Spacer(modifier = Modifier.height(8.dp))
-//                // 필요시 추가 정보 (예: "상세보기 버튼 등")
-//            }
-//        }
-//    }
-//}
-
 fun addOrUpdateMarker(
     naverMap: NaverMap,
     latLng: LatLng,
@@ -335,8 +320,7 @@ fun HomeScreenPreview() {
         onSearchTextChange = { sampleSearchText = it },
         onSearchClick = { println("Preview Search Clicked: $sampleSearchText") },
         onModalMarkerItemClick = { markerData -> println("Preview Marker Item Clicked: ${markerData.address}") },
-        searchedLatLng = null,
-        onMsgReportClick = { println("Preview Message Report Clicked") }
+        searchedLatLng = null
     )
     // }
 }

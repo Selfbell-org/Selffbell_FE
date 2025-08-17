@@ -247,7 +247,17 @@ fun AddressRegisterScreen(
             SelfBellButton(
                 text = "다음으로",
                 onClick = {
-                    navController.navigate(AppRoute.CONTACT_REGISTER_ROUTE)
+                    val selectedAddress = viewModel.searchAddress.value
+                    val selectedLatLng = viewModel.selectedLatLng.value
+                    if (selectedAddress.isNotBlank() && selectedLatLng != null) {
+                        navController.navigate(
+                            AppRoute.mainAddressSetupRoute(
+                                address = selectedAddress,
+                                lat = selectedLatLng.latitude.toFloat(),
+                                lng = selectedLatLng.longitude.toFloat()
+                            )
+                        )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
