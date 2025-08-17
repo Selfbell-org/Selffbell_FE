@@ -119,7 +119,7 @@ fun AppNavHost(
                             val userProfileName by homeViewModel.userProfileName.collectAsState()
                             val criminalMarkers by homeViewModel.criminalMarkers.collectAsState()
                             val safetyBellMarkers by homeViewModel.safetyBellMarkers.collectAsState()
-                            val searchedLatLng by homeViewModel.searchedLatLng.collectAsState()
+                            val searchedLatLng by homeViewModel.cameraTargetLatLng.collectAsState()
 
                             // AddressSearchModal에서 사용될 상태 및 콜백 (ViewModel에서 가져온다고 가정)
                             val searchText by homeViewModel.searchText.collectAsState() // ViewModel에 searchText: StateFlow<String> 필요
