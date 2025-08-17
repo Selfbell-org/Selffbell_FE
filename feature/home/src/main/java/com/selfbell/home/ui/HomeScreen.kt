@@ -9,15 +9,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.rememberModalBottomSheetState
-import androidx.compose.material3.*
+import androidx.compose.material3.* // Use material3 components
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +23,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
 import androidx.core.content.ContextCompat
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraAnimation
@@ -37,14 +30,15 @@ import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.overlay.Marker
 import com.selfbell.core.model.Contact
-import com.selfbell.core.ui.composables.MessageReportBottomSheet
 import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.feature.home.R
 import com.selfbell.home.model.MapMarkerData
 import kotlinx.coroutines.launch
 import com.naver.maps.map.overlay.OverlayImage
+import com.selfbell.core.ui.theme.Primary
 
+// Removed @OptIn(ExperimentalMaterialApi::class) as it's for the old library.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -58,7 +52,10 @@ fun HomeScreen(
     onSearchTextChange: (String) -> Unit,
     onSearchClick: () -> Unit,
     onModalMarkerItemClick: (MapMarkerData) -> Unit,
-    searchedLatLng: LatLng?
+
+    searchedLatLng: LatLng?,
+    onMsgReportClick: () -> Unit
+
 ) {
     var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
     var cameraPosition by remember {
@@ -74,68 +71,19 @@ fun HomeScreen(
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    // Use the correct material3 API
     val sheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetValue.Hidden,
-        skipHalfExpanded = true
+        skipPartiallyExpanded = true,
+        // The initial value is now part of the `ModalBottomSheet` composable itself.
     )
-    var showMessageReportModal by remember { mutableStateOf(false) }
 
-    val dummyGuardians = remember {
-        listOf(
-            Contact(1, "나는돌맹이", "010-1234-5678"),
-            Contact(2, "또로리", "010-9876-5432")
-        )
-    }
-    val dummyMessageTemplates = remember {
-        listOf(
-            "위급 상황입니다.",
-            "갇혔어요.",
-            "위협 받고 있어요.",
-            "누군가 따라오는 것 같아요."
-        )
-    }
-
-    // SMS 발송 권한 요청 및 처리
     val smsPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             Toast.makeText(context, "문자 발송 권한이 허용되었습니다.", Toast.LENGTH_SHORT).show()
-            // 권한 허용 후 바텀 시트를 다시 보여줘서 '보내기'를 다시 누르도록 유도할 수 있습니다.
-            // 여기서는 바텀 시트의 상태를 직접 관리하는 방식으로 구현했습니다.
         } else {
             Toast.makeText(context, "문자 발송 권한이 거부되었습니다.", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    val sendSms = { guardians: List<Contact>, message: String ->
-        // SMS 권한이 있는지 확인
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.SEND_SMS
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            try {
-                val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    context.getSystemService(SmsManager::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    SmsManager.getDefault()
-                }
-
-                guardians.forEach { contact ->
-                    smsManager.sendTextMessage(contact.phoneNumber, null, message, null, null)
-                }
-                Toast.makeText(context, "긴급 문자가 발송되었습니다.", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "문자 발송에 실패했습니다.", Toast.LENGTH_SHORT).show()
-                e.printStackTrace()
-            }
-            coroutineScope.launch { sheetState.hide() }
-            showMessageReportModal = false
-        } else {
-            // 권한이 없으면 요청
-            smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
         }
     }
 
@@ -164,106 +112,134 @@ fun HomeScreen(
         }
     }
 
-    ModalBottomSheetLayout(
-        sheetState = sheetState,
-        sheetContent = {
-            if (showMessageReportModal) {
-                MessageReportBottomSheet(
-                    selectedGuardians = dummyGuardians,
-                    messageTemplates = dummyMessageTemplates,
-                    onSendClick = { guardians, message -> sendSms(guardians, message) },
-                    onCancelClick = {
-                        coroutineScope.launch { sheetState.hide() }
-                        showMessageReportModal = false
-                    }
-                )
-            } else {
-                Spacer(modifier = Modifier.height(1.dp))
-            }
-        },
-        sheetShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    ) {
-        Box(Modifier.fillMaxSize()) {
-            ReusableNaverMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPosition = cameraPosition,
-                onMapReady = { map ->
-                    naverMapInstance = map
-                    if (searchedLatLng != null) map.moveCamera(CameraUpdate.scrollTo(searchedLatLng))
-                    else if (userLatLng.latitude != 0.0 || userLatLng.longitude != 0.0) map.moveCamera(CameraUpdate.scrollTo(userLatLng))
+    // Replace ModalBottomSheetLayout with a conditional ModalBottomSheet
+    Box(Modifier.fillMaxSize()) {
+        ReusableNaverMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPosition = cameraPosition,
+            onMapReady = { map ->
+                naverMapInstance = map
+                if (searchedLatLng != null) map.moveCamera(CameraUpdate.scrollTo(searchedLatLng))
+                else if (userLatLng.latitude != 0.0 || userLatLng.longitude != 0.0) map.moveCamera(CameraUpdate.scrollTo(userLatLng))
 
-                    addOrUpdateMarker(map, userLatLng, MapMarkerData(userLatLng, userAddress,
-                        MapMarkerData.MarkerType.USER, "현재 위치")) { infoWindowData = it }
-                    criminalMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { infoWindowData = it } }
-                    safetyBellMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { infoWindowData = it } }
+                addOrUpdateMarker(map, userLatLng, MapMarkerData(userLatLng, userAddress,
+                    MapMarkerData.MarkerType.USER, "현재 위치")) { infoWindowData = it }
+                criminalMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { infoWindowData = it } }
+                safetyBellMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { infoWindowData = it } }
+            }
+        )
+
+        infoWindowData?.let { (latLngValue, addressValue) ->
+            MapInfoBalloon(address = addressValue, latLng = latLngValue, onDismissRequest = { infoWindowData = null })
+        }
+
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 36.dp)
+                .fillMaxWidth(0.85f)
+                .height(56.dp)
+                .shadow(6.dp, RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(20.dp)),
+            color = Color.White.copy(alpha = 0.95f)
+        ) {
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(userProfileImg),
+                    contentDescription = "프로필",
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                )
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "profile",
+                        style = Typography.labelSmall.copy(color = Color(0xFF949494))
+                    )
+                    Text(
+                        userProfileName,
+                        style = Typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            sheetState.show()
+                        }
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.msg_report_icon),
+                        contentDescription = "메시지 신고",
+                        tint = Color.Unspecified
+                    )
+                }
+            }
+        }
+
+        AddressSearchModal(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp),
+            searchText = searchText,
+            onSearchTextChange = onSearchTextChange,
+            onSearchClick = onSearchClick,
+            mapMarkers = modalMapMarkers,
+            onMarkerItemClick = { markerData ->
+                naverMapInstance?.moveCamera(
+                    CameraUpdate.scrollTo(markerData.latLng).animate(
+                        CameraAnimation.Easing
+                    )
+                )
+            }
+        )
+    }
+
+    // Use a conditional statement to show the material3 ModalBottomSheet
+    if (sheetState.isVisible) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                coroutineScope.launch { sheetState.hide() }
+            },
+            sheetState = sheetState
+        ) {
+            MessageReportFlow(
+                onDismissRequest = {
+                    coroutineScope.launch { sheetState.hide() }
+                },
+                sendSms = { guardians, message ->
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.SEND_SMS
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        try {
+                            val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                context.getSystemService(SmsManager::class.java)
+                            } else {
+                                @Suppress("DEPRECATION")
+                                SmsManager.getDefault()
+                            }
+                            guardians.forEach { contact ->
+                                smsManager.sendTextMessage(contact.phoneNumber, null, message, null, null)
+                            }
+                            Toast.makeText(context, "긴급 문자가 발송되었습니다.", Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "문자 발송에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                            e.printStackTrace()
+                        }
+                    } else {
+                        smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
+                    }
                 }
             )
-
-            infoWindowData?.let { (latLngValue, addressValue) ->
-                MapInfoBalloon(address = addressValue, latLng = latLngValue, onDismissRequest = { infoWindowData = null })
-            }
-
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 36.dp)
-                    .fillMaxWidth(0.85f)
-                    .height(56.dp)
-                    .shadow(6.dp, RoundedCornerShape(20.dp))
-                    .clip(RoundedCornerShape(20.dp)),
-                color = Color.White.copy(alpha = 0.95f)
-            ) {
-                Row(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 18.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(userProfileImg),
-                        contentDescription = "프로필",
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                    )
-                    Spacer(Modifier.width(14.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text("profile", style = Typography.labelSmall, color = Color(0xFF949494))
-                        Text(userProfileName, style = Typography.bodyMedium, fontWeight = FontWeight.Bold)
-                    }
-                    IconButton(
-                        onClick = {
-                            showMessageReportModal = true
-                            coroutineScope.launch {
-                                sheetState.show()
-                            }
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.msg_report_icon),
-                            contentDescription = "메시지 신고",
-                            tint = Color.Unspecified
-                        )
-                    }
-                }
-            }
-
-            AddressSearchModal(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp),
-                searchText = searchText,
-                onSearchTextChange = onSearchTextChange,
-                onSearchClick = onSearchClick,
-                mapMarkers = modalMapMarkers,
-                onMarkerItemClick = { markerData ->
-                    naverMapInstance?.moveCamera(
-                        CameraUpdate.scrollTo(markerData.latLng).animate(
-                            CameraAnimation.Easing
-                        )
-                    )
-                }
-                    )
         }
     }
 }
@@ -277,7 +253,6 @@ fun addOrUpdateMarker(
     Marker().apply {
         position = latLng
         map = naverMap
-        // 아이콘 리소스를 OverlayImage로 설정
         icon = OverlayImage.fromResource(data.getIconResource())
         setOnClickListener {
             onClick(latLng to data.address)
@@ -320,6 +295,7 @@ fun HomeScreenPreview() {
         onSearchTextChange = { sampleSearchText = it },
         onSearchClick = { println("Preview Search Clicked: $sampleSearchText") },
         onModalMarkerItemClick = { markerData -> println("Preview Marker Item Clicked: ${markerData.address}") },
+        onMsgReportClick = {println("preview msg report click")},
         searchedLatLng = null
     )
     // }

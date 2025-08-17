@@ -52,6 +52,8 @@ import com.example.auth.ui.AddressRegisterScreen
 import com.example.auth.ui.ContactRegistrationScreen
 import com.example.auth.ui.MainAddressSetupScreen
 import com.example.auth.ui.OnboardingCompleteScreen
+import com.example.auth.ui.PasswordScreen
+import com.example.auth.ui.PhoneNumberScreen
 import com.selfbell.alerts.ui.AlertsScreen
 import com.selfbell.escort.ui.EscortScreen
 import com.selfbell.home.ui.HomeScreen
@@ -77,6 +79,7 @@ fun AppNavHost(
                 AppRoute.ADDRESS_REGISTER_ROUTE,
                 AppRoute.CONTACT_REGISTER_ROUTE,
                 AppRoute.ONBOARDING_COMPLETE_ROUTE,
+                AppRoute.PHONE_NUMBER_ROUTE,
                 AppRoute.MAIN_ADDRESS_SETUP_ROUTE_WITH_ARGS,
                 AppRoute.MAIN_ADDRESS_SETUP_ROUTE
             )
@@ -145,6 +148,7 @@ fun AppNavHost(
                                     // 또는 navController.navigate(...) 등으로 상세 화면 이동
                                     println("Marker clicked in NavHost: ${mapMarkerData.address}")
                                 },
+                                onMsgReportClick = { println("Msg report clicked in Navhost") },
                                 searchedLatLng = searchedLatLng
                             )
                         }
@@ -155,8 +159,30 @@ fun AppNavHost(
                         composable(AppRoute.FRIENDS_ROUTE) { Text(text = "친구 화면") }
                         composable(AppRoute.LANDING_ROUTE) { LandingScreen(
                             onLoginClick = { navController.navigate(AppRoute.LOGIN_ROUTE) },
-                            onSignUpClick = { navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE ) }
+                            onSignUpClick = { navController.navigate(AppRoute.PHONE_NUMBER_ROUTE) }
                         )}
+                        composable(AppRoute.PHONE_NUMBER_ROUTE) {
+                            PhoneNumberScreen(
+                                onConfirmClick = { phoneNumber ->
+                                    navController.navigate("${AppRoute.PASSWORD_ROUTE}/$phoneNumber")
+                                }
+                            )
+                        }
+                        composable(
+                            route = AppRoute.PASSWORD_ROUTE_WITH_ARGS,
+                            arguments = listOf(navArgument("phoneNumber") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val phoneNumber = backStackEntry.arguments?.getString("phoneNumber")
+                            if (phoneNumber != null) {
+                                PasswordScreen(
+                                    phoneNumber = phoneNumber,
+                                    onConfirmClick = { password ->
+                                        // 비밀번호 입력 후 프로필 등록 화면으로 이동
+                                        navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE)
+                                    }
+                                )
+                            }
+                        }
                         composable(AppRoute.LOGIN_ROUTE) { LoginScreen(
                             onPinCompleted = { pin ->
                                 // PIN 입력 완료 시 홈 화면으로 이동
