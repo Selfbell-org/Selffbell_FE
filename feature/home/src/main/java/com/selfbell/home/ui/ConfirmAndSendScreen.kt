@@ -62,6 +62,7 @@ fun ConfirmAndSendScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text("다음과 같이 문자를 전송합니다.", style = Typography.headlineMedium, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.height(12.dp))
         Text("마지막으로 다시 확인해 주세요.", style = Typography.bodyMedium, textAlign = TextAlign.Center, color = Color(0xFF797479), modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(24.dp))
 

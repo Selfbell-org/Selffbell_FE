@@ -19,9 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.selfbell.core.model.Contact
+import com.selfbell.core.ui.composables.ContactListItem
 import com.selfbell.core.ui.composables.ReportScreenHeader
 import com.selfbell.core.ui.composables.SelfBellButton
 import com.selfbell.core.ui.composables.SelfBellButtonType
+import com.selfbell.core.ui.theme.Gray50
 import com.selfbell.core.ui.theme.Primary
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.feature.home.R
@@ -33,11 +35,14 @@ fun SelectRecipientScreen(
     onCancelClick: () -> Unit,
     onNextClick: (selectedGuardians: List<Contact>, message: String) -> Unit,
     selectedGuardians: List<Contact>,
-    onGuardianSelect: (Contact, Boolean) -> Unit,
+    onGuardianSelect: (Contact) -> Unit, // Boolean 매개변수 제거 (토글 로직은 상위에서 처리)
     selectedMessage: String,
     onMessageSelect: (String) -> Unit
 ) {
     val isNextButtonEnabled = selectedGuardians.isNotEmpty() && selectedMessage.isNotEmpty()
+
+    // 이 Composable에서 상태를 직접 관리하는 대신, 매개변수로 받은 guardians를 활용합니다.
+    // 이는 'ViewModel'에서 상태를 관리하고 UI는 그 상태를 표시하는 역할만 하도록 분리하는 Compose의 권장사항에 따릅니다.
 
     Column(
         modifier = Modifier
@@ -68,24 +73,46 @@ fun SelectRecipientScreen(
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-                .clip(RoundedCornerShape(12.dp))
-        ) {
-            LazyColumn(
+
+        // 로딩 또는 빈 화면 처리
+        if (guardians.isEmpty()) {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 200.dp)
-                    .padding(horizontal = 12.dp)
+                    .height(200.dp) // 높이 설정
+                    .border(1.dp, Color.LightGray, RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
             ) {
-                items(guardians) { contact ->
-                    GuardianItem(
-                        contact = contact,
-                        isSelected = contact in selectedGuardians,
-                        onSelect = { isSelected -> onGuardianSelect(contact, isSelected) }
-                    )
+                Text(
+                    text = "등록된 연락처가 없습니다.",
+                    style = Typography.bodyMedium,
+                    color = Color.Gray
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color.LightGray, RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(12.dp))
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 200.dp)
+                        .padding(horizontal = 12.dp)
+                ) {
+                    items(guardians) { contact ->
+                        ContactListItem(
+                            name = contact.name,
+                            phoneNumber = contact.phoneNumber,
+                            isSelected = contact in selectedGuardians,
+                            onButtonClick = {
+                                onGuardianSelect(contact)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -149,46 +176,6 @@ fun SelectRecipientScreen(
     }
 }
 
-// GuardianItem 디자인 수정
-@Composable
-fun GuardianItem(contact: Contact, isSelected: Boolean, onSelect: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(id = com.selfbell.core.R.drawable.default_profile_icon2), // 더미 프로필 아이콘
-            contentDescription = "프로필",
-            modifier = Modifier
-                .size(32.dp)
-                .clip(RoundedCornerShape(999.dp))
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Column(Modifier.weight(1f)) {
-            Text(text = contact.name, style = Typography.bodyMedium)
-            Text(text = contact.phoneNumber, style = Typography.labelSmall)
-        }
-        Text(
-            text = if (isSelected) "해제" else "선택",
-            color = if (isSelected) Color.White else Color.Black,
-            modifier = Modifier
-                .background(
-                    color = if (isSelected) Color.Red else Color.Transparent,
-                    shape = RoundedCornerShape(999.dp)
-                )
-                .border(
-                    width = 1.dp,
-                    color = if (isSelected) Color.Transparent else Color.LightGray,
-                    shape = RoundedCornerShape(999.dp)
-                )
-                .clickable { onSelect(!isSelected) }
-                .padding(vertical = 6.dp, horizontal = 16.dp)
-        )
-    }
-}
-
 // MessageTemplateItem 디자인 수정
 @Composable
 fun MessageTemplateItem(message: String, isSelected: Boolean, onSelect: (String) -> Unit) {
@@ -197,7 +184,7 @@ fun MessageTemplateItem(message: String, isSelected: Boolean, onSelect: (String)
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) Primary else Color(0xFFF0F0F0))
+            .background(if (isSelected) Primary else Gray50)
             .border(
                 width = 1.dp,
                 color = if (isSelected) Primary else Color.Transparent,
