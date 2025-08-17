@@ -1,3 +1,5 @@
+// AppNavHost.kt (수정된 전체 코드)
+
 package com.selfbell.app.navigation
 
 import androidx.compose.foundation.layout.Box
@@ -59,6 +61,7 @@ import com.selfbell.escort.ui.EscortScreen
 import com.selfbell.home.ui.HomeScreen
 import com.selfbell.home.ui.HomeViewModel
 import com.selfbell.settings.ui.SettingsScreen
+
 @Composable
 fun AppNavHost(
     navController: NavHostController,
@@ -113,9 +116,10 @@ fun AppNavHost(
 
 
                         composable(AppRoute.HOME_ROUTE) {
+                            // ⚠️ ViewModel의 StateFlow를 여기서 관찰할 필요가 없습니다.
+                            // ⚠️ HomeScreen이 hiltViewModel()을 통해 직접 ViewModel을 주입받습니다.
+                            /*
                             val homeViewModel: HomeViewModel = hiltViewModel()
-
-                            // ViewModel의 StateFlow들을 Composable이 관찰할 수 있는 State로 변환
                             val userLatLng by homeViewModel.userLatLng.collectAsState()
                             val userAddress by homeViewModel.userAddress.collectAsState()
                             val userProfileImg by homeViewModel.userProfileImg.collectAsState()
@@ -123,33 +127,13 @@ fun AppNavHost(
                             val criminalMarkers by homeViewModel.criminalMarkers.collectAsState()
                             val safetyBellMarkers by homeViewModel.safetyBellMarkers.collectAsState()
                             val searchedLatLng by homeViewModel.cameraTargetLatLng.collectAsState()
-
-                            // AddressSearchModal에서 사용될 상태 및 콜백 (ViewModel에서 가져온다고 가정)
-                            val searchText by homeViewModel.searchText.collectAsState() // ViewModel에 searchText: StateFlow<String> 필요
-                            // val searchResults by homeViewModel.searchResults.collectAsState() // 필요하다면 검색 결과도 ViewModel에서 관리
+                            val searchText by homeViewModel.searchText.collectAsState()
+                            */
 
                             HomeScreen(
-                                userLatLng = userLatLng,
-                                userAddress = userAddress,
-                                userProfileImg = userProfileImg,
-                                userProfileName = userProfileName,
-                                criminalMarkers = criminalMarkers,
-                                safetyBellMarkers = safetyBellMarkers,
-                                searchText = searchText, // ViewModel의 searchText 전달
-                                onSearchTextChange = { newText -> // ViewModel의 함수 호출
-                                    homeViewModel.onSearchTextChanged(newText) // ViewModel에 onSearchTextChanged(String) 함수 필요
-                                },
-                                onSearchClick = { // ViewModel의 함수 호출
-                                    homeViewModel.onSearchConfirmed()       // ViewModel에 onSearchConfirmed() 함수 필요
-                                },
-                                onModalMarkerItemClick = { mapMarkerData -> // ViewModel의 함수 호출 또는 지도 직접 제어
-                                    // 예시: 클릭된 마커의 위치로 지도 이동
-                                    homeViewModel.onMapMarkerClicked(mapMarkerData) // ViewModel에 onMapMarkerClicked(MapMarkerData) 함수 필요
-                                    // 또는 navController.navigate(...) 등으로 상세 화면 이동
-                                    println("Marker clicked in NavHost: ${mapMarkerData.address}")
-                                },
-                                onMsgReportClick = { println("Msg report clicked in Navhost") },
-                                searchedLatLng = searchedLatLng
+                                // ✅ 이제 개별 매개변수 대신 뷰모델과 필요한 콜백만 전달
+                                viewModel = hiltViewModel(),
+                                onMsgReportClick = { println("Msg report clicked in Navhost") }
                             )
                         }
                         composable(AppRoute.ALERTS_ROUTE) { AlertsScreen() }
