@@ -1,4 +1,4 @@
-import java.util.Properties // Properties 클래스를 사용하기 위해 import 추가
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.library)
@@ -7,10 +7,10 @@ plugins {
 }
 
 // local.properties 파일 로드
-val properties = Properties() // 'new' 키워드 없이 사용
+val properties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
-    properties.load(localPropertiesFile.inputStream()) // newDataInputStream() 대신 inputStream() 사용
+    localPropertiesFile.inputStream().use { properties.load(it) }
 }
 
 android {
@@ -23,9 +23,14 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
-        // Manifest Placeholders 추가
+        // Manifest Placeholders
         manifestPlaceholders["NAVER_MAPS_CLIENT_ID"] = properties.getProperty("NAVER_MAPS_CLIENT_ID", "YOUR_DEFAULT_ID")
         manifestPlaceholders["NAVER_MAPS_CLIENT_SECRET"] = properties.getProperty("NAVER_MAPS_CLIENT_SECRET", "YOUR_DEFAULT_SECRET")
+
+        // Hilt에 주입하기 위해 BuildConfig 필드 추가
+        // Note: I've corrected the property names to match your manifestPlaceholders.
+        buildConfigField("String", "NAVER_API_CLIENT_ID", properties.getProperty("NAVER_API_CLIENT_ID", "\"\""))
+        buildConfigField("String", "NAVER_API_CLIENT_SECRET", properties.getProperty("NAVER_API_CLIENT_SECRET", "\"\""))
     }
 
     buildTypes {
@@ -53,14 +58,13 @@ dependencies {
     implementation(project(":domain"))
 
     // Compose UI
-    implementation(platform(libs.androidx.compose.bom)) // Compose BOM
+    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.ui.test.manifest)
-
 
     // Android 기본 라이브러리 !!
     implementation(libs.androidx.core.ktx)
@@ -69,13 +73,13 @@ dependencies {
 
     // Networking (Retrofit, OkHttp)
     implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson) // JSON 파싱 (Gson 사용 시)
-    implementation(libs.okhttp.logging.interceptor) // API 로깅
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.logging.interceptor)
 
     // Local Database (Room)
     implementation(libs.room.runtime)
     kapt(libs.room.compiler)
-    implementation(libs.room.ktx) // 코루틴 지원
+    implementation(libs.room.ktx)
     implementation(libs.androidx.datastore.preferences)
 
     // Coroutines
