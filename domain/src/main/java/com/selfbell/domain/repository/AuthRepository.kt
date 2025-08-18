@@ -1,7 +1,7 @@
 package com.selfbell.domain.repository
 
 interface AuthRepository {
-    suspend fun signUp(name: String, phoneNumber: String, password: String)
+    suspend fun signUp(deviceToken : String, deviceType: String, name: String, phoneNumber: String, password: String)
 
     // 📌 로그인 함수 추가
     suspend fun login(phoneNumber: String, password: String)

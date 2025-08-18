@@ -13,8 +13,10 @@ class AuthRepositoryImpl @Inject constructor(
     private val authService: AuthService
 ) : AuthRepository {
 
-    override suspend fun signUp(name: String, phoneNumber: String, password: String) {
+    override suspend fun signUp(deviceToken : String,deviceType : String, name: String, phoneNumber: String, password: String) {
         val request = SignupRequest(
+            deviceToken = deviceToken,
+            deviceType = deviceType,
             name = name,
             phoneNumber = phoneNumber,
             password = password

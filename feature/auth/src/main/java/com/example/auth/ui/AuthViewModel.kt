@@ -33,6 +33,8 @@ class AuthViewModel @Inject constructor(
 
             try {
                 authRepository.signUp(
+                    deviceToken = "deviceToken2",
+                    deviceType = "ANDROID",
                     name = name,
                     phoneNumber = phoneNumber,
                     password = password
@@ -87,11 +89,11 @@ class AuthViewModel @Inject constructor(
 
 
     // 📌 서버 통신을 건너뛰는 임시 함수 추가
-    fun bypassRegisterMainAddress() {
-        _uiState.value = AuthUiState.Success
-    }
-    // 📌 임시로 서버 통신을 건너뛰는 함수
-    fun bypassSignUp() {
-        _uiState.value = AuthUiState.Success
-    }
+//    fun bypassRegisterMainAddress() {
+//        _uiState.value = AuthUiState.Success
+//    }
+//    // 📌 임시로 서버 통신을 건너뛰는 함수
+//    fun bypassSignUp() {
+//        _uiState.value = AuthUiState.Success
+//    }
 }

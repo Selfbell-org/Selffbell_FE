@@ -137,13 +137,13 @@ fun ProfileRegisterScreen(
                 SelfBellButton(
                     text = if (uiState is AuthUiState.Loading) "등록 중..." else "확인",
                     onClick = {
-                        viewModel.bypassSignUp()
+//                        viewModel.bypassSignUp()
 //일단 임시로 할게요
-//                        viewModel.signUp(
-//                            name = nickname,
-//                            phoneNumber = phoneNumber,
-//                            password = password
-//                        )
+                        viewModel.signUp(
+                            name = nickname,
+                            phoneNumber = phoneNumber,
+                            password = password
+                        )
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = nickname.isNotBlank() && uiState !is AuthUiState.Loading

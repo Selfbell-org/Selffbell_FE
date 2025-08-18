@@ -99,6 +99,12 @@ dependencies {
 //    implementation(libs.androidx.material3)
 //    implementation("com.google.android.material:material:1.12.0") // Or a similar version
 
+// Firebase (BOM 사용)
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    // Firebase Cloud Messaging (FCM)
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    // Firebase Analytics (선택사항이지만 일반적으로 함께 사용)
+    implementation("com.google.firebase:firebase-analytics-ktx")
 
     // Hilt
     implementation(libs.hilt.android)

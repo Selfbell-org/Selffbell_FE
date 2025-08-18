@@ -233,7 +233,7 @@ fun MainAddressSetupScreen(
                     text = if (authUiState is AuthUiState.Loading) "등록 중..." else "다음으로",
                     onClick = {
 //                          임시로 뚫어놓기 뻥뻥
-                        authViewModel.bypassRegisterMainAddress()
+                        //authViewModel.bypassRegisterMainAddress()
 
 //                        val name = if (isDirectInputSelected) directInputName else selectedAddrType
 //                        val tempToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6..." // temporary token
