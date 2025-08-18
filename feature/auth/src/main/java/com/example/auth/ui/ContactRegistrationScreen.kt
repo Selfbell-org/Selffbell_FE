@@ -25,8 +25,11 @@ import com.selfbell.core.ui.composables.AgreeTermsBottomSheet
 import com.selfbell.core.ui.composables.SelfBellButton
 import com.selfbell.core.ui.theme.Typography
 import kotlinx.coroutines.launch
+import com.selfbell.core.model.Contact
 
-// Contact 데이터 클래스는 ViewModel 파일에 정의되어 있습니다.
+// ContactRegistrationViewModel과 UI 상태를 관찰합니다.
+import com.example.auth.ui.ContactRegistrationViewModel
+import com.example.auth.ui.ContactUiState
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -35,18 +38,26 @@ fun ContactRegistrationScreen(
     modifier: Modifier = Modifier,
     viewModel: ContactRegistrationViewModel = hiltViewModel()
 ) {
-    val allContacts by viewModel.allContacts.collectAsState()
+    // 📌 ViewModel의 상태를 관찰합니다.
+    val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
+    // 📌 화면이 처음 나타날 때 연락처를 불러옵니다.
     LaunchedEffect(Unit) {
-        viewModel.loadContacts()
+        viewModel.loadAndSortContacts()
     }
 
-    val filteredContacts = remember(searchQuery, allContacts) {
+    // 📌 UI 상태에 따라 표시할 연락처 목록을 결정합니다.
+    val contactList = when (uiState) {
+        is ContactUiState.Success -> (uiState as ContactUiState.Success).contacts
+        else -> emptyList()
+    }
+
+    val filteredContacts = remember(searchQuery, contactList) {
         if (searchQuery.isEmpty()) {
-            allContacts
+            contactList
         } else {
-            allContacts.filter {
+            contactList.filter {
                 it.name.contains(searchQuery, ignoreCase = true) || it.phoneNumber.contains(searchQuery, ignoreCase = true)
             }
         }
@@ -57,11 +68,24 @@ fun ContactRegistrationScreen(
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     val isButtonEnabled = selectedContacts.isNotEmpty()
 
+    // 📌 선택된 연락처의 전화번호 목록을 가져옵니다.
+    val selectedPhoneNumbers = remember(selectedContacts, contactList) {
+        contactList.filter { selectedContacts.contains(it.id) }.map { it.phoneNumber }
+    }
+
     AgreeTermsBottomSheet(
         sheetState = sheetState,
         onAgreeAll = {
             coroutineScope.launch {
                 sheetState.hide()
+                // 📌 선택된 모든 연락처에 대해 API 요청을 보냅니다.
+                // TODO: 실제 토큰을 사용하도록 변경
+                val userToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+
+                selectedPhoneNumbers.forEach { phoneNumber ->
+                    viewModel.sendContactRequest(userToken, phoneNumber)
+                }
+
                 navController.navigate(AppRoute.ONBOARDING_COMPLETE_ROUTE)
             }
         }
@@ -105,37 +129,52 @@ fun ContactRegistrationScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (allContacts.isEmpty() && searchQuery.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                // 📌 ViewModel 상태에 따라 UI 표시
+                when (uiState) {
+                    is ContactUiState.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
                     }
-                } else if (filteredContacts.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "연락처를 찾을 수 없습니다.",
-                            style = Typography.bodyMedium,
-                            color = Color.Gray
-                        )
-                    }
-                } else {
-                    LazyColumn(modifier = Modifier.weight(1f)) {
-                        items(filteredContacts, key = { it.id }) { contact ->
-                            ContactListItem(
-                                name = contact.name,
-                                phoneNumber = contact.phoneNumber,
-                                isSelected = selectedContacts.contains(contact.id),
-                                onButtonClick = {
-                                    selectedContacts = if (selectedContacts.contains(contact.id)) {
-                                        selectedContacts - contact.id
-                                    } else {
-                                        if (selectedContacts.size < 3) {
-                                            selectedContacts + contact.id
-                                        } else {
-                                            selectedContacts
-                                        }
-                                    }
-                                }
+                    is ContactUiState.Error -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = (uiState as ContactUiState.Error).message,
+                                style = Typography.bodyMedium,
+                                color = Color.Red
                             )
+                        }
+                    }
+                    else -> {
+                        if (filteredContacts.isEmpty()) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "연락처를 찾을 수 없습니다.",
+                                    style = Typography.bodyMedium,
+                                    color = Color.Gray
+                                )
+                            }
+                        } else {
+                            LazyColumn(modifier = Modifier.weight(1f)) {
+                                items(filteredContacts, key = { it.id }) { contact ->
+                                    ContactListItem(
+                                        name = contact.name,
+                                        phoneNumber = contact.phoneNumber,
+                                        isSelected = selectedContacts.contains(contact.id),
+                                        onButtonClick = {
+                                            selectedContacts = if (selectedContacts.contains(contact.id)) {
+                                                selectedContacts - contact.id
+                                            } else {
+                                                if (selectedContacts.size < 3) {
+                                                    selectedContacts + contact.id
+                                                } else {
+                                                    selectedContacts
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 }

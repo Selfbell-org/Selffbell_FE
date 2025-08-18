@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
 import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.repository.AddressRepository
-import com.selfbell.domain.HomeRepository
 import com.selfbell.domain.User
+import com.selfbell.domain.repository.HomeRepository
 import com.selfbell.domain.model.EmergencyBell
 import com.selfbell.domain.model.EmergencyBellDetail
 import com.selfbell.domain.repository.EmergencyBellRepository

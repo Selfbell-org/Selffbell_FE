@@ -116,8 +116,8 @@ fun AddressSearchModal(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    if (markerData.distance.isNotBlank()) {
-                                        Text(markerData.distance, style = Typography.bodyMedium)
+                                    if (markerData.distance >0) {
+                                        Text("${markerData.distance.toInt()}m", style = Typography.bodyMedium)
                                     }
                                 }
                                 Spacer(Modifier.height(10.dp))

@@ -2,8 +2,8 @@ package com.selfbell.data.repository.impl
 
 import com.selfbell.data.api.HomeService
 import com.selfbell.data.api.UserDto
-import com.selfbell.domain.HomeRepository
 import com.selfbell.domain.User
+import com.selfbell.domain.repository.HomeRepository
 import javax.inject.Inject
 
 // 토큰 관리를 위한 추상화된 인터페이스 (예시)
