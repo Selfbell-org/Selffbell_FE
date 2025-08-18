@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.* // Use material3 components
@@ -50,10 +51,19 @@ fun HomeScreen(
 
     var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
     var infoWindowData by remember { mutableStateOf<Pair<LatLng, String>?>(null) }
+    var currentModalMode by remember { mutableStateOf(ModalMode.SEARCH) }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val mapClickModifier = Modifier.clickable {
+        if (currentModalMode != ModalMode.SEARCH) {
+            currentModalMode = ModalMode.SEARCH
+            // 상세정보 상태 초기화
+            viewModel.setSelectedEmergencyBellDetail(null)
+        }
+    }
 
     val smsPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -83,12 +93,13 @@ fun HomeScreen(
                 val userLatLng = state.userLatLng
                 val criminalMarkers = state.criminalMarkers
                 val safetyBellMarkers = state.safetyBellMarkers
+                val emergencyBells = state.emergencyBells
                 val modalMapMarkers = remember(criminalMarkers, safetyBellMarkers) {
                     (criminalMarkers + safetyBellMarkers).sortedBy { it.distance }
                 }
 
                 ReusableNaverMap(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().then(mapClickModifier), // ✅ 지도에 클릭 모디파이어 적용,
                     cameraPosition = cameraTargetLatLng ?: DEFAULT_LAT_LNG,
                     onMapReady = { map ->
                         naverMapInstance = map
@@ -96,11 +107,32 @@ fun HomeScreen(
                         addOrUpdateMarker(
                             naverMap = map,
                             latLng = userLatLng,
-                            data = MapMarkerData(userLatLng, "내 위치", MapMarkerData.MarkerType.USER, "0m"),
-                            onClick = { infoWindowData = it }
+                            data = MapMarkerData(userLatLng, "내 위치", MapMarkerData.MarkerType.USER, 0.0),
+                            onClick = { markerData -> infoWindowData = markerData.latLng to markerData.address }
                         )
-                        criminalMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { infoWindowData = it } }
-                        safetyBellMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { infoWindowData = it } }
+                        criminalMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { markerData -> infoWindowData = markerData.latLng to markerData.address } }
+                        safetyBellMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { markerData -> infoWindowData = markerData.latLng to markerData.address } }
+
+                        // ✅ 안심벨 마커를 지도에 추가하는 로직
+                        emergencyBells.forEach { bell ->
+                            addOrUpdateMarker(
+                                naverMap = map,
+                                latLng = LatLng(bell.lat, bell.lon),
+                                data = MapMarkerData(
+                                    latLng = LatLng(bell.lat, bell.lon),
+                                    address = bell.detail, // ins_DETAIL을 주소로 사용
+                                    type = MapMarkerData.MarkerType.SAFETY_BELL, // 안심벨 타입
+                                    distance = bell.distance,
+                                    objtId = bell.id
+                                ),
+                                onClick = { markerData ->
+                                    // 안심벨 마커 클릭 시 상세정보 API 호출
+                                    viewModel.getEmergencyBellDetail(markerData.objtId!!)
+                                    // 모달 모드를 상세 정보 보기로 전환
+                                    currentModalMode = ModalMode.DETAIL
+                                }
+                            )
+                        }
                     }
                 )
 
@@ -164,7 +196,11 @@ fun HomeScreen(
                     onSearchTextChange = viewModel::onSearchTextChanged,
                     onSearchClick = viewModel::onSearchConfirmed,
                     mapMarkers = modalMapMarkers,
-                    onMarkerItemClick = viewModel::onMapMarkerClicked
+                    onMarkerItemClick = viewModel::onMapMarkerClicked,
+                    // ✅ ViewModel에서 가져온 상세정보를 모달에 전달
+                    selectedEmergencyBellDetail = state.selectedEmergencyBellDetail,
+                    // ✅ 모달의 현재 모드 전달
+                    modalMode = currentModalMode
                 )
             }
             is HomeUiState.Error -> {
@@ -231,14 +267,14 @@ fun addOrUpdateMarker(
     naverMap: NaverMap,
     latLng: LatLng,
     data: MapMarkerData,
-    onClick: (Pair<LatLng, String>) -> Unit
+    onClick: (MapMarkerData) -> Unit
 ) {
     Marker().apply {
         position = latLng
         map = naverMap
         icon = OverlayImage.fromResource(data.getIconResource())
         setOnClickListener {
-            onClick(latLng to data.address)
+            onClick(data) // ✅ data 객체 전체를 전달
             true
         }
     }
