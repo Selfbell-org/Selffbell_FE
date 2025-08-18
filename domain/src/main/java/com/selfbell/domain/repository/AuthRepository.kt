@@ -5,6 +5,9 @@ interface AuthRepository {
 
     // 📌 로그인 함수 추가
     suspend fun login(phoneNumber: String, password: String)
+
+    suspend fun registerMainAddress(token: String, name: String, address: String, lat: Double, lon: Double)
+
 }
 
 data class User(
