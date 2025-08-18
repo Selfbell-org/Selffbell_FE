@@ -4,7 +4,9 @@ package com.selfbell.data.api
 import com.selfbell.data.api.request.SignupRequest
 import com.selfbell.data.api.response.SignupResponse
 import com.selfbell.data.di.DataModule
+import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 // 서버로 보낼 회원가입 요청 데이터 클래스
@@ -25,6 +27,12 @@ data class AuthResponse(
     val userId: String,
     val message: String
 )
+data class MainAddressRequest(
+    val name: String,
+    val address: String,
+    val lat: Double,
+    val lon: Double
+)
 
 /**
  * 백엔드 API와의 통신을 위한 Retrofit 서비스 인터페이스
@@ -36,4 +44,10 @@ interface AuthService {
 
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): AuthResponse
+
+    @POST("/api/v1/addresses")
+    suspend fun registerMainAddress(
+        @Header("Authorization") token: String,
+        @Body request: MainAddressRequest
+    ): Response<Unit> // 응답 바디가 없을 경우 Response<Unit> 사용
 }
