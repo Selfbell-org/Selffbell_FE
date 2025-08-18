@@ -41,6 +41,9 @@ fun EscortScreen(
 
     val allContacts by viewModel.allContacts.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    // ✅ ViewModel의 세션 활성화 상태를 구독
+    val isSessionActive by viewModel.isSessionActive.collectAsState()
+
     val filteredContacts = remember(searchQuery, allContacts) {
         if (searchQuery.isEmpty()) {
             allContacts
@@ -50,7 +53,6 @@ fun EscortScreen(
     }
 
     var showShareRouteSheet by remember { mutableStateOf(false) }
-    var isEscorting by remember { mutableStateOf(false) }
 
     BackHandler(enabled = showShareRouteSheet) {
         showShareRouteSheet = false
@@ -85,11 +87,14 @@ fun EscortScreen(
             )
         }
 
-        if (isEscorting) {
+        if (isSessionActive) {
             EscortingTopBar(
                 modifier = Modifier.align(Alignment.TopCenter),
                 onShareClick = {
                     showShareRouteSheet = true
+                },
+                onEndClick = {
+                    viewModel.endSafeWalk() // ✅ ViewModel의 종료 함수 호출
                 }
             )
         } else {
@@ -137,7 +142,7 @@ fun EscortScreen(
             SelfBellButton(
                 text = "출발",
                 onClick = {
-                    isEscorting = true
+                    viewModel.startSafeWalk() // ✅ ViewModel의 시작 함수 호출
                 },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

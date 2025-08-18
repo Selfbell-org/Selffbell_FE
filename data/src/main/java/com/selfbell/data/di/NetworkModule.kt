@@ -4,8 +4,11 @@ import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.ContactService
 import com.selfbell.data.api.EmergencyBellApi
 import com.selfbell.data.api.HomeService
+import com.selfbell.data.api.SafeWalksApi
 import com.selfbell.data.repository.impl.EmergencyBellRepositoryImpl
+import com.selfbell.data.repository.impl.SafeWalkRepositoryImpl
 import com.selfbell.domain.repository.EmergencyBellRepository
+import com.selfbell.domain.repository.SafeWalkRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,7 +24,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "http://3.34.181.61:8080/"
+    private const val BASE_URL = "http://3.37.244.247:8080"
 
     @Provides
     @Singleton
@@ -74,5 +77,17 @@ object NetworkModule {
     @Singleton
     fun provideEmergencyBellRepository(api: EmergencyBellApi): EmergencyBellRepository {
         return EmergencyBellRepositoryImpl(api)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSafeWalksApi(@Named("backendRetrofit") retrofit: Retrofit): SafeWalksApi {
+        return retrofit.create(SafeWalksApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSafeWalkRepository(impl: SafeWalkRepositoryImpl): SafeWalkRepository {
+        return impl
     }
 }

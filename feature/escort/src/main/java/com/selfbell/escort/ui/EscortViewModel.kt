@@ -3,6 +3,7 @@ package com.selfbell.escort.ui
 
 import android.content.ContentResolver
 import android.provider.ContactsContract
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
@@ -14,6 +15,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.selfbell.core.model.Contact // 이 import를 사용합니다.
+import com.selfbell.domain.model.SessionEndReason
+import com.selfbell.domain.repository.SafeWalkRepository
 
 
 // 연락처 데이터 클래스
@@ -25,7 +28,8 @@ data class Contact(
 
 @HiltViewModel
 class EscortViewModel @Inject constructor(
-    private val contentResolver: ContentResolver
+    private val contentResolver: ContentResolver,
+    private val safeWalkRepository: SafeWalkRepository
 ) : ViewModel() {
     // 출발지/도착지 상태
     private val _startLocation = MutableStateFlow(LocationState("현재 위치", LatLng(37.5665, 126.9780)))
@@ -43,8 +47,66 @@ class EscortViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
+    // ✅ 세션 관리 상태
+    private val _isSessionActive = MutableStateFlow(false)
+    val isSessionActive = _isSessionActive.asStateFlow()
+    private val _sessionId = MutableStateFlow<Long?>(null)
+
     init {
         loadContacts()
+        checkCurrentSession() // ✅ ViewModel 생성 시 진행 중인 세션 확인
+    }
+
+    // ✅ 진행 중인 세션 확인 함수
+    private fun checkCurrentSession() {
+        viewModelScope.launch {
+            val currentSession = safeWalkRepository.getCurrentSafeWalk()
+            if (currentSession != null) {
+                _sessionId.value = currentSession.sessionId
+                _isSessionActive.value = true
+            }
+        }
+    }
+
+    // ✅ 안심귀가 시작 함수
+    fun startSafeWalk() {
+        viewModelScope.launch {
+            try {
+                val session = safeWalkRepository.createSafeWalkSession(
+                    originLat = _startLocation.value.latLng.latitude,
+                    originLon = _startLocation.value.latLng.longitude,
+                    originAddress = _startLocation.value.name,
+                    destinationLat = _destinationLocation.value.latLng.latitude,
+                    destinationLon = _destinationLocation.value.latLng.longitude,
+                    destinationAddress = _destinationLocation.value.name,
+                    expectedArrival = null, // TODO: 시간 지정 모드일 때 값 설정
+                    timerMinutes = _timerMinutes.value,
+                    guardianIds = emptyList() // TODO: 보호자 선택 기능 연동
+                )
+                // 성공 시 상태 업데이트
+                _sessionId.value = session.sessionId
+                _isSessionActive.value = true
+            } catch (e: Exception) {
+                Log.e("EscortViewModel", "세션 생성 실패", e)
+                // TODO: 사용자에게 오류 알림
+            }
+        }
+    }
+
+    // ✅ 안심귀가 종료 함수
+    fun endSafeWalk() {
+        _sessionId.value?.let { currentSessionId ->
+            viewModelScope.launch {
+                val success = safeWalkRepository.endSafeWalkSession(currentSessionId, SessionEndReason.MANUAL)
+                if (success) {
+                    _isSessionActive.value = false
+                    _sessionId.value = null
+                } else {
+                    // TODO: 종료 실패 처리
+                    Log.d("EscortViewModel", "안심귀가 종료 실패")
+                }
+            }
+        }
     }
 
     fun updateStartLocation(name: String, latLng: LatLng) {

@@ -1,6 +1,6 @@
 package com.selfbell.home.ui
-// HomeViewModel.kt (수정된 전체 코드)
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
@@ -105,7 +105,7 @@ class HomeViewModel @Inject constructor(
                 val detail = emergencyBellRepository.getEmergencyBellDetail(objtId)
                 setSelectedEmergencyBellDetail(detail)
             } catch (e: Exception) {
-                // TODO: 상세 정보 가져오기 실패 처리
+                Log.d("HomeViewModel", "Error fetching emergency bell detail: ${e.message}")
                 setSelectedEmergencyBellDetail(null)
             }
         }

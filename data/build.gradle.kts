@@ -79,6 +79,7 @@ dependencies {
 
     // Local Database (Room)
     implementation(libs.room.runtime)
+    implementation(libs.play.services.maps)
     kapt(libs.room.compiler)
     implementation(libs.room.ktx) // 코루틴 지원
     implementation(libs.androidx.datastore.preferences)
