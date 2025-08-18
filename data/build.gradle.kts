@@ -26,6 +26,11 @@ android {
         // Manifest Placeholders 추가
         manifestPlaceholders["NAVER_MAPS_CLIENT_ID"] = properties.getProperty("NAVER_MAPS_CLIENT_ID", "YOUR_DEFAULT_ID")
         manifestPlaceholders["NAVER_MAPS_CLIENT_SECRET"] = properties.getProperty("NAVER_MAPS_CLIENT_SECRET", "YOUR_DEFAULT_SECRET")
+
+        // Hilt에 주입하기 위해 BuildConfig 필드 추가
+
+        buildConfigField("String", "NAVER_API_CLIENT_ID", "\"${properties.getProperty("NAVER_API_CLIENT_ID", "")}\"")
+        buildConfigField("String", "NAVER_API_CLIENT_SECRET", "\"${properties.getProperty("NAVER_API_CLIENT_SECRET", "")}\"")
     }
 
     buildTypes {

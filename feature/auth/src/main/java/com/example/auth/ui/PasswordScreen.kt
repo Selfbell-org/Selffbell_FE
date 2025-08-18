@@ -35,6 +35,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.selfbell.auth.ui.AuthViewModel
 import com.selfbell.core.R
 import com.selfbell.core.ui.composables.OnboardingProgressBar
 import com.selfbell.core.ui.composables.SelfBellButton
@@ -47,7 +49,8 @@ import com.selfbell.core.ui.theme.SelfBellTheme
 fun PasswordScreen(
     phoneNumber: String,
     onConfirmClick: (password: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: AuthViewModel = hiltViewModel() // AuthViewModel 주입
 ) {
     var password by remember { mutableStateOf("") }
 
