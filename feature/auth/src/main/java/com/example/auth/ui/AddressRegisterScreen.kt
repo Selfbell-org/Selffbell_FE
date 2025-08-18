@@ -44,6 +44,7 @@ import kotlin.text.isBlank
 @Composable
 fun AddressRegisterScreen(
     navController: NavController,
+    onNextClick: (address: String, lat: Double, lon: Double) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AddressRegisterViewModel = hiltViewModel()
 ) {
@@ -250,13 +251,7 @@ fun AddressRegisterScreen(
                     val selectedAddress = viewModel.searchAddress.value
                     val selectedLatLng = viewModel.selectedLatLng.value
                     if (selectedAddress.isNotBlank() && selectedLatLng != null) {
-                        navController.navigate(
-                            AppRoute.mainAddressSetupRoute(
-                                address = selectedAddress,
-                                lat = selectedLatLng.latitude.toFloat(),
-                                lng = selectedLatLng.longitude.toFloat()
-                            )
-                        )
+                        onNextClick(selectedAddress, selectedLatLng.latitude, selectedLatLng.longitude)
                     }
                 },
                 modifier = Modifier
@@ -268,12 +263,13 @@ fun AddressRegisterScreen(
         }
     }
 }
-
-
 @Preview(showBackground = true)
 @Composable
 fun AddressRegisterScreenPreview() {
     SelfBellTheme {
-        AddressRegisterScreen(navController = rememberNavController())
+        AddressRegisterScreen(
+            navController = rememberNavController(),
+            onNextClick = { _, _, _ -> } // 📌 새로운 콜백 파라미터 추가
+        )
     }
 }

@@ -1,4 +1,3 @@
-// AppNavHost.kt (Corrected Code)
 package com.selfbell.app.navigation
 
 import androidx.compose.foundation.layout.Box
@@ -65,8 +64,8 @@ fun AppNavHost(
         setOf(
             AppRoute.SPLASH_ROUTE,
             AppRoute.LANDING_ROUTE,
-            AppRoute.PHONE_NUMBER_LOGIN_ROUTE, // 📌 로그인용 경로 추가
-            AppRoute.LOGIN_PIN_ROUTE_WITH_ARGS, // 📌 로그인 PIN 경로 추가
+            AppRoute.PHONE_NUMBER_LOGIN_ROUTE,
+            AppRoute.LOGIN_PIN_ROUTE_WITH_ARGS,
             AppRoute.PROFILE_REGISTER_ROUTE_WITH_ARGS,
             AppRoute.PERMISSION_ROUTE,
             AppRoute.ADDRESS_REGISTER_ROUTE,
@@ -79,8 +78,8 @@ fun AppNavHost(
     }
     val shouldShowBottomBar = currentRoute !in routesWithoutBottomBar
     var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
-    // 지도 화면에서 사용할 마커 참조 (선택적)
     var currentMapMarker by remember { mutableStateOf<Marker?>(null) }
+
     SelfBellTheme {
         Scaffold(
             modifier = modifier.fillMaxSize(),
@@ -98,11 +97,11 @@ fun AppNavHost(
                     )
                 ) {
                     composable(AppRoute.SPLASH_ROUTE) { SplashScreen(navController = navController) }
-                    composable(AppRoute.HOME_ROUTE) { HomeScreen(
-                        // ✅ 이제 개별 매개변수 대신 뷰모델과 필요한 콜백만 전달
-                        viewModel = hiltViewModel(),
-                        onMsgReportClick = { println("Msg report clicked in Navhost") }
-                    )
+                    composable(AppRoute.HOME_ROUTE) {
+                        HomeScreen(
+                            viewModel = hiltViewModel(),
+                            onMsgReportClick = { println("Msg report clicked in Navhost") }
+                        )
                     }
 
                     composable(AppRoute.ALERTS_ROUTE) { AlertsScreen() }
@@ -117,14 +116,16 @@ fun AppNavHost(
                         )
                     }
 
+                    // 📌 회원가입 플로우
                     composable(AppRoute.PHONE_NUMBER_ROUTE) {
                         PhoneNumberScreen(
                             onConfirmClick = { phoneNumber ->
                                 navController.navigate(AppRoute.passwordRoute(phoneNumber))
                             }
                         )
-
                     }
+
+                    // 📌 로그인 플로우
                     composable(AppRoute.PHONE_NUMBER_LOGIN_ROUTE) {
                         PhoneNumberLoginScreen(
                             onConfirmClick = { phoneNumber ->
@@ -132,12 +133,13 @@ fun AppNavHost(
                             }
                         )
                     }
+
                     composable(
                         route = AppRoute.LOGIN_PIN_ROUTE_WITH_ARGS,
                         arguments = listOf(navArgument("phoneNumber") { type = NavType.StringType })
                     ) { backStackEntry ->
                         val phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: ""
-                        LoginScreen( // LoginScreen이 PIN 입력 화면으로 사용됨
+                        LoginScreen(
                             phoneNumber = phoneNumber,
                             onLoginSuccess = {
                                 navController.navigate(AppRoute.HOME_ROUTE) {
@@ -155,7 +157,6 @@ fun AppNavHost(
                         PasswordScreen(
                             phoneNumber = phoneNumber,
                             onConfirmClick = { password ->
-                                // 📌 수정된 부분: AppRoute.profileRegisterRoute 헬퍼 함수 사용
                                 navController.navigate(AppRoute.profileRegisterRoute(phoneNumber, password))
                             }
                         )
@@ -177,16 +178,6 @@ fun AppNavHost(
                         )
                     }
 
-//                    composable(AppRoute.LOGIN_ROUTE) {
-//                        LoginScreen(
-//                            onPinCompleted = {
-//                                navController.navigate(AppRoute.HOME_ROUTE) {
-//                                    popUpTo(AppRoute.LOGIN_ROUTE) { inclusive = true }
-//                                }
-//                            }
-//                        )
-//                    }
-
                     composable(AppRoute.CONTACT_REGISTER_ROUTE) {
                         ContactRegistrationScreen(navController = navController)
                     }
@@ -195,39 +186,40 @@ fun AppNavHost(
                         OnboardingCompleteScreen(navController = navController)
                     }
 
+                    // 📌 AddressRegisterScreen에 onNextClick 콜백 추가
                     composable(AppRoute.ADDRESS_REGISTER_ROUTE) {
-                        AddressRegisterScreen(navController = navController)
+                        AddressRegisterScreen(
+                            navController = navController,
+                            onNextClick = { address, lat, lng ->
+                                navController.navigate(AppRoute.mainAddressSetupRoute(address, lat.toFloat(), lng.toFloat()))
+                            }
+                        )
                     }
 
                     composable(AppRoute.PERMISSION_ROUTE) {
                         PermissionScreen(navController = navController)
                     }
 
-                    composable(AppRoute.REUSABEL_MAP) { ReusableNaverMap(
-                        modifier = Modifier.fillMaxSize(),
-                        onMapReady = { map ->
-                            naverMapInstance = map // NaverMap 객체 저장
-                            println("NaverMap 준비 완료 in AppNavHost!")
+                    composable(AppRoute.REUSABEL_MAP) {
+                        ReusableNaverMap(
+                            modifier = Modifier.fillMaxSize(),
+                            onMapReady = { map ->
+                                naverMapInstance = map
+                                println("NaverMap 준비 완료 in AppNavHost!")
+                                map.uiSettings.isCompassEnabled = true
+                                map.uiSettings.isZoomControlEnabled = true
+                                map.uiSettings.isLocationButtonEnabled = true
+                                val initialPosition = LatLng(37.5665, 126.9780)
+                                map.moveCamera(CameraUpdate.scrollTo(initialPosition))
+                                val marker = Marker()
+                                marker.position = initialPosition
+                                marker.captionText = "초기 위치"
+                                marker.map = map
+                                currentMapMarker = marker
+                            }
+                        )
+                    }
 
-                            // 예시: 지도 준비 시 초기 설정
-                            map.uiSettings.isCompassEnabled = true
-                            map.uiSettings.isZoomControlEnabled = true
-                            map.uiSettings.isLocationButtonEnabled = true // 위치 권한 및 LocationSource 설정 필요
-
-                            // 예시: 특정 위치로 카메라 이동
-                            val initialPosition = LatLng(37.5665, 126.9780)
-                            map.moveCamera(CameraUpdate.scrollTo(initialPosition))
-
-                            // 예시: 초기 마커 추가
-                            val marker = Marker()
-                            marker.position = initialPosition
-                            marker.captionText = "초기 위치"
-                            marker.map = map
-                            currentMapMarker = marker
-
-                            // 필요하다면 추가적인 지도 설정 수행
-                        }
-                    ) }
                     composable(
                         route = AppRoute.MAIN_ADDRESS_SETUP_ROUTE_WITH_ARGS,
                         arguments = listOf(
@@ -235,8 +227,17 @@ fun AppNavHost(
                             navArgument("lat") { type = NavType.FloatType },
                             navArgument("lng") { type = NavType.FloatType }
                         )
-                    ) {
-                        MainAddressSetupScreen(navController = navController)
+                    ) { backStackEntry ->
+                        val address = backStackEntry.arguments?.getString("address") ?: ""
+                        val lat = backStackEntry.arguments?.getFloat("lat")?.toDouble() ?: 0.0
+                        val lng = backStackEntry.arguments?.getFloat("lng")?.toDouble() ?: 0.0
+
+                        MainAddressSetupScreen(
+                            navController = navController,
+                            address = address,
+                            lat = lat,
+                            lon = lng
+                        )
                     }
                 }
             }
