@@ -17,5 +17,13 @@ class SelfBellApplication : Application() {
         val clientId = getString(R.string.naver_maps_client_id_from_gradle) // 생성한 리소스 ID 사용
         NaverMapSdk.getInstance(this).client =
             NaverMapSdk.NcpKeyClient(clientId)
+//        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+//            if (!task.isSuccessful) {
+//                Log.w("FCM_TOKEN", "FCM 토큰 가져오기 실패", task.exception)
+//                return@addOnCompleteListener
+//            }
+//            val token = task.result
+//            Log.d("FCM_TOKEN", "FCM 토큰: $token")
+//        }
     }
 }

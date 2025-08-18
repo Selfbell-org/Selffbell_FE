@@ -4,9 +4,9 @@ package com.selfbell.data.api
 import com.selfbell.data.api.request.SignupRequest
 import com.selfbell.data.api.response.SignupResponse
 import com.selfbell.data.di.DataModule
+import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.Header
 import retrofit2.http.POST
 
 // 서버로 보낼 회원가입 요청 데이터 클래스
@@ -21,6 +21,10 @@ data class LoginRequest(
     val password: String
 )
 
+data class LoginResponse(
+    @SerializedName(value = "accessToken", alternate = ["access_token", "token"]) val accessToken: String?,
+    @SerializedName(value = "refreshToken", alternate = ["refresh_token"]) val refreshToken: String?
+)
 // 서버로부터 받을 응답 데이터 클래스 (예시)
 data class AuthResponse(
     val token: String, // 인증 토큰
@@ -42,12 +46,11 @@ interface AuthService {
     @POST("/api/v1/auth/signup")
     suspend fun signup(@Body request: SignupRequest): SignupResponse
 
-    @POST("api/auth/login")
-    suspend fun login(@Body request: LoginRequest): AuthResponse
+    @POST("api/v1/auth/login")
+    suspend fun login(@Body request: LoginRequest): LoginResponse
 
     @POST("/api/v1/addresses")
     suspend fun registerMainAddress(
-        @Header("Authorization") token: String,
         @Body request: MainAddressRequest
     ): Response<Unit> // 응답 바디가 없을 경우 Response<Unit> 사용
 }

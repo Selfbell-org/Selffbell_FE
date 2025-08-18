@@ -31,32 +31,32 @@ class ProfileRegisterViewModel @Inject constructor(
      * 회원가입 API를 호출하는 함수.
      * ProfileRegisterScreen에서 호출됩니다.
      */
-    fun signUp(name: String, phoneNumber: String, password: String) {
-        // 중복 호출 방지
-        if (_uiState.value.isLoading) return
-
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-
-        viewModelScope.launch {
-            try {
-                // AuthRepository의 signUp 함수를 호출
-                authRepository.signUp(name, phoneNumber, password)
-
-                // API 호출 성공 시 상태 업데이트
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    isSuccess = true
-                )
-                Log.d("ProfileRegisterVM", "회원가입 성공. 다음 화면으로 이동 준비.")
-
-            } catch (e: Exception) {
-                // API 호출 실패 시 상태 업데이트
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = e.message ?: "알 수 없는 오류가 발생했습니다."
-                )
-                Log.e("ProfileRegisterVM", "회원가입 실패: ${e.message}")
-            }
-        }
-    }
+//    fun signUp(name: String, phoneNumber: String, password: String) {
+//        // 중복 호출 방지
+//        if (_uiState.value.isLoading) return
+//
+//        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+//
+//        viewModelScope.launch {
+//            try {
+//                // AuthRepository의 signUp 함수를 호출
+//                authRepository.signUp(deviceToken = "a", deviceType = "ANDROID",name, phoneNumber, password)
+//
+//                // API 호출 성공 시 상태 업데이트
+//                _uiState.value = _uiState.value.copy(
+//                    isLoading = false,
+//                    isSuccess = true
+//                )
+//                Log.d("ProfileRegisterVM", "회원가입 성공. 다음 화면으로 이동 준비.")
+//
+//            } catch (e: Exception) {
+//                // API 호출 실패 시 상태 업데이트
+//                _uiState.value = _uiState.value.copy(
+//                    isLoading = false,
+//                    errorMessage = e.message ?: "알 수 없는 오류가 발생했습니다."
+//                )
+//                Log.e("ProfileRegisterVM", "회원가입 실패: ${e.message}")
+//            }
+//        }
+//    }
 }
