@@ -6,28 +6,16 @@ import com.selfbell.domain.User
 import com.selfbell.domain.repository.HomeRepository
 import javax.inject.Inject
 
-// 토큰 관리를 위한 추상화된 인터페이스 (예시)
-interface TokenManager {
-    suspend fun getToken(): String?
-}
-
-// TokenManager의 구현체
-class TokenManagerImpl @Inject constructor() : TokenManager {
-    override suspend fun getToken(): String? {
-        return "Bearer YOUR_STORED_TOKEN_HERE"
-    }
-}
-
 class HomeRepositoryImpl @Inject constructor(
     private val homeService: HomeService,
     private val tokenManager: TokenManager
 ) : HomeRepository {
 
     override suspend fun getUserProfile(): User {
-        val token = tokenManager.getToken()
+        val token = tokenManager.getAccessToken()
             ?: throw IllegalStateException("인증 토큰이 존재하지 않습니다.")
 
-        val userDto = homeService.getUserProfile(token)
+        val userDto = homeService.getUserProfile("Bearer $token")
 
         // API 응답 DTO를 도메인 모델(User)로 변환
         return userDto.toDomainUser()

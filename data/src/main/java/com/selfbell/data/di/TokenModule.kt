@@ -2,8 +2,8 @@
 
 package com.selfbell.data.di
 
+import com.selfbell.data.repository.impl.SecurePreferences
 import com.selfbell.data.repository.impl.TokenManager
-import com.selfbell.data.repository.impl.TokenManagerImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,6 +17,6 @@ abstract class TokenModule {
     @Binds
     @Singleton
     abstract fun bindTokenManager(
-        tokenManagerImpl: TokenManagerImpl
+        securePreferences: SecurePreferences
     ): TokenManager
 }

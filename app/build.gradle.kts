@@ -111,6 +111,9 @@ dependencies {
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // DataStore for secure token storage
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
     //Naver Maps api
     implementation("com.naver.maps:map-sdk:3.22.1")
 

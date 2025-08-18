@@ -232,19 +232,15 @@ fun MainAddressSetupScreen(
                 SelfBellButton(
                     text = if (authUiState is AuthUiState.Loading) "등록 중..." else "다음으로",
                     onClick = {
-//                          임시로 뚫어놓기 뻥뻥
-                        //authViewModel.bypassRegisterMainAddress()
-
-//                        val name = if (isDirectInputSelected) directInputName else selectedAddrType
-//                        val tempToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6..." // temporary token
-//
-//                        authViewModel.registerMainAddress(
-//                            token = tempToken,
-//                            name = name,
-//                            address = address, // 📌 Use the parameter directly
-//                            lat = lat,         // 📌 Use the parameter directly
-//                            lon = lon          // 📌 Use the parameter directly
-//                        )
+                        val name = if (isDirectInputSelected) directInputName else selectedAddrType
+                        
+                        // ✅ 실제 주소 등록 API 호출 (토큰은 AuthInterceptor에서 자동 추가)
+                        authViewModel.registerMainAddress(
+                            name = name,
+                            address = address,
+                            lat = lat,
+                            lon = lon
+                        )
                     },
                     modifier = Modifier
                         .fillMaxWidth()

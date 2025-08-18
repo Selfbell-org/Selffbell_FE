@@ -1,5 +1,6 @@
 package com.selfbell.data.di
 
+import com.selfbell.data.api.AuthInterceptor
 import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.ContactService
 import com.selfbell.data.api.EmergencyBellApi
@@ -26,11 +27,12 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("backendOkHttpClient") // 📌 OkHttpClient에 이름 지정
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
         return OkHttpClient.Builder()
+            .addInterceptor(authInterceptor) // ✅ 인증 인터셉터 추가
             .addInterceptor(loggingInterceptor)
             .build()
     }
