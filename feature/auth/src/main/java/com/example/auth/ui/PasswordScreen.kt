@@ -54,9 +54,9 @@ fun PasswordScreen(
 ) {
     var password by remember { mutableStateOf("") }
 
-    val isLengthValid = password.length in 8..20
-    val isContentValid = password.any { it.isLetter() } && password.any { it.isDigit() }
-
+    val isLengthValid = password.length in 4..20
+//    val isContentValid = password.any { it.isLetter() } && password.any { it.isDigit() }
+    val isContentValid = true
     val isPasswordValid = isLengthValid && isContentValid
 
     val currentOnboardingStep = 1 // Corrected to 2 for this screen
@@ -119,7 +119,7 @@ fun PasswordScreen(
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                placeholder = { Text("영문, 숫자, 특수문자 포함 8자 이상") },
+                placeholder = { Text("숫자로 이루어진 4자리 수") },
                 shape = RoundedCornerShape(8.dp),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.White,
@@ -136,14 +136,14 @@ fun PasswordScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
             ) {
                 ValidationCheckText(
-                    text = "8-20자 이내",
+                    text = "숫자 4자리 조합으로 입력해주세요",
                     isValid = isLengthValid
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                ValidationCheckText(
-                    text = "영문 대소문자, 숫자 포함",
-                    isValid = isContentValid
-                )
+//                ValidationCheckText(
+//                    text = "영문 대소문자, 숫자 포함",
+//                    isValid = isContentValid
+//                )
             }
             Spacer(modifier = Modifier.height(24.dp))
 
