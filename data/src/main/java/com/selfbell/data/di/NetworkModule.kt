@@ -1,14 +1,13 @@
 package com.selfbell.data.di
 
-
-import com.selfbell.data.BuildConfig
 import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.HomeService
-import com.selfbell.data.api.NaverApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Named
@@ -18,46 +17,40 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
+    private const val BASE_URL = "http://3.34.181.61:8080/"
+
+    @Provides
+    @Singleton
+    @Named("backendOkHttpClient") // 📌 OkHttpClient에 이름 지정
+    fun provideOkHttpClient(): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
     @Singleton
     @Provides
-    fun provideRetrofit(): Retrofit {
+    @Named("backendRetrofit")
+    fun provideRetrofit(@Named("backendOkHttpClient") okHttpClient: OkHttpClient): Retrofit { // 📌 이름으로 주입받음
         return Retrofit.Builder()
-                .baseUrl("https://your-backend-api-url.com/") // ⚠️ 백엔드 API의 기본 URL로 변경
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
     @Singleton
     @Provides
-    fun provideAuthService(retrofit: Retrofit): AuthService {
+    fun provideAuthService(@Named("backendRetrofit") retrofit: Retrofit): AuthService {
         return retrofit.create(AuthService::class.java)
     }
 
     @Singleton
     @Provides
-    fun provideHomeService(retrofit: Retrofit): HomeService {
+    fun provideHomeService(@Named("backendRetrofit") retrofit: Retrofit): HomeService {
         return retrofit.create(HomeService::class.java)
-    }
-
-    @Singleton
-    @Provides
-    fun provideNaverApiService(retrofit: Retrofit): NaverApiService {
-        return retrofit.create(NaverApiService::class.java)
-    }
-
-    // BuildConfig를 통해 네이버 API 클라이언트 ID를 제공
-    @Provides
-    @Singleton
-    @Named("X-NCP-APIGW-API-KEY-ID")
-    fun provideNaverApiClientId(): String {
-        return BuildConfig.NAVER_API_CLIENT_ID
-    }
-
-    // BuildConfig를 통해 네이버 API 클라이언트 시크릿을 제공
-    @Provides
-    @Singleton
-    @Named("X-NCP-APIGW-API-KEY")
-    fun provideNaverApiClientSecret(): String {
-        return BuildConfig.NAVER_API_CLIENT_SECRET
     }
 }

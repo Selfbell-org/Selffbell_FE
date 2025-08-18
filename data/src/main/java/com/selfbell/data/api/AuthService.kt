@@ -1,6 +1,9 @@
 package com.selfbell.data.api
 
 
+import com.selfbell.data.api.request.SignupRequest
+import com.selfbell.data.api.response.SignupResponse
+import com.selfbell.data.di.DataModule
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -28,8 +31,8 @@ data class AuthResponse(
  */
 interface AuthService {
 
-    @POST("api/auth/signup")
-    suspend fun signUp(@Body request: SignUpRequest): AuthResponse
+    @POST("/api/v1/auth/signup")
+    suspend fun signup(@Body request: SignupRequest): SignupResponse
 
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): AuthResponse

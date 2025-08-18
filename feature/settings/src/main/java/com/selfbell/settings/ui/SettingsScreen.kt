@@ -75,7 +75,7 @@ fun SettingsScreen(
                 SettingsMenuItem(
                     label = "프로필 관리",
                     onClick = {
-                        navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE)
+                        navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE_WITH_ARGS)
                     }
                 )
             }
