@@ -2,7 +2,10 @@ package com.selfbell.data.di
 
 import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.ContactService
+import com.selfbell.data.api.EmergencyBellApi
 import com.selfbell.data.api.HomeService
+import com.selfbell.data.repository.impl.EmergencyBellRepositoryImpl
+import com.selfbell.domain.repository.EmergencyBellRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -58,5 +61,18 @@ object NetworkModule {
     @Provides
     fun provideHomeService(@Named("backendRetrofit") retrofit: Retrofit): HomeService {
         return retrofit.create(HomeService::class.java)
+    }
+
+    // 안심벨 API 관련 코드 추가
+    @Provides
+    @Singleton
+    fun provideEmergencyBellApi(@Named("backendRetrofit") retrofit: Retrofit): EmergencyBellApi {
+        return retrofit.create(EmergencyBellApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEmergencyBellRepository(api: EmergencyBellApi): EmergencyBellRepository {
+        return EmergencyBellRepositoryImpl(api)
     }
 }
