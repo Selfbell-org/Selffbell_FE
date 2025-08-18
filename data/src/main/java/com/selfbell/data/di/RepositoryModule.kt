@@ -1,14 +1,13 @@
-// File: com.selfbell.data.di.RepositoryModule.kt
-// (기존 파일에 이 내용을 추가하세요)
-
 package com.selfbell.data.di
 
+import com.selfbell.data.repository.impl.AddressRepositoryImpl
 import com.selfbell.data.repository.impl.AuthRepositoryImpl
+import com.selfbell.data.repository.impl.ContactRepositoryImpl
 import com.selfbell.data.repository.impl.HomeRepositoryImpl
-import com.selfbell.data.repository.impl.AddressRepositoryImpl // AddressRepositoryImpl 임포트 추가
-import com.selfbell.domain.HomeRepository
-import com.selfbell.domain.repository.AuthRepository
 import com.selfbell.domain.repository.AddressRepository
+import com.selfbell.domain.repository.AuthRepository
+import com.selfbell.domain.repository.ContactRepository
+import com.selfbell.domain.repository.HomeRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,24 +16,26 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
+// 📌 object를 abstract class로 변경
 abstract class RepositoryModule {
 
+    // 📌 @Binds 함수로 변경
     @Binds
     @Singleton
-    abstract fun bindAuthRepository(
-        authRepositoryImpl: AuthRepositoryImpl
-    ): AuthRepository
+    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 
+    // 📌 @Binds 함수로 변경
     @Binds
     @Singleton
-    abstract fun bindHomeRepository(
-        homeRepositoryImpl: HomeRepositoryImpl
-    ): HomeRepository
+    abstract fun bindContactRepository(impl: ContactRepositoryImpl): ContactRepository
 
-    // **추가된 코드: AddressRepository 바인딩**
+    // 📌 @Binds 함수로 변경
     @Binds
     @Singleton
-    abstract fun bindAddressRepository(
-        addressRepositoryImpl: AddressRepositoryImpl
-    ): AddressRepository
+    abstract fun bindAddressRepository(impl: AddressRepositoryImpl): AddressRepository
+
+    // 📌 @Binds 함수로 변경
+    @Binds
+    @Singleton
+    abstract fun bindHomeRepository(impl: HomeRepositoryImpl): HomeRepository
 }

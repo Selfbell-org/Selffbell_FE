@@ -27,9 +27,11 @@ data class UserDto(
  */
 interface HomeService {
 
+
     @GET("api/user/profile")
     suspend fun getUserProfile(
         // @Header를 사용하여 요청 헤더에 인증 토큰을 추가합니다.
         @Header("Authorization") token: String
     ): UserDto
+
 }

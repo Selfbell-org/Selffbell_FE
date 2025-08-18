@@ -1,6 +1,7 @@
 package com.selfbell.data.di
 
 import com.selfbell.data.api.AuthService
+import com.selfbell.data.api.ContactService
 import com.selfbell.data.api.HomeService
 import dagger.Module
 import dagger.Provides
@@ -48,6 +49,11 @@ object NetworkModule {
         return retrofit.create(AuthService::class.java)
     }
 
+    @Singleton
+    @Provides
+    fun provideContactService(@Named("backendRetrofit") retrofit: Retrofit): ContactService {
+        return retrofit.create(ContactService::class.java)
+    }
     @Singleton
     @Provides
     fun provideHomeService(@Named("backendRetrofit") retrofit: Retrofit): HomeService {

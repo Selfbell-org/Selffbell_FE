@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
 import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.repository.AddressRepository
-import com.selfbell.domain.HomeRepository
 import com.selfbell.domain.User
+import com.selfbell.domain.repository.HomeRepository
 import com.selfbell.home.model.MapMarkerData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
