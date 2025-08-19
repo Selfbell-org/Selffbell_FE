@@ -5,9 +5,12 @@ import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.ContactService
 import com.selfbell.data.api.EmergencyBellApi
 import com.selfbell.data.api.HomeService
+import com.selfbell.data.api.SafeWalksApi
 import com.selfbell.data.repository.impl.EmergencyBellRepositoryImpl
+import com.selfbell.data.repository.impl.SafeWalkRepositoryImpl
 import com.selfbell.data.repository.impl.TokenManager
 import com.selfbell.domain.repository.EmergencyBellRepository
+import com.selfbell.domain.repository.SafeWalkRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -118,7 +121,7 @@ object NetworkModule {
     fun provideContactService(@Named("backendRetrofit") retrofit: Retrofit): ContactService {
         return retrofit.create(ContactService::class.java)
     }
-    
+
     @Singleton
     @Provides
     fun provideHomeService(@Named("backendRetrofit") retrofit: Retrofit): HomeService {
@@ -136,5 +139,17 @@ object NetworkModule {
     @Singleton
     fun provideEmergencyBellRepository(api: EmergencyBellApi): EmergencyBellRepository {
         return EmergencyBellRepositoryImpl(api)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSafeWalksApi(@Named("backendRetrofit") retrofit: Retrofit): SafeWalksApi {
+        return retrofit.create(SafeWalksApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSafeWalkRepository(impl: SafeWalkRepositoryImpl): SafeWalkRepository {
+        return impl
     }
 }

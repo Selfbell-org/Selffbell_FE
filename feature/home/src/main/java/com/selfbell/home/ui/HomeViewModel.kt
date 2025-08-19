@@ -1,6 +1,6 @@
 package com.selfbell.home.ui
-// HomeViewModel.kt (수정된 전체 코드)
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
@@ -16,8 +16,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.selfbell.core.location.LocationTracker
 import kotlin.text.ifEmpty
 import kotlin.text.toDoubleOrNull
 
@@ -40,7 +42,8 @@ val DEFAULT_LAT_LNG = LatLng(37.5665, 126.9780)
 class HomeViewModel @Inject constructor(
     private val homeRepository: HomeRepository,
     private val addressRepository: AddressRepository,
-    private val emergencyBellRepository: EmergencyBellRepository
+    private val emergencyBellRepository: EmergencyBellRepository,
+    private val locationTracker: LocationTracker
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -56,36 +59,43 @@ class HomeViewModel @Inject constructor(
     val searchResultMessage: StateFlow<String?> = _searchResultMessage.asStateFlow()
 
     init {
-        loadHomeScreenData()
+        startHomeLocationStream()
     }
 
-    private fun loadHomeScreenData() {
+    private fun startHomeLocationStream() {
         viewModelScope.launch {
             try {
-                // homeRepository를 통해 사용자 프로필을 가져옴
-                val userProfile: User = homeRepository.getUserProfile()
+                locationTracker.getLocationUpdates().collectLatest { location ->
+                    val userLatLng = LatLng(location.latitude, location.longitude)
+                    val emergencyBells = emergencyBellRepository.getNearbyEmergencyBells(
+                        lat = userLatLng.latitude,
+                        lon = userLatLng.longitude,
+                        radius = 500
+                    )
 
-                val criminalMarkers = loadDummyCriminalMarkers()
-                val safetyBellMarkers = loadDummySafetyBellMarkers()
-
-                // ✅ userProfile에서 위도, 경도 정보 추출
-                val userLatLng = LatLng(userProfile.latitude, userProfile.longitude)
-                val emergencyBells = emergencyBellRepository.getNearbyEmergencyBells( // ✅ API 호출
-                    lat = userLatLng.latitude,
-                    lon = userLatLng.longitude,
-                    radius = 1000 // 1000m 반경 설정
-                )
-
-                _uiState.value = HomeUiState.Success(
-                    userProfile = userProfile,
-                    userLatLng = userLatLng, // ✅ userLatLng 전달
-                    criminalMarkers = criminalMarkers,
-                    safetyBellMarkers = safetyBellMarkers,
-                    emergencyBells = emergencyBells
-                )
-                _cameraTargetLatLng.value = userLatLng
+                    val current = _uiState.value
+                    if (current is HomeUiState.Success) {
+                        _uiState.value = current.copy(
+                            userLatLng = userLatLng,
+                            emergencyBells = emergencyBells
+                        )
+                    } else {
+                        val criminalMarkers = loadDummyCriminalMarkers()
+                        val safetyBellMarkers = loadDummySafetyBellMarkers()
+                        _uiState.value = HomeUiState.Success(
+                            userProfile = User(id = "", phoneNumber = "", name = null),
+                            userLatLng = userLatLng,
+                            criminalMarkers = criminalMarkers,
+                            safetyBellMarkers = safetyBellMarkers,
+                            emergencyBells = emergencyBells
+                        )
+                    }
+                    if (_cameraTargetLatLng.value == null) {
+                        _cameraTargetLatLng.value = userLatLng
+                    }
+                }
             } catch (e: Exception) {
-                _uiState.value = HomeUiState.Error(e.message ?: "데이터 로딩 실패")
+                _uiState.value = HomeUiState.Error(e.message ?: "위치 스트림 실패")
             }
         }
     }
@@ -103,9 +113,20 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val detail = emergencyBellRepository.getEmergencyBellDetail(objtId)
-                setSelectedEmergencyBellDetail(detail)
+
+                // 이미 로드된 안전벨 목록에서 해당 ID의 거리 정보를 찾기
+                val currentState = _uiState.value
+                val distanceFromNearbyList = if (currentState is HomeUiState.Success) {
+                    currentState.emergencyBells.find { it.id == objtId }?.distance
+                } else null
+
+                // 거리 정보를 포함한 상세 정보 생성
+                val detailWithDistance = detail.copy(distance = distanceFromNearbyList)
+
+                Log.d("HomeViewModel", "안전벨 상세 정보: ${detail.detail}, 거리: ${distanceFromNearbyList?.let { "${it}m" } ?: "알 수 없음"}")
+                setSelectedEmergencyBellDetail(detailWithDistance)
             } catch (e: Exception) {
-                // TODO: 상세 정보 가져오기 실패 처리
+                Log.e("HomeViewModel", "안전벨 상세 정보 가져오기 실패", e)
                 setSelectedEmergencyBellDetail(null)
             }
         }

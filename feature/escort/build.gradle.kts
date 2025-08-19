@@ -38,9 +38,13 @@ dependencies {
     // domain 모듈 의존성 (필수) !!
     implementation(project(":domain"))
     implementation(project(":core"))
+    implementation(project(":data"))
 
     //네이버
     implementation("com.naver.maps:map-sdk:3.22.1")
+
+    // Google Play Services Location
+    implementation("com.google.android.gms:play-services-location:21.2.0")
 
     // Compose UI
     implementation(platform(libs.androidx.compose.bom)) // Compose BOM

@@ -17,7 +17,7 @@ class EmergencyBellRepositoryImpl @Inject constructor(
         return api.getNearbyEmergencyBells(lat, lon, radius).items.map { it.toDomainModel() }
     }
 
-    override suspend fun getEmergencyBellDetail(id: Int): EmergencyBellDetail {
-        return api.getEmergencyBellDetail(id).toDomainModel()
+    override suspend fun getEmergencyBellDetail(objt_id: Int): EmergencyBellDetail {
+        return api.getEmergencyBellDetail(objt_id).toDomainModel()
     }
 }

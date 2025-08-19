@@ -128,10 +128,10 @@ fun TimePickerDialog(
 @Composable
 fun ScheduledTimePicker(
     modifier: Modifier = Modifier,
+    selectedTime: LocalTime?,
     onTimeChange: (LocalTime) -> Unit
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
-    var selectedTime by remember { mutableStateOf(LocalTime.now()) }
     val formatter = DateTimeFormatter.ofPattern("HH시 mm분")
 
     Box(
@@ -142,24 +142,25 @@ fun ScheduledTimePicker(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = selectedTime.format(formatter),
+            text = selectedTime?.format(formatter) ?: "시간을 선택해주세요",
             style = Typography.titleMedium,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = if (selectedTime != null) Black else Color.Gray
         )
     }
 
     if (showTimePicker) {
         val timePickerState = rememberTimePickerState(
-            initialHour = selectedTime.hour,
-            initialMinute = selectedTime.minute,
+            initialHour = selectedTime?.hour ?: LocalTime.now().hour,
+            initialMinute = selectedTime?.minute ?: LocalTime.now().minute,
             is24Hour = true
         )
 
         TimePickerDialog(
             onDismissRequest = { showTimePicker = false },
             onConfirmClick = {
-                selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
-                onTimeChange(selectedTime)
+                val newTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                onTimeChange(newTime)
                 showTimePicker = false
             }
         ) {
@@ -172,8 +173,10 @@ fun ScheduledTimePicker(
 fun ArrivalTimerSection(
     arrivalMode: ArrivalMode,
     timerMinutes: Int,
+    expectedArrivalTime: LocalTime?,
     onModeChange: (ArrivalMode) -> Unit,
-    onTimerChange: (Int) -> Unit
+    onTimerChange: (Int) -> Unit,
+    onExpectedArrivalTimeChange: (LocalTime) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = "도착 시간", style = Typography.bodyMedium, color = Color.Gray)
@@ -215,7 +218,8 @@ fun ArrivalTimerSection(
                 Spacer(modifier = Modifier.height(16.dp))
                 ScheduledTimePicker(
                     modifier = Modifier.fillMaxWidth(),
-                    onTimeChange = { /* TODO: ViewModel에 시간 업데이트 */ }
+                    selectedTime = expectedArrivalTime,
+                    onTimeChange = onExpectedArrivalTimeChange
                 )
             }
         }
@@ -228,12 +232,15 @@ fun ArrivalTimerSectionPreview() {
     SelfBellTheme {
         var arrivalMode by remember { mutableStateOf(ArrivalMode.TIMER) }
         var timerMinutes by remember { mutableStateOf(30) }
+        var expectedArrivalTime by remember { mutableStateOf<LocalTime?>(null) }
 
         ArrivalTimerSection(
             arrivalMode = arrivalMode,
             timerMinutes = timerMinutes,
+            expectedArrivalTime = expectedArrivalTime,
             onModeChange = { arrivalMode = it },
-            onTimerChange = { timerMinutes = it }
+            onTimerChange = { timerMinutes = it },
+            onExpectedArrivalTimeChange = { expectedArrivalTime = it }
         )
     }
 }

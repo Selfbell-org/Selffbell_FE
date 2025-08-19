@@ -38,12 +38,11 @@ fun ShareRouteTopSheet(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     filteredContacts: List<Contact>,
-    // onShareClick 파라미터를 Contact를 받는 콜백으로 다시 수정합니다.
-    onShareClick: (Contact) -> Unit,
+    selectedGuardians: Set<Contact>,
+    onGuardianToggle: (Contact) -> Unit,
+    onStartWithGuardians: () -> Unit,
     onCloseClick: () -> Unit
 ) {
-    var sharedContacts by remember { mutableStateOf(setOf<Long>()) }
-
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -98,26 +97,44 @@ fun ShareRouteTopSheet(
                     }
                 } else {
                     items(filteredContacts) { contact ->
-                        val isShared = sharedContacts.contains(contact.id)
+                        val isSelected = selectedGuardians.contains(contact)
                         FriendContactItem(
                             contact = contact,
-                            isShared = isShared,
-                            onShareClick = {
-                                if (!isShared) {
-                                    onShareClick(contact)
-                                    sharedContacts = sharedContacts + contact.id
-                                }
-                            }
+                            isSelected = isSelected,
+                            onToggle = { onGuardianToggle(contact) }
                         )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 선택된 보호자 수 표시
+            if (selectedGuardians.isNotEmpty()) {
+                Text(
+                    text = "${selectedGuardians.size}명의 친구가 선택되었습니다.",
+                    style = Typography.bodyMedium,
+                    color = Primary,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // 공유하고 시작하기 버튼
+            SelfBellButton(
+                text = "공유하고 시작하기",
+                onClick = onStartWithGuardians,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedGuardians.isNotEmpty(),
+                buttonType = if (selectedGuardians.isNotEmpty()) SelfBellButtonType.PRIMARY_FILLED else SelfBellButtonType.OUTLINED
+            )
         }
     }
 }
 
 @Composable
-fun FriendContactItem(contact: Contact, isShared: Boolean, onShareClick: () -> Unit) {
+fun FriendContactItem(contact: Contact, isSelected: Boolean, onToggle: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -140,11 +157,10 @@ fun FriendContactItem(contact: Contact, isShared: Boolean, onShareClick: () -> U
             }
         }
         SelfBellButton(
-            text = if (isShared) "공유 완료" else "공유",
-            onClick = onShareClick,
-            modifier = Modifier.width(140.dp), // <-- 여기서 width를 140dp로 고정
-            enabled = !isShared,
-            buttonType = if (isShared) SelfBellButtonType.OUTLINED else SelfBellButtonType.PRIMARY_FILLED
+            text = if (isSelected) "선택됨" else "선택",
+            onClick = onToggle,
+            modifier = Modifier.width(140.dp),
+            buttonType = if (isSelected) SelfBellButtonType.PRIMARY_FILLED else SelfBellButtonType.OUTLINED
         )
     }
 }
@@ -166,7 +182,9 @@ fun ShareRouteTopSheetPreview() {
             searchQuery = searchQuery,
             onSearchQueryChange = { searchQuery = it },
             filteredContacts = filtered,
-            onShareClick = { contact -> /* preview */ },
+            selectedGuardians = emptySet(),
+            onGuardianToggle = { /* preview */ },
+            onStartWithGuardians = { /* preview */ },
             onCloseClick = { /* preview */ }
         )
     }

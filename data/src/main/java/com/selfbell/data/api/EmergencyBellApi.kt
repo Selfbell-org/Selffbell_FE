@@ -17,8 +17,8 @@ interface EmergencyBellApi {
     ): EmergencyBellNearbyResponse
 
     // 안심벨 상세 조회
-    @GET("api/v1/emergency-bells/{objt_ID}")
+    @GET("api/v1/emergency-bells/{objt_id}")
     suspend fun getEmergencyBellDetail(
-        @Path("objt_ID") objtId: Int
+        @Path("objt_id") id: Int
     ): EmergencyBellDetailResponse
 }
