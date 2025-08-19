@@ -8,5 +8,6 @@ data class ContactRelationship(
     val toPhoneNumber: String,
     val status: ContactRelationshipStatus,
     val createdAt: String,
-    val updatedAt: String
+    val updatedAt: String,
+    val sharePermission: Boolean
 )

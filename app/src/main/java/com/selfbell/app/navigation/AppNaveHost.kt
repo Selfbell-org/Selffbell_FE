@@ -53,6 +53,8 @@ import com.selfbell.escort.ui.EscortScreen
 import com.selfbell.home.ui.HomeScreen
 import com.selfbell.settings.ui.SettingsScreen
 import com.selfbell.app.ui.SplashScreen
+import com.selfbell.settings.ui.ContactListScreen // ✅ New screen import
+
 
 @Composable
 fun AppNavHost(
@@ -125,6 +127,9 @@ fun AppNavHost(
                         )
                     }
 
+                    composable(AppRoute.FRIENDS_ROUTE) {
+                        ContactListScreen(navController = navController)
+                    }
                     // 📌 로그인 플로우
                     composable(AppRoute.PHONE_NUMBER_LOGIN_ROUTE) {
                         PhoneNumberLoginScreen(
