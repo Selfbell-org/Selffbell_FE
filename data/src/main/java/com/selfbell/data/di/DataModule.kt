@@ -3,6 +3,7 @@ package com.selfbell.data.di
 import android.content.Context
 import android.content.pm.PackageManager
 import com.selfbell.data.api.NaverApiService
+import com.selfbell.data.api.SafeWalksApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -86,4 +87,9 @@ object DataModule {
             "DEFAULT_SECRET_ON_ERROR"
         } ?: "DEFAULT_SECRET_IF_NULL"
     }
+//    @Provides
+//    @Singleton
+//    fun provideSafeWalksApi(retrofit: Retrofit): SafeWalksApi {
+//        return retrofit.create(SafeWalksApi::class.java)
+//    }
 }

@@ -1,4 +1,3 @@
-// feature/escort/ui/EscortingTopBar.kt
 package com.selfbell.escort.ui
 
 import androidx.compose.foundation.background
@@ -15,13 +14,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.selfbell.core.ui.composables.SelfBellButton
+import com.selfbell.core.ui.composables.SelfBellButtonType
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
 
 @Composable
 fun EscortingTopBar(
     modifier: Modifier = Modifier,
-    onShareClick: () -> Unit // 공유 버튼 클릭 시 실행될 콜백
+    onShareClick: () -> Unit,
+    onEndClick: () -> Unit // ✅ 종료 버튼 클릭 콜백 추가
 ) {
     Row(
         modifier = modifier
@@ -38,18 +39,21 @@ fun EscortingTopBar(
             style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.weight(1f)
         )
+
+        // ✅ 종료 버튼 추가
+        SelfBellButton(
+            text = "종료",
+            onClick = onEndClick,
+            isSmall = true,
+            buttonType = SelfBellButtonType.OUTLINED
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
         SelfBellButton(
             text = "공유",
             onClick = onShareClick,
             isSmall = true
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun EscortingTopBarPreview() {
-    SelfBellTheme {
-        EscortingTopBar(onShareClick = {})
     }
 }

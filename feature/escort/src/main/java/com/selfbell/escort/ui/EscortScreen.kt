@@ -38,9 +38,15 @@ fun EscortScreen(
     val destinationLocation by viewModel.destinationLocation.collectAsState()
     val arrivalMode by viewModel.arrivalMode.collectAsState()
     val timerMinutes by viewModel.timerMinutes.collectAsState()
+    val expectedArrivalTime by viewModel.expectedArrivalTime.collectAsState()
 
     val allContacts by viewModel.allContacts.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    // ✅ ViewModel의 세션 활성화 상태를 구독
+    val isSessionActive by viewModel.isSessionActive.collectAsState()
+    // ✅ 선택된 보호자들을 구독
+    val selectedGuardians by viewModel.selectedGuardians.collectAsState()
+
     val filteredContacts = remember(searchQuery, allContacts) {
         if (searchQuery.isEmpty()) {
             allContacts
@@ -50,7 +56,6 @@ fun EscortScreen(
     }
 
     var showShareRouteSheet by remember { mutableStateOf(false) }
-    var isEscorting by remember { mutableStateOf(false) }
 
     BackHandler(enabled = showShareRouteSheet) {
         showShareRouteSheet = false
@@ -76,23 +81,30 @@ fun EscortScreen(
                 searchQuery = searchQuery,
                 onSearchQueryChange = { viewModel.updateSearchQuery(it) },
                 filteredContacts = filteredContacts,
-                // contact를 받는 onShareClick 람다 전달
-                onShareClick = { contact ->
-                    println("동선 공유: ${contact.name}")
-                    // 창을 닫지 않고 상태 업데이트
+                selectedGuardians = selectedGuardians,
+                onGuardianToggle = { contact ->
+                    viewModel.toggleGuardianSelection(contact)
+                },
+                onStartWithGuardians = {
+                    viewModel.startSafeWalkWithGuardians()
+                    showShareRouteSheet = false
                 },
                 onCloseClick = { showShareRouteSheet = false }
             )
         }
 
-        if (isEscorting) {
+        if (isSessionActive) {
             EscortingTopBar(
                 modifier = Modifier.align(Alignment.TopCenter),
                 onShareClick = {
                     showShareRouteSheet = true
+                },
+                onEndClick = {
+                    viewModel.endSafeWalk() // ✅ ViewModel의 종료 함수 호출
                 }
             )
-        } else {
+        } else if (!showShareRouteSheet) {
+            // ✅ 보호자 선택 시트가 표시되지 않을 때만 도착시간 설정 UI 표시
             Card(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -128,16 +140,18 @@ fun EscortScreen(
                     ArrivalTimerSection(
                         arrivalMode = arrivalMode,
                         timerMinutes = timerMinutes,
+                        expectedArrivalTime = expectedArrivalTime,
                         onModeChange = { viewModel.setArrivalMode(it) },
-                        onTimerChange = { viewModel.setTimerMinutes(it) }
+                        onTimerChange = { viewModel.setTimerMinutes(it) },
+                        onExpectedArrivalTimeChange = { viewModel.setExpectedArrivalTime(it) }
                     )
                 }
             }
 
             SelfBellButton(
-                text = "출발",
+                text = "보호자 선택하기",
                 onClick = {
-                    isEscorting = true
+                    showShareRouteSheet = true
                 },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

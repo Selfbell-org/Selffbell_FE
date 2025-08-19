@@ -116,7 +116,7 @@ fun AddressSearchModal(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    if (markerData.distance > 0) {
+                                    if (markerData.distance >0) {
                                         Text("${markerData.distance.toInt()}m", style = Typography.bodyMedium)
                                     }
                                 }
@@ -140,7 +140,7 @@ fun AddressSearchModal(
                             Text("관리 전화: ${detail.managerTel}", style = Typography.bodyMedium)
                             Text("시설 종류: ${detail.type}", style = Typography.bodyMedium)
                             Text(
-                                text = "거리: ${detail.distance?.let { "${it.toInt()}m" } ?: "알 수 없음"}", 
+                                text = "거리: ${detail.distance?.let { "${it.toInt()}m" } ?: "알 수 없음"}",
                                 style = Typography.bodyMedium
                             )
                             // TODO: 필요한 다른 정보 추가
