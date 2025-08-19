@@ -14,7 +14,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
+// Deprecated: moved to core module as com.selfbell.core.location.LocationTracker
+@Deprecated("Use com.selfbell.core.location.LocationTracker from core module")
 class LocationTrackingService @Inject constructor(
     private val context: Context
 ) {
@@ -63,4 +64,4 @@ class LocationTrackingService @Inject constructor(
     fun stopLocationUpdates() {
         fusedLocationClient.removeLocationUpdates(object : LocationCallback() {})
     }
-} 
+}

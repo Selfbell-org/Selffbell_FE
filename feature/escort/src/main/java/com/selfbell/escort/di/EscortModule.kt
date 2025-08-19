@@ -1,7 +1,6 @@
 package com.selfbell.escort.di
 
 import android.content.Context
-import com.selfbell.escort.ui.LocationTrackingService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,12 +12,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object EscortModule {
 
-    @Provides
-    @Singleton
-    fun provideLocationTrackingService(
-        @ApplicationContext context: Context
-    ): LocationTrackingService {
-        return LocationTrackingService(context)
-    }
+    // No-op: LocationTracker is provided via constructor injection in core module
 }
 

@@ -122,7 +122,7 @@ fun HomeScreen(
                                     latLng = LatLng(bell.lat, bell.lon),
                                     address = bell.detail, // ins_DETAIL을 주소로 사용
                                     type = MapMarkerData.MarkerType.SAFETY_BELL, // 안심벨 타입
-                                    distance = bell.distance,
+                                    distance = bell.distance ?: 0.0,
                                     objtId = bell.id
                                 ),
                                 onClick = { markerData ->

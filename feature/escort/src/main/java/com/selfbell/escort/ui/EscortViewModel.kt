@@ -19,6 +19,7 @@ import com.selfbell.core.model.Contact // 이 import를 사용합니다.
 import com.selfbell.domain.model.SessionEndReason
 import com.selfbell.domain.repository.SafeWalkRepository
 import com.selfbell.data.repository.impl.TokenManager
+import com.selfbell.core.location.LocationTracker
 import java.time.LocalDateTime
 import java.time.LocalTime
 import retrofit2.HttpException
@@ -27,7 +28,7 @@ import retrofit2.HttpException
 class EscortViewModel @Inject constructor(
     private val contentResolver: ContentResolver,
     private val safeWalkRepository: SafeWalkRepository,
-    private val locationTrackingService: LocationTrackingService,
+    private val locationTracker: LocationTracker,
     private val tokenManager: TokenManager
 ) : ViewModel() {
     // 출발지/도착지 상태
@@ -80,7 +81,7 @@ class EscortViewModel @Inject constructor(
     private fun startLocationTracking() {
         viewModelScope.launch {
             try {
-                locationTrackingService.getLocationUpdates().collectLatest { location ->
+                locationTracker.getLocationUpdates().collectLatest { location ->
                     updateLocationTrack(location.latitude, location.longitude, location.accuracy.toDouble())
                 }
             } catch (e: Exception) {
@@ -192,7 +193,7 @@ class EscortViewModel @Inject constructor(
                     _isSessionActive.value = false
                     _sessionId.value = null
                     // 위치 추적 중지
-                    locationTrackingService.stopLocationUpdates()
+                    locationTracker.stopLocationUpdates()
                 } else {
                     // TODO: 종료 실패 처리
                     Log.d("EscortViewModel", "안심귀가 종료 실패")
@@ -273,7 +274,7 @@ class EscortViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         // ViewModel이 정리될 때 위치 추적 중지
-        locationTrackingService.stopLocationUpdates()
+        locationTracker.stopLocationUpdates()
     }
 }
 

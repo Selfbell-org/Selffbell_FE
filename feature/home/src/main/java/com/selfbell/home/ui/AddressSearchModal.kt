@@ -139,7 +139,10 @@ fun AddressSearchModal(
                             Text("상세 주소: ${detail.address}", style = Typography.bodyMedium)
                             Text("관리 전화: ${detail.managerTel}", style = Typography.bodyMedium)
                             Text("시설 종류: ${detail.type}", style = Typography.bodyMedium)
-                            Text("거리: ${detail.distance}m", style = Typography.bodyMedium)
+                            Text(
+                                text = "거리: ${detail.distance?.let { "${it.toInt()}m" } ?: "알 수 없음"}",
+                                style = Typography.bodyMedium
+                            )
                             // TODO: 필요한 다른 정보 추가
                         }
                     } ?: run {

@@ -5,7 +5,7 @@ data class EmergencyBell(
     val lat: Double,
     val lon: Double,
     val detail: String,
-    val distance: Double
+    val distance: Double? = null
 )
 
 data class EmergencyBellDetail(
@@ -16,5 +16,5 @@ data class EmergencyBellDetail(
     val managerTel: String,
     val address: String,
     val type: String,
-    val distance: Double
+    val distance: Double? = null
 )
