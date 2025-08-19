@@ -31,10 +31,8 @@ class LocationTracker @Inject constructor(
 		.build()
 
 	fun getLocationUpdates(): Flow<Location> = callbackFlow {
-		if (
-			ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-			ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
-		) {
+		// 권한 체크를 더 엄격하게 수행
+		if (!hasLocationPermission()) {
 			close(Exception("위치 권한이 필요합니다."))
 			return@callbackFlow
 		}
@@ -47,21 +45,36 @@ class LocationTracker @Inject constructor(
 			}
 		}
 
-		fusedLocationClient.requestLocationUpdates(
-			locationRequest,
-			locationCallback,
-			Looper.getMainLooper()
-		).addOnFailureListener { exception ->
-			close(exception)
+		// 권한이 있을 때만 위치 업데이트 요청
+		if (hasLocationPermission()) {
+			fusedLocationClient.requestLocationUpdates(
+				locationRequest,
+				locationCallback,
+				Looper.getMainLooper()
+			).addOnFailureListener { exception ->
+				close(exception)
+			}
+		} else {
+			close(Exception("위치 권한이 필요합니다."))
+			return@callbackFlow
 		}
 
 		awaitClose {
-			fusedLocationClient.removeLocationUpdates(locationCallback)
+			if (hasLocationPermission()) {
+				fusedLocationClient.removeLocationUpdates(locationCallback)
+			}
 		}
 	}
 
 	fun stopLocationUpdates() {
-		fusedLocationClient.removeLocationUpdates(object : LocationCallback() {})
+		if (hasLocationPermission()) {
+			fusedLocationClient.removeLocationUpdates(object : LocationCallback() {})
+		}
+	}
+
+	private fun hasLocationPermission(): Boolean {
+		return ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+			   ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 	}
 }
 

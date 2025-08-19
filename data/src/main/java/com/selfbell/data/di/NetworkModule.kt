@@ -4,6 +4,7 @@ import com.selfbell.data.api.AuthInterceptor
 import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.ContactService
 import com.selfbell.data.api.EmergencyBellApi
+import com.selfbell.data.api.SafeWalksApi
 import com.selfbell.data.repository.impl.EmergencyBellRepositoryImpl
 import com.selfbell.data.repository.impl.TokenManager
 import com.selfbell.domain.repository.EmergencyBellRepository
@@ -129,5 +130,12 @@ object NetworkModule {
     @Singleton
     fun provideEmergencyBellRepository(api: EmergencyBellApi): EmergencyBellRepository {
         return EmergencyBellRepositoryImpl(api)
+    }
+
+    // SafeWalks API 관련 코드 추가
+    @Provides
+    @Singleton
+    fun provideSafeWalksApi(@Named("backendRetrofit") retrofit: Retrofit): SafeWalksApi {
+        return retrofit.create(SafeWalksApi::class.java)
     }
 }
