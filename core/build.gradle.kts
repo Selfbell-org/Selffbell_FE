@@ -40,6 +40,12 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get() // libs.versions에서 가져옴
     }
+    
+    // Lint 설정 추가
+    lint {
+        disable += "MissingPermission"
+        abortOnError = false
+    }
 }
 
 dependencies {

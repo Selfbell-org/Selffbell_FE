@@ -68,7 +68,7 @@ class HomeViewModel @Inject constructor(
                         lat = userLatLng.latitude,
                         lon = userLatLng.longitude,
                         radius = 500
-                    )
+                    ).sortedBy { it.distance ?: Double.MAX_VALUE } // 거리순 정렬 (null인 경우 맨 뒤로)
 
                     val current = _uiState.value
                     if (current is HomeUiState.Success) {
@@ -89,8 +89,15 @@ class HomeViewModel @Inject constructor(
                     if (_cameraTargetLatLng.value == null) {
                         _cameraTargetLatLng.value = userLatLng
                     }
+                    
+                    // 안전벨 정보 로깅
+                    Log.d("HomeViewModel", "안전벨 ${emergencyBells.size}개 로드 완료")
+                    emergencyBells.take(3).forEach { bell ->
+                        Log.d("HomeViewModel", "안전벨: ${bell.detail}, 거리: ${bell.distance?.let { "${it.toInt()}m" } ?: "알 수 없음"}")
+                    }
                 }
             } catch (e: Exception) {
+                Log.e("HomeViewModel", "위치 스트림 처리 실패", e)
                 _uiState.value = HomeUiState.Error(e.message ?: "데이터 로딩 실패")
             }
         }
@@ -109,9 +116,20 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val detail = emergencyBellRepository.getEmergencyBellDetail(objtId)
-                setSelectedEmergencyBellDetail(detail)
+                
+                // 이미 로드된 안전벨 목록에서 해당 ID의 거리 정보를 찾기
+                val currentState = _uiState.value
+                val distanceFromNearbyList = if (currentState is HomeUiState.Success) {
+                    currentState.emergencyBells.find { it.id == objtId }?.distance
+                } else null
+                
+                // 거리 정보를 포함한 상세 정보 생성
+                val detailWithDistance = detail.copy(distance = distanceFromNearbyList)
+                
+                Log.d("HomeViewModel", "안전벨 상세 정보: ${detail.detail}, 거리: ${distanceFromNearbyList?.let { "${it.toInt()}m" } ?: "알 수 없음"}")
+                setSelectedEmergencyBellDetail(detailWithDistance)
             } catch (e: Exception) {
-                // TODO: 상세 정보 가져오기 실패 처리
+                Log.e("HomeViewModel", "안전벨 상세 정보 가져오기 실패", e)
                 setSelectedEmergencyBellDetail(null)
             }
         }
