@@ -1,5 +1,6 @@
 package com.selfbell.data.repository.impl
 
+import android.provider.ContactsContract
 import android.util.Log
 import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.request.SignupRequest
@@ -9,6 +10,8 @@ import com.selfbell.domain.repository.AuthRepository
 import com.selfbell.domain.repository.User // User import
 import javax.inject.Inject
 import com.selfbell.data.api.MainAddressRequest // 📌 import
+import com.selfbell.data.mapper.toProfile
+import com.selfbell.domain.model.Profile
 
 class AuthRepositoryImpl @Inject constructor(
     private val authService: AuthService,
@@ -84,6 +87,16 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getUserProfile():  Profile{
+        return try {
+            val response = authService.getUserProfile("Bearer " + tokenManager.getAccessToken())
+            // DTO를 도메인 모델로 변환하는 매핑 로직 필요
+            response.toProfile()
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "사용자 프로필 가져오기 실패", e)
+            throw e
+        }
+    }
     // ✅ 로그아웃 구현
     override suspend fun logout() {
         try {

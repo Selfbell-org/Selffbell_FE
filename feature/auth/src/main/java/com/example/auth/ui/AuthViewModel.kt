@@ -26,6 +26,9 @@ class AuthViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val uiState = _uiState.asStateFlow()
+    // 📌 Add the missing state variable
+    private val _userName = MutableStateFlow<String?>(null)
+    val userName = _userName.asStateFlow()
 
     fun signUp(name: String, phoneNumber: String, password: String) {
         if (_uiState.value is AuthUiState.Loading) return
@@ -59,6 +62,19 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun fetchUserProfile() {
+        viewModelScope.launch {
+            try {
+                // ✅ AuthRepository에 구현된 getUserProfile 함수를 호출합니다.
+                val profile = authRepository.getUserProfile()
+                _userName.value = profile.name // ✅ ViewModel 상태 업데이트
+                Log.d("AuthViewModel", "사용자 프로필 불러오기 성공: ${profile.name}")
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "사용자 프로필 불러오기 실패", e)
+                _userName.value = null // 에러 발생 시 이름 초기화
+            }
+        }
+    }
     fun login(phoneNumber: String, password: String) {
         if (_uiState.value is AuthUiState.Loading) return
 

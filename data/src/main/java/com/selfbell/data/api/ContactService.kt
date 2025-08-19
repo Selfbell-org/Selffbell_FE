@@ -21,7 +21,7 @@ interface ContactService {
      */
     @GET("/api/v1/users")
     suspend fun checkUserExists(
-        @Query("phone") phoneNumber: String
+        @Query("phoneNumber") phoneNumber: String
     ): UserExistsResponse
 
     /**
