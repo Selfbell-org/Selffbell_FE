@@ -3,12 +3,10 @@ package com.selfbell.data.di
 import com.selfbell.data.repository.impl.AddressRepositoryImpl
 import com.selfbell.data.repository.impl.AuthRepositoryImpl
 import com.selfbell.data.repository.impl.ContactRepositoryImpl
-import com.selfbell.data.repository.impl.HomeRepositoryImpl
 import com.selfbell.data.repository.impl.FCMTokenManager
 import com.selfbell.domain.repository.AddressRepository
 import com.selfbell.domain.repository.AuthRepository
 import com.selfbell.domain.repository.ContactRepository
-import com.selfbell.domain.repository.HomeRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -34,9 +32,4 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAddressRepository(impl: AddressRepositoryImpl): AddressRepository
-
-    // 📌 @Binds 함수로 변경
-    @Binds
-    @Singleton
-    abstract fun bindHomeRepository(impl: HomeRepositoryImpl): HomeRepository
 }

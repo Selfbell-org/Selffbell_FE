@@ -11,7 +11,7 @@ fun EmergencyBellNearby.toDomainModel(): EmergencyBell {
         lat = this.lat,
         lon = this.lon,
         detail = this.insDetail,
-        distance = this.distance
+        distance = this.distance // null일 수 있음
     )
 }
 
@@ -24,6 +24,6 @@ fun EmergencyBellDetailResponse.toDomainModel(): EmergencyBellDetail {
         managerTel = this.mngTel,
         address = this.adres,
         type = this.insType,
-        distance = this.distance
+        distance = this.distance // null일 수 있음
     )
 }

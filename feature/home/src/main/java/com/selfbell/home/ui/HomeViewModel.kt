@@ -1,4 +1,5 @@
 package com.selfbell.home.ui
+// HomeViewModel.kt (수정된 전체 코드)
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -6,8 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
 import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.repository.AddressRepository
-import com.selfbell.domain.User
-import com.selfbell.domain.repository.HomeRepository
 import com.selfbell.domain.model.EmergencyBell
 import com.selfbell.domain.model.EmergencyBellDetail
 import com.selfbell.domain.repository.EmergencyBellRepository
@@ -26,7 +25,6 @@ import kotlin.text.toDoubleOrNull
 sealed interface HomeUiState {
     object Loading : HomeUiState
     data class Success(
-        val userProfile: User,
         val userLatLng: LatLng,
         val criminalMarkers: List<MapMarkerData>,
         val safetyBellMarkers: List<MapMarkerData>,
@@ -40,7 +38,6 @@ val DEFAULT_LAT_LNG = LatLng(37.5665, 126.9780)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val homeRepository: HomeRepository,
     private val addressRepository: AddressRepository,
     private val emergencyBellRepository: EmergencyBellRepository,
     private val locationTracker: LocationTracker
@@ -83,7 +80,6 @@ class HomeViewModel @Inject constructor(
                         val criminalMarkers = loadDummyCriminalMarkers()
                         val safetyBellMarkers = loadDummySafetyBellMarkers()
                         _uiState.value = HomeUiState.Success(
-                            userProfile = User(id = "", phoneNumber = "", name = null),
                             userLatLng = userLatLng,
                             criminalMarkers = criminalMarkers,
                             safetyBellMarkers = safetyBellMarkers,
@@ -95,7 +91,7 @@ class HomeViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                _uiState.value = HomeUiState.Error(e.message ?: "위치 스트림 실패")
+                _uiState.value = HomeUiState.Error(e.message ?: "데이터 로딩 실패")
             }
         }
     }
@@ -113,20 +109,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val detail = emergencyBellRepository.getEmergencyBellDetail(objtId)
-
-                // 이미 로드된 안전벨 목록에서 해당 ID의 거리 정보를 찾기
-                val currentState = _uiState.value
-                val distanceFromNearbyList = if (currentState is HomeUiState.Success) {
-                    currentState.emergencyBells.find { it.id == objtId }?.distance
-                } else null
-
-                // 거리 정보를 포함한 상세 정보 생성
-                val detailWithDistance = detail.copy(distance = distanceFromNearbyList)
-
-                Log.d("HomeViewModel", "안전벨 상세 정보: ${detail.detail}, 거리: ${distanceFromNearbyList?.let { "${it}m" } ?: "알 수 없음"}")
-                setSelectedEmergencyBellDetail(detailWithDistance)
+                setSelectedEmergencyBellDetail(detail)
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "안전벨 상세 정보 가져오기 실패", e)
+                // TODO: 상세 정보 가져오기 실패 처리
                 setSelectedEmergencyBellDetail(null)
             }
         }

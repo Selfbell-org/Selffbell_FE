@@ -89,7 +89,7 @@ fun HomeScreen(
                 }
             }
             is HomeUiState.Success -> {
-                val userProfile = state.userProfile
+                //val userProfile = state.userProfile
                 val userLatLng = state.userLatLng
                 val criminalMarkers = state.criminalMarkers
                 val safetyBellMarkers = state.safetyBellMarkers
@@ -122,7 +122,7 @@ fun HomeScreen(
                                     latLng = LatLng(bell.lat, bell.lon),
                                     address = bell.detail, // ins_DETAIL을 주소로 사용
                                     type = MapMarkerData.MarkerType.SAFETY_BELL, // 안심벨 타입
-                                    distance = bell.distance ?: 0.0,
+                                    distance = bell.distance ?: 0.0, // null인 경우 0.0으로 설정
                                     objtId = bell.id
                                 ),
                                 onClick = { markerData ->
@@ -166,11 +166,11 @@ fun HomeScreen(
                         Spacer(Modifier.width(14.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                "profile",
+                                "사용자",
                                 style = Typography.labelSmall.copy(color = Color(0xFF949494))
                             )
                             Text(
-                                userProfile.name ?: "이름 없음",
+                                "SelfBell 사용자",
                                 style = Typography.bodyMedium,
                                 fontWeight = FontWeight.Bold
                             )
