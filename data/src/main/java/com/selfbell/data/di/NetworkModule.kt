@@ -4,7 +4,6 @@ import com.selfbell.data.api.AuthInterceptor
 import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.ContactService
 import com.selfbell.data.api.EmergencyBellApi
-import com.selfbell.data.api.HomeService
 import com.selfbell.data.repository.impl.EmergencyBellRepositoryImpl
 import com.selfbell.data.repository.impl.TokenManager
 import com.selfbell.domain.repository.EmergencyBellRepository
@@ -117,12 +116,6 @@ object NetworkModule {
     @Provides
     fun provideContactService(@Named("backendRetrofit") retrofit: Retrofit): ContactService {
         return retrofit.create(ContactService::class.java)
-    }
-    
-    @Singleton
-    @Provides
-    fun provideHomeService(@Named("backendRetrofit") retrofit: Retrofit): HomeService {
-        return retrofit.create(HomeService::class.java)
     }
 
     // 안심벨 API 관련 코드 추가

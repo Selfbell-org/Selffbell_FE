@@ -45,7 +45,7 @@ fun SettingsScreen(
     // 2. 화면이 로드될 때 프로필 정보를 가져오는 함수를 호출합니다.
     // LaunchedEffect는 컴포저블이 화면에 나타날 때 딱 한 번만 실행됩니다.
     LaunchedEffect(Unit) {
-        viewModel.fetchUserProfile()
+        //viewModel.fetchUserProfile()
     }
 
     // 기존의 하드코딩된 값 대신 ViewModel의 상태를 사용합니다.

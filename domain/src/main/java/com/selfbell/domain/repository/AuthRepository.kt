@@ -10,7 +10,7 @@ interface AuthRepository {
 
     suspend fun registerMainAddress(name: String, address: String, lat: Double, lon: Double)
 
-    suspend fun getUserProfile(): Profile
+    //suspend fun getUserProfile(): Profile
 
     // ✅ 로그아웃 함수 추가
     suspend fun logout()
