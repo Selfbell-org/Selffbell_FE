@@ -1,5 +1,6 @@
 package com.selfbell.data.repository.impl
 
+import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.selfbell.data.api.SafeWalksApi
 import com.selfbell.data.api.response.*
@@ -35,7 +36,31 @@ class SafeWalkRepositoryImpl @Inject constructor(
             timerMinutes = timerMinutes,
             guardianIds = guardianIds
         )
-        return api.createSafeWalkSession(requestBody).toDomainModel()
+        
+        // ✅ 디버깅을 위한 로그 추가
+        Log.d("SafeWalkRepository", "SafeWalk 세션 생성 요청")
+        Log.d("SafeWalkRepository", "Request Body: $requestBody")
+        
+        return try {
+            val response = api.createSafeWalkSession(requestBody)
+            Log.d("SafeWalkRepository", "SafeWalk 세션 생성 성공: ${response.sessionId}")
+            response.toDomainModel()
+        } catch (e: Exception) {
+            Log.e("SafeWalkRepository", "SafeWalk 세션 생성 실패", e)
+            when (e) {
+                is retrofit2.HttpException -> {
+                    Log.e("SafeWalkRepository", "HTTP 에러 코드: ${e.code()}")
+                    Log.e("SafeWalkRepository", "에러 응답 헤더: ${e.response()?.headers()}")
+                    Log.e("SafeWalkRepository", "에러 응답: ${e.response()?.errorBody()?.string()}")
+                    Log.e("SafeWalkRepository", "요청 URL: ${e.response()?.raw()?.request?.url}")
+                }
+                else -> {
+                    Log.e("SafeWalkRepository", "기타 에러: ${e.message}")
+                    Log.e("SafeWalkRepository", "에러 타입: ${e.javaClass.simpleName}")
+                }
+            }
+            throw e
+        }
     }
     override suspend fun uploadLocationTrack(sessionId: Long, lat: Double, lon: Double, accuracy: Double): Boolean {
         val requestBody = TrackRequest(
@@ -46,8 +71,16 @@ class SafeWalkRepositoryImpl @Inject constructor(
         )
         return try {
             val response = api.uploadLocationTrack(sessionId, requestBody)
+            Log.d("SafeWalkRepository", "위치 트랙 업로드 성공: ${response.status}")
             response.status == "UPLOADED"
         } catch (e: Exception) {
+            Log.e("SafeWalkRepository", "위치 트랙 업로드 실패", e)
+            when (e) {
+                is retrofit2.HttpException -> {
+                    Log.e("SafeWalkRepository", "위치 트랙 HTTP 에러: ${e.code()}")
+                    Log.e("SafeWalkRepository", "위치 트랙 에러 응답: ${e.response()?.errorBody()?.string()}")
+                }
+            }
             false
         }
     }
@@ -56,25 +89,72 @@ class SafeWalkRepositoryImpl @Inject constructor(
         return try {
             val requestBody = EndRequest(reason = reason.name)
             val response = api.endSafeWalkSession(sessionId, requestBody)
+            Log.d("SafeWalkRepository", "세션 종료 성공: ${response.status}")
             response.status.contains("END")
         } catch (e: Exception) {
+            Log.e("SafeWalkRepository", "세션 종료 실패", e)
+            when (e) {
+                is retrofit2.HttpException -> {
+                    Log.e("SafeWalkRepository", "세션 종료 HTTP 에러: ${e.code()}")
+                    Log.e("SafeWalkRepository", "세션 종료 에러 응답: ${e.response()?.errorBody()?.string()}")
+                }
+            }
             false
         }
     }
 
     override suspend fun getSafeWalkDetail(sessionId: Long): SafeWalkDetail {
-        return api.getSafeWalkDetail(sessionId).toDomainModel()
+        return try {
+            val response = api.getSafeWalkDetail(sessionId)
+            Log.d("SafeWalkRepository", "세션 상세 조회 성공: ${response.sessionId}")
+            response.toDomainModel()
+        } catch (e: Exception) {
+            Log.e("SafeWalkRepository", "세션 상세 조회 실패", e)
+            when (e) {
+                is retrofit2.HttpException -> {
+                    Log.e("SafeWalkRepository", "세션 상세 조회 HTTP 에러: ${e.code()}")
+                    Log.e("SafeWalkRepository", "세션 상세 조회 에러 응답: ${e.response()?.errorBody()?.string()}")
+                }
+            }
+            throw e
+        }
     }
 
     override suspend fun getCurrentSafeWalk(): SafeWalkSessionState? {
         return try {
-            api.getCurrentSafeWalk()?.toDomainModel()
+            val response = api.getCurrentSafeWalk()
+            if (response != null) {
+                Log.d("SafeWalkRepository", "현재 세션 조회 성공: ${response.sessionId}")
+            } else {
+                Log.d("SafeWalkRepository", "현재 진행 중인 세션이 없습니다")
+            }
+            response?.toDomainModel()
         } catch (e: Exception) {
+            Log.e("SafeWalkRepository", "현재 세션 조회 실패", e)
+            when (e) {
+                is retrofit2.HttpException -> {
+                    Log.e("SafeWalkRepository", "현재 세션 조회 HTTP 에러: ${e.code()}")
+                    Log.e("SafeWalkRepository", "현재 세션 조회 에러 응답: ${e.response()?.errorBody()?.string()}")
+                }
+            }
             null
         }
     }
 
     override suspend fun getTracks(sessionId: Long, cursor: String?, size: Int, order: String): List<TrackItem> {
-        return api.getTracks(sessionId, cursor, size, order).items.map { it.toDomainModel() }
+        return try {
+            val response = api.getTracks(sessionId, cursor, size, order)
+            Log.d("SafeWalkRepository", "트랙 조회 성공: ${response.items.size}개")
+            response.items.map { it.toDomainModel() }
+        } catch (e: Exception) {
+            Log.e("SafeWalkRepository", "트랙 조회 실패", e)
+            when (e) {
+                is retrofit2.HttpException -> {
+                    Log.e("SafeWalkRepository", "트랙 조회 HTTP 에러: ${e.code()}")
+                    Log.e("SafeWalkRepository", "트랙 조회 에러 응답: ${e.response()?.errorBody()?.string()}")
+                }
+            }
+            throw e
+        }
     }
 }

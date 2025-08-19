@@ -41,8 +41,3 @@ data class Guardian(val id: Long, val nickname: String)
 data class Location(val lat: Double, val lon: Double, val addressText: String)
 
 enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
-
-data class Coordinates(
-    val latitude: Double,
-    val longitude: Double
-)
