@@ -26,8 +26,11 @@ data class UserDto(
  * 인증이 필요한 요청을 처리합니다.
  */
 interface HomeService {
-
-
+    /**
+     * 사용자 프로필을 가져오는 API 호출.
+     * @param token 인증 토큰
+     * @return 사용자 프로필 데이터
+     */
     @GET("api/user/profile")
     suspend fun getUserProfile(
         // @Header를 사용하여 요청 헤더에 인증 토큰을 추가합니다.

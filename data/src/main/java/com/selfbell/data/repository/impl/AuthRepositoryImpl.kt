@@ -1,5 +1,6 @@
 package com.selfbell.data.repository.impl
 
+import android.provider.ContactsContract
 import android.util.Log
 import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.request.SignupRequest
@@ -9,6 +10,8 @@ import com.selfbell.domain.repository.AuthRepository
 import com.selfbell.domain.repository.User // User import
 import javax.inject.Inject
 import com.selfbell.data.api.MainAddressRequest // 📌 import
+import com.selfbell.data.mapper.toProfile
+import com.selfbell.domain.model.Profile
 
 class AuthRepositoryImpl @Inject constructor(
     private val authService: AuthService,
@@ -84,6 +87,16 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getUserProfile():  Profile{
+        return try {
+            val response = authService.getUserProfile("Bearer " + tokenManager.getAccessToken())
+            // DTO를 도메인 모델로 변환하는 매핑 로직 필요
+            response.toProfile()
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "사용자 프로필 가져오기 실패", e)
+            throw e
+        }
+    }
     // ✅ 로그아웃 구현
     override suspend fun logout() {
         try {
@@ -93,6 +106,44 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e("AuthRepository", "로그아웃 실패: ${e.message}", e)
             throw e
+        }
+    }
+
+    /**
+     * 리프레시 토큰을 사용해 새로운 액세스 토큰을 발급받습니다.
+     * @return 새로운 액세스 토큰, 실패 시 null
+     */
+    suspend fun refreshAccessToken(): String? {
+        try {
+            val refreshToken = tokenManager.getRefreshToken()
+            if (refreshToken.isNullOrBlank()) {
+                Log.e("AuthRepository", "리프레시 토큰이 없습니다")
+                return null
+            }
+
+            Log.d("AuthRepository", "액세스 토큰 재발급 요청")
+            val request = com.selfbell.data.api.RefreshTokenRequest(refreshToken)
+            val response = authService.refreshToken(request)
+
+            val newAccessToken = response.accessToken?.trim()
+            val newRefreshToken = response.refreshToken?.trim()
+
+            if (!newAccessToken.isNullOrBlank()) {
+                // 새 토큰들 저장
+                tokenManager.saveAccessToken(newAccessToken)
+                if (!newRefreshToken.isNullOrBlank()) {
+                    tokenManager.saveRefreshToken(newRefreshToken)
+                }
+                
+                Log.d("AuthRepository", "액세스 토큰 재발급 성공")
+                return newAccessToken
+            } else {
+                Log.e("AuthRepository", "유효한 액세스 토큰을 받지 못했습니다")
+                return null
+            }
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "액세스 토큰 재발급 실패: ${e.message}", e)
+            return null
         }
     }
 }

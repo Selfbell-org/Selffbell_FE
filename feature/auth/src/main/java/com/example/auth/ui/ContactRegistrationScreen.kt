@@ -25,11 +25,8 @@ import com.selfbell.core.ui.composables.AgreeTermsBottomSheet
 import com.selfbell.core.ui.composables.SelfBellButton
 import com.selfbell.core.ui.theme.Typography
 import kotlinx.coroutines.launch
-import com.selfbell.core.model.Contact
-
-// ContactRegistrationViewModel과 UI 상태를 관찰합니다.
-import com.example.auth.ui.ContactRegistrationViewModel
-import com.example.auth.ui.ContactUiState
+import com.selfbell.domain.model.ContactUser
+import com.selfbell.domain.model.ContactRelationshipStatus
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -44,7 +41,7 @@ fun ContactRegistrationScreen(
 
     // 📌 화면이 처음 나타날 때 연락처를 불러옵니다.
     LaunchedEffect(Unit) {
-        viewModel.loadAndSortContacts()
+        viewModel.loadContactsWithUserCheck()
     }
 
     // 📌 UI 상태에 따라 표시할 연락처 목록을 결정합니다.
@@ -63,14 +60,19 @@ fun ContactRegistrationScreen(
         }
     }
 
-    var selectedContacts by remember { mutableStateOf(setOf<Long>()) }
+    var selectedContacts by remember { mutableStateOf(setOf<String>()) }
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-    val isButtonEnabled = selectedContacts.isNotEmpty()
+    
+    // ✅ 서버에 등록된 사용자만 선택 가능하도록 수정
+    val availableContacts = filteredContacts.filter { it.isExists }
+    val isButtonEnabled = selectedContacts.isNotEmpty() && selectedContacts.all { phoneNumber ->
+        availableContacts.any { it.phoneNumber == phoneNumber }
+    }
 
     // 📌 선택된 연락처의 전화번호 목록을 가져옵니다.
     val selectedPhoneNumbers = remember(selectedContacts, contactList) {
-        contactList.filter { selectedContacts.contains(it.id) }.map { it.phoneNumber }
+        contactList.filter { selectedContacts.contains(it.phoneNumber) }.map { it.phoneNumber }
     }
 
     AgreeTermsBottomSheet(
@@ -78,14 +80,10 @@ fun ContactRegistrationScreen(
         onAgreeAll = {
             coroutineScope.launch {
                 sheetState.hide()
-                // 📌 선택된 모든 연락처에 대해 API 요청을 보냅니다.
-                // TODO: 실제 토큰을 사용하도록 변경
-                val userToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-
+                // ✅ 선택된 모든 연락처에 대해 보호자 요청을 보냅니다.
                 selectedPhoneNumbers.forEach { phoneNumber ->
-                    viewModel.sendContactRequest(userToken, phoneNumber)
+                    viewModel.sendContactRequest(phoneNumber)
                 }
-
                 navController.navigate(AppRoute.ONBOARDING_COMPLETE_ROUTE)
             }
         }
@@ -101,33 +99,35 @@ fun ContactRegistrationScreen(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(20.dp))
-                OnboardingProgressBar(currentStep = 4, totalSteps = 4)
-
-                Spacer(modifier = Modifier.height(24.dp))
+                OnboardingProgressBar(
+                    currentStep = 4,
+                    totalSteps = 5,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
 
                 Text(
-                    text = "보호자 연락처를 추가해주세요.",
+                    text = "보호자 연락처를 선택해주세요",
                     style = Typography.headlineMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
                 Text(
-                    text = "최대 3명까지 가능합니다.",
+                    text = "최대 3명까지 선택할 수 있습니다",
                     style = Typography.bodyMedium,
                     color = Color.Gray,
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
+                // 📌 검색 입력 필드
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.updateSearchQuery(it) },
-                    placeholder = { Text("연락처 검색", style = Typography.bodyMedium) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = { Text("연락처 검색") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "검색") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
                 )
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // 📌 ViewModel 상태에 따라 UI 표시
                 when (uiState) {
@@ -156,19 +156,22 @@ fun ContactRegistrationScreen(
                             }
                         } else {
                             LazyColumn(modifier = Modifier.weight(1f)) {
-                                items(filteredContacts, key = { it.id }) { contact ->
+                                items(filteredContacts, key = { it.phoneNumber }) { contact ->
                                     ContactListItem(
                                         name = contact.name,
                                         phoneNumber = contact.phoneNumber,
-                                        isSelected = selectedContacts.contains(contact.id),
+                                        isSelected = selectedContacts.contains(contact.phoneNumber),
+                                        isEnabled = contact.isExists, // ✅ 서버 등록 여부에 따라 활성화/비활성화
                                         onButtonClick = {
-                                            selectedContacts = if (selectedContacts.contains(contact.id)) {
-                                                selectedContacts - contact.id
-                                            } else {
-                                                if (selectedContacts.size < 3) {
-                                                    selectedContacts + contact.id
+                                            if (contact.isExists) {
+                                                selectedContacts = if (selectedContacts.contains(contact.phoneNumber)) {
+                                                    selectedContacts - contact.phoneNumber
                                                 } else {
-                                                    selectedContacts
+                                                    if (selectedContacts.size < 3) {
+                                                        selectedContacts + contact.phoneNumber
+                                                    } else {
+                                                        selectedContacts
+                                                    }
                                                 }
                                             }
                                         }

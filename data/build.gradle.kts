@@ -84,6 +84,11 @@ dependencies {
     implementation(libs.room.ktx) // 코루틴 지원
     implementation(libs.androidx.datastore.preferences)
 
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)

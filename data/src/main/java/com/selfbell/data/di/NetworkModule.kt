@@ -8,6 +8,7 @@ import com.selfbell.data.api.HomeService
 import com.selfbell.data.api.SafeWalksApi
 import com.selfbell.data.repository.impl.EmergencyBellRepositoryImpl
 import com.selfbell.data.repository.impl.SafeWalkRepositoryImpl
+import com.selfbell.data.repository.impl.TokenManager
 import com.selfbell.domain.repository.EmergencyBellRepository
 import com.selfbell.domain.repository.SafeWalkRepository
 import dagger.Module
@@ -27,9 +28,64 @@ object NetworkModule {
 
     private const val BASE_URL = "http://3.37.244.247:8080/"
 
+    /**
+     * AuthInterceptor가 토큰 재발급 시에만 사용하는 별도의 OkHttpClient
+     * 이 클라이언트는 AuthInterceptor를 포함하지 않아 순환 참조를 방지합니다.
+     */
     @Provides
     @Singleton
-    @Named("backendOkHttpClient") // 📌 OkHttpClient에 이름 지정
+    @Named("authOkHttpClient")
+    fun provideAuthOkHttpClient(): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
+    /**
+     * AuthInterceptor가 토큰 재발급에 사용하는 별도의 Retrofit 인스턴스
+     */
+    @Provides
+    @Singleton
+    @Named("authRetrofit")
+    fun provideAuthRetrofit(@Named("authOkHttpClient") okHttpClient: OkHttpClient): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    /**
+     * AuthInterceptor가 토큰 재발급에 사용하는 AuthService
+     */
+    @Provides
+    @Singleton
+    @Named("authServiceForInterceptor")
+    fun provideAuthServiceForInterceptor(@Named("authRetrofit") retrofit: Retrofit): AuthService {
+        return retrofit.create(AuthService::class.java)
+    }
+
+    /**
+     * AuthInterceptor 제공
+     */
+    @Provides
+    @Singleton
+    fun provideAuthInterceptor(
+        tokenManager: TokenManager,
+        @Named("authServiceForInterceptor") authService: AuthService
+    ): AuthInterceptor {
+        return AuthInterceptor(tokenManager, authService)
+    }
+
+    /**
+     * 일반 API 요청에 사용되는 OkHttpClient (AuthInterceptor 포함)
+     */
+    @Provides
+    @Singleton
+    @Named("backendOkHttpClient")
     fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
@@ -40,10 +96,13 @@ object NetworkModule {
             .build()
     }
 
+    /**
+     * 일반 API 요청에 사용되는 Retrofit 인스턴스
+     */
     @Singleton
     @Provides
     @Named("backendRetrofit")
-    fun provideRetrofit(@Named("backendOkHttpClient") okHttpClient: OkHttpClient): Retrofit { // 📌 이름으로 주입받음
+    fun provideRetrofit(@Named("backendOkHttpClient") okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
@@ -62,6 +121,7 @@ object NetworkModule {
     fun provideContactService(@Named("backendRetrofit") retrofit: Retrofit): ContactService {
         return retrofit.create(ContactService::class.java)
     }
+
     @Singleton
     @Provides
     fun provideHomeService(@Named("backendRetrofit") retrofit: Retrofit): HomeService {

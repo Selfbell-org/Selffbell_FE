@@ -1,4 +1,3 @@
-// feature/settings/ui/SettingsScreen.kt
 package com.selfbell.settings.ui
 
 import androidx.compose.foundation.Image
@@ -33,14 +32,23 @@ import com.selfbell.core.ui.theme.Black
 import com.selfbell.core.ui.theme.Primary
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
+import com.selfbell.auth.ui.AuthViewModel
 
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
-    // TODO: ViewModel에서 프로필, 설정 데이터 불러오기
-    val profileName by remember { mutableStateOf("김셀프벨") }
+    // 1. ViewModel의 userName 상태를 관찰합니다.
+    val profileName by viewModel.userName.collectAsState()
+
+    // 2. 화면이 로드될 때 프로필 정보를 가져오는 함수를 호출합니다.
+    // LaunchedEffect는 컴포저블이 화면에 나타날 때 딱 한 번만 실행됩니다.
+    LaunchedEffect(Unit) {
+        viewModel.fetchUserProfile()
+    }
+
+    // 기존의 하드코딩된 값 대신 ViewModel의 상태를 사용합니다.
     val profileImageRes by remember { mutableStateOf(R.drawable.default_profile_icon2) }
     var alertEnabled by remember { mutableStateOf(true) }
 
@@ -50,8 +58,9 @@ fun SettingsScreen(
             .background(Color(0xFFF5F5F5))
             .padding(16.dp)
     ) {
-        // 프로필 영역
-        UserProfileSection(name = profileName, profileImageRes = profileImageRes)
+        // 3. ViewModel에서 가져온 profileName을 UserProfileSection에 전달합니다.
+        // 데이터가 아직 로드되지 않았다면 "로딩 중..."을 표시합니다.
+        UserProfileSection(name = profileName ?: "로딩 중...", profileImageRes = profileImageRes)
 
         Spacer(modifier = Modifier.height(24.dp))
 

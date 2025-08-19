@@ -1,13 +1,12 @@
 package com.selfbell.domain.model
 
 data class ContactRelationship(
-    val contactId: Long,
-    val other: ContactUser,
-    val status: String,
-    val sharePermission: Boolean
-)
-
-data class ContactUser(
-    val phoneNumber: String,
-    val name: String
+    val id: String,
+    val fromUserId: String,
+    val toUserId: String,
+    val fromPhoneNumber: String,
+    val toPhoneNumber: String,
+    val status: ContactRelationshipStatus,
+    val createdAt: String,
+    val updatedAt: String
 )
