@@ -12,6 +12,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.kapt) // Hilt 사용을 위해 kapt 플러그인 추가
     alias(libs.plugins.hilt.android) // Hilt Gradle 플러그인 추가
+    id("com.google.gms.google-services") // 플러그인 적용
+
 }
 // app/build.gradle.kts
 kapt {

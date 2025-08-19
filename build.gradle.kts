@@ -7,4 +7,6 @@ plugins {
     alias(libs.plugins.kotlin.kapt) apply false // <-- 이 라인이 정확히 있는지 확인하시구
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.hilt.android) apply false
+    id("com.google.gms.google-services") version "4.4.2" apply false // google-services 플러그인 추가
+
 }

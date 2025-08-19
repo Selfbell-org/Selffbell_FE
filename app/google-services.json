@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "541718774792",
+    "project_id": "safebell-7b21a",
+    "storage_bucket": "safebell-7b21a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:541718774792:android:093991006ff0291bee7dbd",
+        "android_client_info": {
+          "package_name": "com.selfbell.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHJPVqAUrfbwmy26aYGeHBxE3EbaQ-1-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

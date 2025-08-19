@@ -4,6 +4,7 @@ import com.selfbell.data.repository.impl.AddressRepositoryImpl
 import com.selfbell.data.repository.impl.AuthRepositoryImpl
 import com.selfbell.data.repository.impl.ContactRepositoryImpl
 import com.selfbell.data.repository.impl.HomeRepositoryImpl
+import com.selfbell.data.repository.impl.FCMTokenManager
 import com.selfbell.domain.repository.AddressRepository
 import com.selfbell.domain.repository.AuthRepository
 import com.selfbell.domain.repository.ContactRepository

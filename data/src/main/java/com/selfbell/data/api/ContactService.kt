@@ -1,8 +1,11 @@
 package com.selfbell.data.api
 
 import com.selfbell.data.api.request.ContactRequestDto
+import com.selfbell.data.api.request.ContactRequestRequest
 import com.selfbell.data.api.response.ContactListResponseDto
 import com.selfbell.data.api.response.ContactResponseDto
+import com.selfbell.data.api.response.UserExistsResponse
+import com.selfbell.data.api.response.ContactRequestResponse
 import retrofit2.Response
 import retrofit2.http.*
 import javax.inject.Named
@@ -13,6 +16,15 @@ import javax.inject.Named
 interface ContactService {
 
     /**
+     * 특정 전화번호로 가입된 사용자가 존재하는지 확인합니다.
+     * @param phoneNumber 확인할 전화번호
+     */
+    @GET("/api/v1/users")
+    suspend fun checkUserExists(
+        @Query("phoneNumber") phoneNumber: String
+    ): UserExistsResponse
+
+    /**
      * 서버에 등록된 연락처 목록을 가져옵니다. (상태별 필터링 가능)
      * @param status 필터링할 관계 상태 (PENDING 또는 ACCEPTED)
      * @param page 페이지 번호
@@ -20,7 +32,6 @@ interface ContactService {
      */
     @GET("/api/v1/contacts")
     suspend fun getContacts(
-        @Header("Authorization") token: String,
         @Query("status") status: String,
         @Query("page") page: Int,
         @Query("size") size: Int
@@ -28,13 +39,12 @@ interface ContactService {
 
     /**
      * 특정 사용자에게 보호자 요청을 보냅니다.
-     * @param toPhoneNumber 요청을 보낼 상대방의 전화번호
+     * @param request 보호자 요청 데이터
      */
     @POST("/api/v1/contacts/requests")
     suspend fun sendContactRequest(
-        @Header("Authorization") token: String,
-        @Body request: ContactRequestDto
-    ): ContactResponseDto
+        @Body request: ContactRequestRequest
+    ): Response<ContactRequestResponse>
 
     /**
      * 받은 보호자 요청을 수락합니다.
@@ -42,7 +52,6 @@ interface ContactService {
      */
     @POST("/api/v1/contacts/{contactId}/accept")
     suspend fun acceptContactRequest(
-        @Header("Authorization") token: String,
         @Path("contactId") contactId: Long
     ): ContactResponseDto
 }

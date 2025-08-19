@@ -24,6 +24,7 @@ fun ContactListItem(
     name: String,
     phoneNumber: String,
     isSelected: Boolean,
+    isEnabled: Boolean = true,
     onButtonClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -56,6 +57,14 @@ fun ContactListItem(
                     style = Typography.bodyMedium,
                     color = Color.Gray
                 )
+                // ✅ 서버 등록 여부 표시
+                if (!isEnabled) {
+                    Text(
+                        text = "서버에 등록되지 않은 사용자",
+                        style = Typography.labelSmall,
+                        color = Color.Red
+                    )
+                }
             }
         }
 
@@ -64,7 +73,8 @@ fun ContactListItem(
             onClick = onButtonClick,
             modifier = Modifier.width(72.dp),
             buttonType = if (isSelected) SelfBellButtonType.PRIMARY_FILLED else SelfBellButtonType.OUTLINED,
-            isSmall = true
+            isSmall = true,
+            enabled = isEnabled // ✅ 서버 등록 여부에 따라 버튼 활성화/비활성화
         )
     }
 }
