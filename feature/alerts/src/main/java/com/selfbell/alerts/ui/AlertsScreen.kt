@@ -62,7 +62,10 @@ fun AlertsScreen(
 
     val filteredAlerts = remember(selectedAlertType, allAlerts, searchQuery) {
         allAlerts.filter {
-            it.type == selectedAlertType && (searchQuery.isEmpty() || it.address.contains(searchQuery, ignoreCase = true))
+            it.type == selectedAlertType && (searchQuery.isEmpty() || it.address.contains(
+                searchQuery,
+                ignoreCase = true
+            ))
         }
     }
 
@@ -74,131 +77,132 @@ fun AlertsScreen(
     val currentMarkers = remember { mutableStateListOf<Marker>() }
 
     // 지도 준비 및 알림 마커 업데이트
-    LaunchedEffect(naverMapInstance, filteredAlerts) {
-        currentMarkers.forEach { it.map = null }
-        currentMarkers.clear()
-        naverMapInstance?.let { naverMap ->
-            filteredAlerts.forEach { alertData ->
-                val marker = addOrUpdateMarker(naverMap, alertData) { clickedAlert ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        LaunchedEffect(naverMapInstance, filteredAlerts) {
+            currentMarkers.forEach { it.map = null }
+            currentMarkers.clear()
+            naverMapInstance?.let { naverMap ->
+                filteredAlerts.forEach { alertData ->
+                    val marker = addOrUpdateMarker(naverMap, alertData) { clickedAlert ->
+                        naverMap.moveCamera(
+                            CameraUpdate.scrollTo(clickedAlert.latLng)
+                                .animate(CameraAnimation.Easing)
+                        )
+                    }
+                    currentMarkers.add(marker)
+                }
+                // 필터링된 알림이 있을 경우 첫번째 알림으로 카메라 이동 (기존 로직 유지)
+                if (filteredAlerts.isNotEmpty() && searchedLocationCameraTarget == null) { // 주소 검색 타겟이 없을 때만
                     naverMap.moveCamera(
-                        CameraUpdate.scrollTo(clickedAlert.latLng)
+                        CameraUpdate.scrollTo(filteredAlerts.first().latLng)
                             .animate(CameraAnimation.Easing)
                     )
+                } else if (filteredAlerts.isEmpty() && searchedLocationCameraTarget == null) {
+                    naverMap.moveCamera(CameraUpdate.scrollTo(userLatLng))
                 }
-                currentMarkers.add(marker)
-            }
-            // 필터링된 알림이 있을 경우 첫번째 알림으로 카메라 이동 (기존 로직 유지)
-            if (filteredAlerts.isNotEmpty() && searchedLocationCameraTarget == null) { // 주소 검색 타겟이 없을 때만
-                naverMap.moveCamera(
-                    CameraUpdate.scrollTo(filteredAlerts.first().latLng)
-                        .animate(CameraAnimation.Easing)
-                )
-            } else if (filteredAlerts.isEmpty() && searchedLocationCameraTarget == null) {
-                naverMap.moveCamera(CameraUpdate.scrollTo(userLatLng))
             }
         }
-    }
 
-    // 주소 검색 결과로 카메라 이동
-    LaunchedEffect(searchedLocationCameraTarget) {
-        searchedLocationCameraTarget?.let { latLng ->
-            Log.d("AlertAddress", "Moving camera to target: $latLng")
-            naverMapInstance?.let { naverMap ->
-                naverMap.moveCamera(
-                    CameraUpdate.scrollTo(latLng).animate(CameraAnimation.Easing)
-                )
-                // 기존 검색 마커 제거
-                searchedLocationMarker?.map = null
-                // 새로운 마커 생성 및 지도에 추가
-                searchedLocationMarker = Marker().apply {
-                    position = latLng
-                    this.map = naverMap
-                    icon =
-                        OverlayImage.fromResource(com.selfbell.core.R.drawable.user_marker_icon) // 예시 아이콘 사용
-                    setOnClickListener {
-                        // 클릭 시 동작 (예: 정보 창 표시)
-                        Log.d("AlertsScreen", "Search location marker clicked.")
-                        true
+        // 주소 검색 결과로 카메라 이동
+        LaunchedEffect(searchedLocationCameraTarget) {
+            searchedLocationCameraTarget?.let { latLng ->
+                Log.d("AlertAddress", "Moving camera to target: $latLng")
+                naverMapInstance?.let { naverMap ->
+                    naverMap.moveCamera(
+                        CameraUpdate.scrollTo(latLng).animate(CameraAnimation.Easing)
+                    )
+                    // 기존 검색 마커 제거
+                    searchedLocationMarker?.map = null
+                    // 새로운 마커 생성 및 지도에 추가
+                    searchedLocationMarker = Marker().apply {
+                        position = latLng
+                        this.map = naverMap
+                        icon =
+                            OverlayImage.fromResource(com.selfbell.core.R.drawable.user_marker_icon) // 예시 아이콘 사용
+                        setOnClickListener {
+                            // 클릭 시 동작 (예: 정보 창 표시)
+                            Log.d("AlertsScreen", "Search location marker clicked.")
+                            true
+                        }
                     }
                 }
+            } ?: run {
+                searchedLocationMarker?.map = null
             }
-        } ?: run {
-            searchedLocationMarker?.map = null
         }
-    }
 
-    // 검색 결과 메시지 표시 (예: SnackBar)
-    val scaffoldState = remember { SnackbarHostState() } // Material 3 에서는 rememberSnackbarHostState()
-    LaunchedEffect(searchResultMessage) {
-        searchResultMessage?.let { message ->
-            scaffoldState.showSnackbar(message)
-            viewModel.onSearchResultMessageConsumed()
+        // 검색 결과 메시지 표시 (예: SnackBar)
+        val scaffoldState =
+            remember { SnackbarHostState() } // Material 3 에서는 rememberSnackbarHostState()
+        LaunchedEffect(searchResultMessage) {
+            searchResultMessage?.let { message ->
+                scaffoldState.showSnackbar(message)
+                viewModel.onSearchResultMessageConsumed()
+            }
         }
-    }
 
-    Scaffold( // SnackBarHost를 사용하기 위해 Scaffold로 감쌈
-        snackbarHost = { SnackbarHost(scaffoldState) }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues) // Scaffold로부터의 패딩 적용
-        ) {
+        Scaffold( // SnackBarHost를 사용하기 위해 Scaffold로 감쌈
+            snackbarHost = { SnackbarHost(scaffoldState) }
+        ) { paddingValues ->
             ReusableNaverMap(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize(), // 지도에 직접 fillMaxSize 적용
                 cameraPosition = userLatLng,
                 onMapReady = { naverMap ->
                     naverMapInstance = naverMap
-                    // 초기 카메라 위치 설정 (위 LaunchedEffect에서 처리)
                 }
             )
-
-            AlertTypeToggleButton(
-                selectedAlertType = selectedAlertType,
-                onToggle = { newType ->
-                    viewModel.setAlertType(newType)
-                    // viewModel.onAlertSearchQueryChanged("") // 알림 필터 검색어 초기화
-                    viewModel.onAddressSearchQueryChanged("") // 주소 검색어도 초기화
-                },
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(WindowInsets.statusBars.asPaddingValues())
-                    .padding(top = 16.dp, end = 16.dp)
-            )
+                    .fillMaxSize()
+                    .padding(paddingValues) // 다른 UI 컴포넌트들을 감싸는 Box에만 패딩 적용
+            ){
 
-            // AlertsModal을 AddressSearchModal처럼 작동하도록 수정
-            // 이제 이 모달은 '알림 필터링 결과' 또는 '주소 검색 결과'를 보여줄 수 있음
-            // UI/UX적으로 이를 어떻게 명확히 구분할지 고민 필요 (예: 모달 상단에 탭 또는 상태 텍스트)
-            AlertModal( // 컴포저블 이름 변경 고려
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(WindowInsets.navigationBars.asPaddingValues())
-                    .padding(bottom = 24.dp, start = 16.dp, end = 16.dp),
-                // 알림 필터 관련
-                alertItems = filteredAlerts,
-                onAlertItemClick = { alertData ->
-                    naverMapInstance?.moveCamera(
-                        CameraUpdate.scrollTo(alertData.latLng)
-                            .animate(CameraAnimation.Easing)
-                    )
-                },
-                // 주소 검색 관련
-                addressSearchQuery = addressSearchQuery,
-                onAddressSearchQueryChange = { viewModel.onAddressSearchQueryChanged(it) },
-                onAddressSearchConfirmed = { viewModel.searchAddress() }, // 검색 버튼 클릭 시 API 호출
-                searchedAddressItems = searchedAddresses,
-                onSearchedAddressItemClick = { addressModel ->
-                    viewModel.onSearchedAddressClicked(addressModel) // ViewModel에서 카메라 타겟 설정
-                },
-                isSearchingAddress = isSearchingAddress,
-                // 현재 모달이 어떤 내용을 보여줘야 하는지 결정하는 로직 필요
-                // 예: addressSearchQuery가 비어있으면 알림 목록, 아니면 주소 검색 결과
-                displayMode = if (addressSearchQuery.isBlank() && searchedAddresses.isEmpty()) DisplayMode.ALERTS else DisplayMode.ADDRESS_SEARCH
-            )
+                AlertTypeToggleButton(
+                    selectedAlertType = selectedAlertType,
+                    onToggle = { newType ->
+                        viewModel.setAlertType(newType)
+                        // viewModel.onAlertSearchQueryChanged("") // 알림 필터 검색어 초기화
+                        viewModel.onAddressSearchQueryChanged("") // 주소 검색어도 초기화
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(WindowInsets.statusBars.asPaddingValues())
+                        .padding(top = 16.dp, end = 16.dp)
+                )
+
+                // AlertsModal을 AddressSearchModal처럼 작동하도록 수정
+                // 이제 이 모달은 '알림 필터링 결과' 또는 '주소 검색 결과'를 보여줄 수 있음
+                // UI/UX적으로 이를 어떻게 명확히 구분할지 고민 필요 (예: 모달 상단에 탭 또는 상태 텍스트)
+                AlertModal( // 컴포저블 이름 변경 고려
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(WindowInsets.navigationBars.asPaddingValues())
+                        .padding(bottom = 0.dp, start = 16.dp, end = 16.dp),
+                    // 알림 필터 관련
+                    alertItems = filteredAlerts,
+                    onAlertItemClick = { alertData ->
+                        naverMapInstance?.moveCamera(
+                            CameraUpdate.scrollTo(alertData.latLng)
+                                .animate(CameraAnimation.Easing)
+                        )
+                    },
+                    // 주소 검색 관련
+                    addressSearchQuery = addressSearchQuery,
+                    onAddressSearchQueryChange = { viewModel.onAddressSearchQueryChanged(it) },
+                    onAddressSearchConfirmed = { viewModel.searchAddress() }, // 검색 버튼 클릭 시 API 호출
+                    searchedAddressItems = searchedAddresses,
+                    onSearchedAddressItemClick = { addressModel ->
+                        viewModel.onSearchedAddressClicked(addressModel) // ViewModel에서 카메라 타겟 설정
+                    },
+                    isSearchingAddress = isSearchingAddress,
+                    // 현재 모달이 어떤 내용을 보여줘야 하는지 결정하는 로직 필요
+                    // 예: addressSearchQuery가 비어있으면 알림 목록, 아니면 주소 검색 결과
+                    displayMode = if (addressSearchQuery.isBlank() && searchedAddresses.isEmpty()) DisplayMode.ALERTS else DisplayMode.ADDRESS_SEARCH
+                )
+            }
         }
     }
 }
-
 fun addOrUpdateMarker(
     naverMap: NaverMap,
     alertData: AlertData,

@@ -21,16 +21,29 @@ data class LoginRequest(
     val password: String
 )
 
+// 리프레시 토큰 요청 데이터 클래스
+data class RefreshTokenRequest(
+    @SerializedName("refreshToken") val refreshToken: String
+)
+
 data class LoginResponse(
     @SerializedName(value = "accessToken", alternate = ["access_token", "token"]) val accessToken: String?,
     @SerializedName(value = "refreshToken", alternate = ["refresh_token"]) val refreshToken: String?
 )
+
+// 토큰 재발급 응답 데이터 클래스
+data class RefreshTokenResponse(
+    @SerializedName(value = "accessToken", alternate = ["access_token", "token"]) val accessToken: String?,
+    @SerializedName(value = "refreshToken", alternate = ["refresh_token"]) val refreshToken: String?
+)
+
 // 서버로부터 받을 응답 데이터 클래스 (예시)
 data class AuthResponse(
     val token: String, // 인증 토큰
     val userId: String,
     val message: String
 )
+
 data class MainAddressRequest(
     val name: String,
     val address: String,
@@ -48,6 +61,14 @@ interface AuthService {
 
     @POST("api/v1/auth/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse
+
+    /**
+     * 리프레시 토큰을 사용해 새로운 액세스 토큰을 발급받습니다.
+     * @param request 리프레시 토큰 요청 데이터
+     * @return 새로운 액세스 토큰과 리프레시 토큰
+     */
+    @POST("/api/v1/auth/refresh")
+    suspend fun refreshToken(@Body request: RefreshTokenRequest): RefreshTokenResponse
 
     @POST("/api/v1/addresses")
     suspend fun registerMainAddress(

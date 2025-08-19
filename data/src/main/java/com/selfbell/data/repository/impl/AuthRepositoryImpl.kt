@@ -95,4 +95,42 @@ class AuthRepositoryImpl @Inject constructor(
             throw e
         }
     }
+
+    /**
+     * 리프레시 토큰을 사용해 새로운 액세스 토큰을 발급받습니다.
+     * @return 새로운 액세스 토큰, 실패 시 null
+     */
+    suspend fun refreshAccessToken(): String? {
+        try {
+            val refreshToken = tokenManager.getRefreshToken()
+            if (refreshToken.isNullOrBlank()) {
+                Log.e("AuthRepository", "리프레시 토큰이 없습니다")
+                return null
+            }
+
+            Log.d("AuthRepository", "액세스 토큰 재발급 요청")
+            val request = com.selfbell.data.api.RefreshTokenRequest(refreshToken)
+            val response = authService.refreshToken(request)
+
+            val newAccessToken = response.accessToken?.trim()
+            val newRefreshToken = response.refreshToken?.trim()
+
+            if (!newAccessToken.isNullOrBlank()) {
+                // 새 토큰들 저장
+                tokenManager.saveAccessToken(newAccessToken)
+                if (!newRefreshToken.isNullOrBlank()) {
+                    tokenManager.saveRefreshToken(newRefreshToken)
+                }
+                
+                Log.d("AuthRepository", "액세스 토큰 재발급 성공")
+                return newAccessToken
+            } else {
+                Log.e("AuthRepository", "유효한 액세스 토큰을 받지 못했습니다")
+                return null
+            }
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "액세스 토큰 재발급 실패: ${e.message}", e)
+            return null
+        }
+    }
 }

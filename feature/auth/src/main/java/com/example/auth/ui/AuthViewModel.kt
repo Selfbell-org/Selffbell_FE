@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.selfbell.domain.repository.AuthRepository
+import com.selfbell.data.repository.impl.FCMTokenManager
 import javax.inject.Inject
 
 sealed interface AuthUiState {
@@ -19,7 +20,8 @@ sealed interface AuthUiState {
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val fcmTokenManager: FCMTokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
@@ -32,8 +34,12 @@ class AuthViewModel @Inject constructor(
             _uiState.value = AuthUiState.Loading
 
             try {
+                // ✅ FCM 토큰 가져오기
+                val deviceToken = fcmTokenManager.getFCMToken() ?: "deviceToken2"
+                Log.d("AuthViewModel", "FCM 토큰 가져오기: $deviceToken")
+
                 authRepository.signUp(
-                    deviceToken = "deviceToken2",
+                    deviceToken = deviceToken,
                     deviceType = "ANDROID",
                     name = name,
                     phoneNumber = phoneNumber,
@@ -90,13 +96,15 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-
-    // 📌 서버 통신을 건너뛰는 임시 함수 추가
-//    fun bypassRegisterMainAddress() {
-//        _uiState.value = AuthUiState.Success
-//    }
-//    // 📌 임시로 서버 통신을 건너뛰는 함수
-//    fun bypassSignUp() {
-//        _uiState.value = AuthUiState.Success
-//    }
+    // 📌 FCM 토큰 새로고침 함수 추가
+    fun refreshFCMToken() {
+        viewModelScope.launch {
+            try {
+                val newToken = fcmTokenManager.refreshFCMToken()
+                Log.d("AuthViewModel", "FCM 토큰 새로고침 완료: $newToken")
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "FCM 토큰 새로고침 실패", e)
+            }
+        }
+    }
 }
