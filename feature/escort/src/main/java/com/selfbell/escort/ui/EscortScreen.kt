@@ -1,4 +1,3 @@
-// feature/escort/ui/EscortScreen.kt
 package com.selfbell.escort.ui
 
 import androidx.compose.foundation.layout.*
@@ -14,8 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.naver.maps.geometry.LatLng
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.selfbell.core.model.Contact
+import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.selfbell.core.ui.composables.SelfBellButton
 import com.selfbell.core.ui.theme.SelfBellTheme
@@ -23,6 +24,7 @@ import com.selfbell.core.ui.theme.Typography
 
 @Composable
 fun EscortScreen(
+    navController: NavController,
     viewModel: EscortViewModel = hiltViewModel()
 ) {
     // ViewModel의 모든 상태를 구독합니다.
@@ -32,22 +34,22 @@ fun EscortScreen(
     val arrivalMode by viewModel.arrivalMode.collectAsState()
     val timerMinutes by viewModel.timerMinutes.collectAsState()
     val expectedArrivalTime by viewModel.expectedArrivalTime.collectAsState()
+    val isSetupComplete by viewModel.isSetupComplete.collectAsState()
+    val isDestinationSelected by viewModel.isDestinationSelected.collectAsState()
+    val favoriteAddresses by viewModel.favoriteAddresses.collectAsState()
+    val showGuardianShareSheet by viewModel.showGuardianShareSheet.collectAsState()
     val allContacts by viewModel.allContacts.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedGuardians by viewModel.selectedGuardians.collectAsState()
-    val favoriteAddresses by viewModel.favoriteAddresses.collectAsState()
+    val isSearchingAddress by viewModel.isSearchingAddress.collectAsState()
+    val addressSearchQuery by viewModel.addressSearchQuery.collectAsState()
+    val addressSearchResults by viewModel.addressSearchResults.collectAsState()
+    val selectedAddressForConfirmation by viewModel.selectedAddressForConfirmation.collectAsState()
 
-    // '출발하기' 버튼 활성화 여부 상태
-    val isSetupComplete by viewModel.isSetupComplete.collectAsState()
-    // 세션 진행 중 보호자 공유 UI 표시 여부 상태
-    val showGuardianShareSheet by viewModel.showGuardianShareSheet.collectAsState()
 
     val filteredContacts = remember(searchQuery, allContacts) {
-        if (searchQuery.isEmpty()) {
-            allContacts
-        } else {
-            allContacts.filter { it.name.contains(searchQuery, ignoreCase = true) }
-        }
+        if (searchQuery.isEmpty()) allContacts
+        else allContacts.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -59,28 +61,47 @@ fun EscortScreen(
             }
         )
 
-        // --- 상단 UI 그룹 ---
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            when (escortFlowState) {
-                EscortFlowState.SETTING_DESTINATION, EscortFlowState.SETTING_ARRIVAL_TIME -> {
-                    // 1단계: 목적지 설정
-                    DestinationSetupSheet(
-                        startLocationName = "현재 위치",
-                        destinationLocationName = destinationLocation.name.takeIf { it != "메인 주소 (더미)" } ?: "선택하기",
-                        favoriteAddresses = favoriteAddresses,
-                        onFavoriteClick = { address -> viewModel.onFavoriteAddressSelected(address) },
-                        onDirectInputClick = { /* TODO: 주소 검색 화면으로 이동하는 로직 */ },
-                        onConfirmClick = { viewModel.onDestinationSet() } // 다음 단계로 이동
-                    )
-                }
-                EscortFlowState.IN_PROGRESS -> {
-                    // 4단계: 안심귀가 진행 중
+        when (escortFlowState) {
+            EscortFlowState.SETUP -> {
+                // --- 설정 단계 UI ---
+                EscortSetupSheet(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 24.dp),
+                    startLocationName = "현재 위치",
+                    destinationLocationName = destinationLocation.name.takeIf { it != "메인 주소 (더미)" } ?: "선택하기",
+                    favoriteAddresses = favoriteAddresses,
+                    onFavoriteClick = viewModel::onFavoriteAddressSelected,
+                    onDirectInputClick = { navController.navigate(AppRoute.ADDRESS_SEARCH_ROUTE) },
+                    isDestinationSelected = isDestinationSelected,
+                    arrivalMode = arrivalMode,
+                    timerMinutes = timerMinutes,
+                    expectedArrivalTime = expectedArrivalTime,
+                    onModeChange = viewModel::setArrivalMode,
+                    onTimerChange = viewModel::setTimerMinutes,
+                    onExpectedArrivalTimeChange = viewModel::setExpectedArrivalTime
+                )
+
+                // 하단 '출발하기' 버튼
+                SelfBellButton(
+                    text = "출발하기",
+                    onClick = { viewModel.startSafeWalk() },
+                    enabled = isSetupComplete,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 32.dp)
+                        .fillMaxWidth(0.9f)
+                )
+            }
+            EscortFlowState.IN_PROGRESS -> {
+                // --- 진행 중 UI ---
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     EscortingInfoCard(
                         destinationName = destinationLocation.name,
                         onShareClick = { viewModel.toggleGuardianShareSheet() }
@@ -94,48 +115,11 @@ fun EscortScreen(
                             selectedGuardians = selectedGuardians,
                             onGuardianToggle = viewModel::toggleGuardianSelection,
                             onCloseClick = { viewModel.toggleGuardianShareSheet() }
-                            // TODO: 공유 완료 버튼 및 로직 추가
                         )
                     }
                 }
-                else -> {}
-            }
-        }
 
-        // --- 하단 UI 그룹 ---
-        when (escortFlowState) {
-            EscortFlowState.SETTING_ARRIVAL_TIME -> {
-                // 2단계: 도착 시간 설정 UI
-                Card(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 100.dp) // 출발 버튼 위로 배치
-                        .fillMaxWidth(0.9f),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                ) {
-                    ArrivalTimerSection(
-                        arrivalMode = arrivalMode,
-                        timerMinutes = timerMinutes,
-                        expectedArrivalTime = expectedArrivalTime,
-                        onModeChange = viewModel::setArrivalMode,
-                        onTimerChange = viewModel::setTimerMinutes,
-                        onExpectedArrivalTimeChange = viewModel::setExpectedArrivalTime
-                    )
-                }
-
-                SelfBellButton(
-                    text = "출발하기",
-                    onClick = { viewModel.startSafeWalk() },
-                    enabled = isSetupComplete, // ✅ isSetupComplete 상태에 따라 활성화
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 32.dp)
-                        .fillMaxWidth(0.9f)
-                )
-            }
-            EscortFlowState.IN_PROGRESS -> {
+                // 하단 '도착 완료' 버튼
                 SelfBellButton(
                     text = "도착 완료",
                     onClick = { viewModel.endSafeWalk() },
@@ -145,11 +129,9 @@ fun EscortScreen(
                         .fillMaxWidth(0.9f)
                 )
             }
-            else -> {}
         }
     }
 }
-
 
 // --- EscortScreen에서 사용하는 새로운 Composable 함수들 ---
 
@@ -191,7 +173,6 @@ fun GuardianShareSheet(
     onGuardianToggle: (Contact) -> Unit,
     onCloseClick: () -> Unit
 ) {
-    // 기존 ShareRouteTopSheet의 로직을 재활용하여 카드 형태로 만듭니다.
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -200,19 +181,17 @@ fun GuardianShareSheet(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        // ShareRouteTopSheet의 Column 내부 로직과 거의 동일하게 구현
         Column(modifier = Modifier.padding(16.dp)) {
             Text("동선을 공유할 친구를 선택해주세요.", style = Typography.titleMedium)
-            // ... 검색창, 연락처 목록 (LazyColumn) 등 ...
+            // TODO: ShareRouteTopSheet의 검색창, 연락처 목록(LazyColumn) 등 내부 UI 구현 필요
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
 fun EscortScreenPreview() {
     SelfBellTheme {
-        EscortScreen()
+        EscortScreen(navController = rememberNavController())
     }
 }

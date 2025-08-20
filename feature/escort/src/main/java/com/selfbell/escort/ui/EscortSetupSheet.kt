@@ -1,6 +1,6 @@
 package com.selfbell.escort.ui
 
-
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,27 +15,32 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.selfbell.core.ui.composables.SelfBellButton
+import com.selfbell.core.ui.theme.Black
 import com.selfbell.core.ui.theme.Primary
 import com.selfbell.core.ui.theme.Typography
-import com.selfbell.core.ui.theme.Black
 import com.selfbell.domain.model.FavoriteAddress
+import java.time.LocalTime
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun DestinationSetupSheet(
+fun EscortSetupSheet(
     modifier: Modifier = Modifier,
     startLocationName: String,
     destinationLocationName: String,
-    favoriteAddresses: List<FavoriteAddress>, // ✅ 즐겨찾기 목록을 파라미터로 받음
-    onFavoriteClick: (FavoriteAddress) -> Unit, // ✅ 클릭 시 객체 전체를 전달
+    favoriteAddresses: List<FavoriteAddress>,
+    onFavoriteClick: (FavoriteAddress) -> Unit,
     onDirectInputClick: () -> Unit,
-    onConfirmClick: () -> Unit
+    isDestinationSelected: Boolean,
+    arrivalMode: ArrivalMode,
+    timerMinutes: Int,
+    expectedArrivalTime: LocalTime?,
+    onModeChange: (ArrivalMode) -> Unit,
+    onTimerChange: (Int) -> Unit,
+    onExpectedArrivalTimeChange: (LocalTime) -> Unit
 ) {
     var activeTab by remember { mutableStateOf("destination") }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(20.dp),
@@ -43,7 +48,7 @@ fun DestinationSetupSheet(
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // 탭 버튼 (출발지/도착지)
+            // --- 목적지 설정 섹션 ---
             Row(modifier = Modifier.fillMaxWidth()) {
                 TabButton(
                     text = "출발지 입력",
@@ -63,36 +68,58 @@ fun DestinationSetupSheet(
             }
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ✅ 즐겨찾기 버튼: FlowRow를 LazyRow로 변경
             Text("즐겨찾기", style = Typography.bodyMedium)
             Spacer(modifier = Modifier.height(8.dp))
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp) // 좌우 약간의 여백
+                contentPadding = PaddingValues(horizontal = 4.dp)
             ) {
-                // forEach 대신 items 블록 사용
                 items(favoriteAddresses) { address ->
                     FavoriteButton(
                         text = address.name,
+                        // ✅ 현재 선택된 목적지 이름과 버튼의 이름이 같으면 isSelected = true
+                        isSelected = (destinationLocationName == address.name),
                         onClick = { onFavoriteClick(address) }
                     )
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 직접 입력
+            // ✅ '직접 입력' 버튼의 텍스트와 스타일을 isDestinationSelected 상태에 따라 변경
+            val isFavoriteSelected = favoriteAddresses.any { it.name == destinationLocationName }
             Button(
                 onClick = onDirectInputClick,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF5F5F5)
+                    // 직접 입력으로 주소가 선택되었을 때(즐겨찾기 선택이 아닐 때) 활성화 색상 표시
+                    containerColor = if (isDestinationSelected && !isFavoriteSelected) Primary else Color(0xFFF5F5F5)
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                 elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Text("도착지 주소 직접 입력..", color = Color.Gray)
+                    if (isDestinationSelected && !isFavoriteSelected) {
+                        // ✅ 직접 입력으로 선택된 경우: 버튼 라벨을 설정한 주소로 표시
+                        Text(destinationLocationName, color = Color.White)
+                    } else {
+                        Text("도착지 주소 직접 입력..", color = Color.Gray)
+                    }
+                }
+            }
+
+            // --- 도착 시간 설정 섹션 ---
+            AnimatedVisibility(visible = isDestinationSelected) {
+                Column {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    ArrivalTimerSection(
+                        arrivalMode = arrivalMode,
+                        timerMinutes = timerMinutes,
+                        expectedArrivalTime = expectedArrivalTime,
+                        onModeChange = onModeChange,
+                        onTimerChange = onTimerChange,
+                        onExpectedArrivalTimeChange = onExpectedArrivalTimeChange
+                    )
                 }
             }
         }
@@ -132,7 +159,7 @@ private fun TabButton(
                 Box(
                     modifier = Modifier
                         .size(6.dp)
-                        .background(Color.Green, RoundedCornerShape(50))
+                        .background(if(text == "출발지 입력") Color.Green else Color.Red, RoundedCornerShape(50))
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
@@ -146,13 +173,19 @@ private fun TabButton(
 }
 
 @Composable
-private fun FavoriteButton(text: String, onClick: () -> Unit) {
+private fun FavoriteButton(
+    text: String, onClick: () -> Unit,
+    isSelected: Boolean) {
     Button(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5)),
+        // ✅ isSelected 값에 따라 버튼 색상을 다르게 표시
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) Primary else Color(0xFFF5F5F5),
+            contentColor = if (isSelected) Color.White else Black
+        ),
         elevation = ButtonDefaults.buttonElevation(0.dp)
     ) {
-        Text(text, color = Black)
+        Text(text)
     }
 }

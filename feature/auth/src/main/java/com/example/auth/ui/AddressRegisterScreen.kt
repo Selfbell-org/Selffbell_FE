@@ -52,6 +52,7 @@ fun AddressRegisterScreen(
     val searchAddress by viewModel.searchAddress.collectAsState()
     val addressResults by viewModel.addressResults.collectAsState()
     val isAddressSelected by viewModel.isAddressSelected.collectAsState()
+    val selectedLatLng by viewModel.selectedLatLng.collectAsState()
 
     val totalOnboardingSteps = 4
     val currentOnboardingStep = 3
@@ -248,10 +249,19 @@ fun AddressRegisterScreen(
             SelfBellButton(
                 text = "다음으로",
                 onClick = {
-                    val selectedAddress = viewModel.searchAddress.value
-                    val selectedLatLng = viewModel.selectedLatLng.value
-                    if (selectedAddress.isNotBlank() && selectedLatLng != null) {
-                        onNextClick(selectedAddress, selectedLatLng.latitude, selectedLatLng.longitude)
+                    val name = viewModel.searchAddress.value
+                    val latLng = selectedLatLng
+                    if (name.isNotBlank() && latLng != null) {
+                        // 이전 화면으로 데이터 전달
+                        navController.previousBackStackEntry?.savedStateHandle?.apply {
+                            set("address_name", name)
+                            set("address_lat", latLng.latitude)
+                            set("address_lon", latLng.longitude)
+                        }
+                        // 필요 시 외부 콜백도 유지
+                        onNextClick(name, latLng.latitude, latLng.longitude)
+                        // 화면 복귀
+                        navController.popBackStack()
                     }
                 },
                 modifier = Modifier

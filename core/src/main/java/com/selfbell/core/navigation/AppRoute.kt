@@ -43,4 +43,7 @@ object AppRoute {
     const val ADDRESS_MANAGEMENT_ROUTE = "address_management_route"
     const val REUSABEL_MAP = "reusable_map"
 
+    //escort
+    const val ADDRESS_SEARCH_ROUTE = "address_search_route"
+
 }
