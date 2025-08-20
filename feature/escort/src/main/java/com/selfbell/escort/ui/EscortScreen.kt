@@ -161,10 +161,6 @@ fun EscortScreen(
         }
     }
 }
-
-// LocationInputRow 등 나머지 컴포저블 코드
-// ...
-
 @Composable
 fun LocationInputRow(
     label: String,

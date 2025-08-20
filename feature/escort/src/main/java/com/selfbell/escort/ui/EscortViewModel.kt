@@ -179,7 +179,6 @@ class EscortViewModel @Inject constructor(
                         Log.e("EscortViewModel", "기타 에러: ${e.message}")
                     }
                 }
-                // TODO: 사용자에게 오류 알림
             }
         }
     }
