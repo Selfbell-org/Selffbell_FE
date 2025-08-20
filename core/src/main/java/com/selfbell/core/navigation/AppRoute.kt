@@ -42,4 +42,5 @@ object AppRoute {
     const val EMERGENCY_CALL_ROUTE = "emergency_call_route"
     const val ADDRESS_MANAGEMENT_ROUTE = "address_management_route"
     const val REUSABEL_MAP = "reusable_map"
+
 }
