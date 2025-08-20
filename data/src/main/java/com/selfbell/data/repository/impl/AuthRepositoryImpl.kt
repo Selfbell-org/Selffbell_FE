@@ -86,20 +86,7 @@ class AuthRepositoryImpl @Inject constructor(
             throw e
         }
     }
-    //이거 api 에서 위치추적 가져오는 잘못된 코드 삭제
-    //이거 api 에서 위치추적 가져오는 잘못된 코드 삭제
-    //이거 api 에서 위치추적 가져오는 잘못된 코드 삭제
 
-//    override suspend fun getUserProfile():  Profile{
-//        return try {
-//            //val response = authService.getUserProfile("Bearer " + tokenManager.getAccessToken())
-//            // DTO를 도메인 모델로 변환하는 매핑 로직 필요
-//            //response.toProfile()
-//        } catch (e: Exception) {
-//            Log.e("AuthRepository", "사용자 프로필 가져오기 실패", e)
-//            throw e
-//        }
-//    }
     // ✅ 로그아웃 구현
     override suspend fun logout() {
         try {

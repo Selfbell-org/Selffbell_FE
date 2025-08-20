@@ -20,14 +20,27 @@ import com.selfbell.domain.model.SessionEndReason
 import com.selfbell.domain.repository.SafeWalkRepository
 import com.selfbell.data.repository.impl.TokenManager
 import com.selfbell.core.location.LocationTracker
+import com.selfbell.domain.model.FavoriteAddress
+import com.selfbell.domain.repository.FavoriteAddressRepository
 import java.time.LocalDateTime
 import java.time.LocalTime
 import retrofit2.HttpException
+
+
+// EscortViewModel.kt 파일 상단이나 별도 파일에 정의
+enum class EscortFlowState {
+    SETTING_DESTINATION,    // 1. 목적지 설정 단계
+    SETTING_ARRIVAL_TIME,   // 2. 도착 시간 설정 단계
+    SETTING_GUARDIANS,      // 3. 보호자 선택 단계
+    IN_PROGRESS             // 4. 안심귀가 진행 중
+}
+
 
 @HiltViewModel
 class EscortViewModel @Inject constructor(
     private val contentResolver: ContentResolver,
     private val safeWalkRepository: SafeWalkRepository,
+    private val FavoriteAddressRepository: FavoriteAddressRepository,
     private val locationTracker: LocationTracker,
     private val tokenManager: TokenManager
 ) : ViewModel() {
@@ -40,6 +53,22 @@ class EscortViewModel @Inject constructor(
     val arrivalMode = _arrivalMode.asStateFlow()
     private val _timerMinutes = MutableStateFlow(30)
     val timerMinutes = _timerMinutes.asStateFlow()
+
+    // ✅ 즐겨찾기 목록을 저장할 상태
+    private val _favoriteAddresses = MutableStateFlow<List<FavoriteAddress>>(emptyList())
+    val favoriteAddresses = _favoriteAddresses.asStateFlow()
+
+    // ✅ 현재 UI 흐름 상태를 관리하는 StateFlow 추가
+    private val _escortFlowState = MutableStateFlow(EscortFlowState.SETTING_DESTINATION)
+    val escortFlowState = _escortFlowState.asStateFlow()
+
+    // ✅ '출발하기' 버튼 활성화 여부를 관리하는 상태
+    private val _isSetupComplete = MutableStateFlow(false)
+    val isSetupComplete = _isSetupComplete.asStateFlow()
+
+    // ✅ 세션 시작 후 보호자 공유 UI 표시 여부를 관리하는 상태
+    private val _showGuardianShareSheet = MutableStateFlow(false)
+    val showGuardianShareSheet = _showGuardianShareSheet.asStateFlow()
 
     // ✅ 예상 도착 시간 상태 추가
     private val _expectedArrivalTime = MutableStateFlow<LocalTime?>(null)
@@ -63,6 +92,28 @@ class EscortViewModel @Inject constructor(
     init {
         loadContacts()
         checkCurrentSession() // ✅ ViewModel 생성 시 진행 중인 세션 확인
+        loadFavoriteAddresses()
+    }
+
+    // TODO: UserRepository에서 즐겨찾기 주소를 가져오는 로직 필요
+    // fun onFavoriteAddressClick(type: FavoriteType) { ... }
+
+    // ✅ 도착 시간이 설정되면 '출발하기' 버튼을 활성화하는 로직
+    private fun checkSetupCompletion() {
+        val isTimeSet = (_arrivalMode.value == ArrivalMode.TIMER && _timerMinutes.value > 0) ||
+                (_arrivalMode.value == ArrivalMode.SCHEDULED_TIME && _expectedArrivalTime.value != null)
+
+        // ✅ 시간 설정 단계일 때만 버튼 활성화
+        _isSetupComplete.value = (escortFlowState.value == EscortFlowState.SETTING_ARRIVAL_TIME) && isTimeSet
+    }
+
+    // ✅ 다음 단계로 상태를 변경하는 함수들
+    fun onDestinationSet() {
+        _escortFlowState.value = EscortFlowState.SETTING_ARRIVAL_TIME
+    }
+
+    fun onArrivalTimeSet() {
+        _escortFlowState.value = EscortFlowState.SETTING_GUARDIANS
     }
 
     // ✅ 진행 중인 세션 확인 함수
@@ -101,13 +152,20 @@ class EscortViewModel @Inject constructor(
         _selectedGuardians.value = currentSelected
     }
 
+    // ✅ 타이머 또는 도착 예정 시간이 변경될 때마다 활성화 여부 체크
+    fun setTimerMinutes(minutes: Int) {
+        _timerMinutes.value = minutes
+        checkSetupCompletion()
+    }
+
     // ✅ 예상 도착 시간 설정 함수
     fun setExpectedArrivalTime(time: LocalTime) {
         _expectedArrivalTime.value = time
+        checkSetupCompletion()
     }
 
     // ✅ 선택된 보호자들로 안심귀가 시작 함수
-    fun startSafeWalkWithGuardians() {
+    fun startSafeWalk() {
         viewModelScope.launch {
             try {
                 // ✅ 토큰 상태 확인
@@ -119,8 +177,9 @@ class EscortViewModel @Inject constructor(
                 
                 val currentToken = tokenManager.getAccessToken()
                 Log.d("EscortViewModel", "현재 토큰: $currentToken")
-                
-                val guardianIds = _selectedGuardians.value.map { it.id }
+
+                // ✅ 보호자 ID 없이 세션을 시작 (빈 리스트 전달)
+                val guardianIds = emptyList<Long>()
                 
                 // 예상 도착 시간 계산
                 val expectedArrival: LocalDateTime? = when (_arrivalMode.value) {
@@ -154,9 +213,11 @@ class EscortViewModel @Inject constructor(
                     timerMinutes = if (_arrivalMode.value == ArrivalMode.TIMER) _timerMinutes.value else null,
                     guardianIds = guardianIds
                 )
+
                 // 성공 시 상태 업데이트
                 _sessionId.value = session.sessionId
                 _isSessionActive.value = true
+                _escortFlowState.value = EscortFlowState.IN_PROGRESS
                 // 보호자 선택 초기화
                 _selectedGuardians.value = emptySet()
                 // 위치 추적 시작
@@ -191,6 +252,8 @@ class EscortViewModel @Inject constructor(
                 if (success) {
                     _isSessionActive.value = false
                     _sessionId.value = null
+                    _escortFlowState.value = EscortFlowState.SETTING_DESTINATION // 초기 화면으로 복귀
+
                     // 위치 추적 중지
                     locationTracker.stopLocationUpdates()
                 } else {
@@ -217,18 +280,41 @@ class EscortViewModel @Inject constructor(
         }
     }
 
+    // ✅ 즐겨찾기 목록을 불러오는 함수
+    private fun loadFavoriteAddresses() {
+        viewModelScope.launch {
+            try {
+                _favoriteAddresses.value = FavoriteAddressRepository.getFavoriteAddresses()
+            } catch (e: Exception) {
+                Log.e("EscortViewModel", "즐겨찾기 주소 로딩 실패", e)
+            }
+        }
+    }
+
+    // ✅ 즐겨찾기 주소 선택 시 목적지를 업데이트하는 함수
+    fun onFavoriteAddressSelected(favoriteAddress: FavoriteAddress) {
+        _destinationLocation.value = LocationState(
+            name = favoriteAddress.name,
+            latLng = LatLng(favoriteAddress.lat, favoriteAddress.lon)
+        )
+    }
+
     fun updateStartLocation(name: String, latLng: LatLng) {
         _startLocation.value = LocationState(name, latLng)
     }
     fun updateDestinationLocation(name: String, latLng: LatLng) {
         _destinationLocation.value = LocationState(name, latLng)
     }
+
+    // ✅ 보호자 공유 UI 토글 함수
+    fun toggleGuardianShareSheet() {
+        _showGuardianShareSheet.value = !_showGuardianShareSheet.value
+    }
+
     fun setArrivalMode(mode: ArrivalMode) {
         _arrivalMode.value = mode
     }
-    fun setTimerMinutes(minutes: Int) {
-        _timerMinutes.value = minutes
-    }
+
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
     }
