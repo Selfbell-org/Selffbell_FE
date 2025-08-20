@@ -21,6 +21,14 @@ import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.selfbell.core.ui.composables.SelfBellButton
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
+import com.naver.maps.map.CameraUpdate
+import com.naver.maps.map.NaverMap
+import com.naver.maps.map.LocationTrackingMode
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.compose.ui.platform.LocalContext
+import com.google.android.gms.location.LocationServices
 
 @Composable
 fun EscortScreen(
@@ -41,10 +49,6 @@ fun EscortScreen(
     val allContacts by viewModel.allContacts.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedGuardians by viewModel.selectedGuardians.collectAsState()
-    val isSearchingAddress by viewModel.isSearchingAddress.collectAsState()
-    val addressSearchQuery by viewModel.addressSearchQuery.collectAsState()
-    val addressSearchResults by viewModel.addressSearchResults.collectAsState()
-    val selectedAddressForConfirmation by viewModel.selectedAddressForConfirmation.collectAsState()
 
 
     val filteredContacts = remember(searchQuery, allContacts) {
@@ -52,12 +56,38 @@ fun EscortScreen(
         else allContacts.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
 
+    val context = LocalContext.current
     Box(modifier = Modifier.fillMaxSize()) {
+        var naverMapRef by remember { mutableStateOf<NaverMap?>(null) }
+
         ReusableNaverMap(
             modifier = Modifier.fillMaxSize(),
-            cameraPosition = startLocation.latLng,
+            cameraPosition = null, // 초기엔 기본 위치 이동을 막고, 실제 위치 수신 시 카메라 이동
             onMapReady = { naverMap ->
-                // TODO: 출발지, 도착지, 현재위치 마커를 지도에 표시하는 로직
+                naverMapRef = naverMap
+                // LocationOverlay 표시
+                naverMap.locationOverlay.isVisible = true
+                // 최초부터 사용자 위치로 추적해 카메라가 자동으로 따라가도록 설정
+                naverMap.locationTrackingMode = LocationTrackingMode.Follow
+
+                // 마지막으로 알려진 위치로 즉시 카메라 이동 (초기 깜빡임 방지)
+                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    val fusedClient = LocationServices.getFusedLocationProviderClient(context)
+                    fusedClient.lastLocation.addOnSuccessListener { loc ->
+                        if (loc != null) {
+                            val target = com.naver.maps.geometry.LatLng(loc.latitude, loc.longitude)
+                            naverMap.moveCamera(CameraUpdate.scrollTo(target))
+                            naverMap.locationOverlay.position = target
+                        }
+                    }
+                }
+            },
+            onLocationChanged = { latLng ->
+                val map = naverMapRef ?: return@ReusableNaverMap
+                // 현재 위치 오버레이 갱신
+                map.locationOverlay.position = com.naver.maps.geometry.LatLng(latLng.latitude, latLng.longitude)
             }
         )
 

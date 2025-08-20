@@ -21,6 +21,7 @@ import com.selfbell.domain.model.SessionEndReason
 import com.selfbell.domain.repository.SafeWalkRepository
 import com.selfbell.data.repository.impl.TokenManager
 import com.selfbell.core.location.LocationTracker
+import com.selfbell.data.api.StompManager
 import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.model.FavoriteAddress
 import com.selfbell.domain.repository.AddressRepository
@@ -45,6 +46,10 @@ class EscortViewModel @Inject constructor(
     private val locationTracker: LocationTracker,
     private val tokenManager: TokenManager
 ) : ViewModel() {
+
+    private val stompManager = StompManager()
+
+
     // 출발지/도착지 상태
     private val _startLocation = MutableStateFlow(LocationState("현재 위치", LatLng(37.5665, 126.9780)))
     val startLocation = _startLocation.asStateFlow()
@@ -119,9 +124,6 @@ class EscortViewModel @Inject constructor(
         }
 
     }
-
-    // TODO: UserRepository에서 즐겨찾기 주소를 가져오는 로직 필요
-    // fun onFavoriteAddressClick(type: FavoriteType) { ... }
 
     private fun checkSetupCompletion() {
         val isTimeSet = (_arrivalMode.value == ArrivalMode.TIMER && _timerMinutes.value > 0) ||
@@ -250,6 +252,10 @@ class EscortViewModel @Inject constructor(
                 _escortFlowState.value = EscortFlowState.IN_PROGRESS
                 // 보호자 선택 초기화
                 _selectedGuardians.value = emptySet()
+
+                // ✅ WebSocket 연결
+                stompManager.connect("USER_TOKEN", session.sessionId)
+
                 // 위치 추적 시작
                 startLocationTracking()
                 Log.d("EscortViewModel", "SafeWalk 세션 생성 성공: ${session.sessionId}")
@@ -286,6 +292,8 @@ class EscortViewModel @Inject constructor(
 
                     // 위치 추적 중지
                     locationTracker.stopLocationUpdates()
+
+                    stompManager.disconnect()
                 } else {
                     // TODO: 종료 실패 처리
                     Log.d("EscortViewModel", "안심귀가 종료 실패")
@@ -303,6 +311,8 @@ class EscortViewModel @Inject constructor(
                     if (!success) {
                         Log.w("EscortViewModel", "위치 트랙 업데이트 실패")
                     }
+                    stompManager.sendLocation(sessionId, lat, lon)
+
                 } catch (e: Exception) {
                     Log.e("EscortViewModel", "위치 트랙 업데이트 중 오류", e)
                 }
