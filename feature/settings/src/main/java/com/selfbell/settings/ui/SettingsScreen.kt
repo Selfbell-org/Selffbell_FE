@@ -90,6 +90,14 @@ fun SettingsScreen(
             }
             item {
                 SettingsMenuItem(
+                    label = "친구 관리",
+                    onClick = {
+                        navController.navigate(AppRoute.FRIENDS_ROUTE)
+                    }
+                )
+            }
+            item {
+                SettingsMenuItem(
                     label = "긴급 연락처 관리",
                     onClick = {
                         navController.navigate(AppRoute.CONTACT_REGISTER_ROUTE)
