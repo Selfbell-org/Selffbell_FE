@@ -39,16 +39,12 @@ fun SettingsScreen(
     navController: NavController,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
-    // 1. ViewModel의 userName 상태를 관찰합니다.
     val profileName by viewModel.userName.collectAsState()
 
-    // 2. 화면이 로드될 때 프로필 정보를 가져오는 함수를 호출합니다.
-    // LaunchedEffect는 컴포저블이 화면에 나타날 때 딱 한 번만 실행됩니다.
     LaunchedEffect(Unit) {
-        //viewModel.fetchUserProfile()
+        viewModel.fetchUserProfile()
     }
 
-    // 기존의 하드코딩된 값 대신 ViewModel의 상태를 사용합니다.
     val profileImageRes by remember { mutableStateOf(R.drawable.default_profile_icon2) }
     var alertEnabled by remember { mutableStateOf(true) }
 
@@ -58,8 +54,6 @@ fun SettingsScreen(
             .background(Color(0xFFF5F5F5))
             .padding(16.dp)
     ) {
-        // 3. ViewModel에서 가져온 profileName을 UserProfileSection에 전달합니다.
-        // 데이터가 아직 로드되지 않았다면 "로딩 중..."을 표시합니다.
         UserProfileSection(name = profileName ?: "로딩 중...", profileImageRes = profileImageRes)
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -68,7 +62,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .shadow(4.dp, RoundedCornerShape(16.dp))
+            .shadow(4.dp, RoundedCornerShape(16.dp))
                 .background(Color.White)
         ) {
             item {
@@ -79,7 +73,6 @@ fun SettingsScreen(
                 )
                 Divider()
             }
-            // 일반 설정 항목들
             item {
                 SettingsMenuItem(
                     label = "프로필 관리",
@@ -113,7 +106,6 @@ fun SettingsScreen(
                 )
             }
             item {
-                // 알림 설정 항목
                 SettingsSwitchItem(
                     label = "긴급 알림 받기",
                     isChecked = alertEnabled,
@@ -131,7 +123,6 @@ fun SettingsScreen(
         }
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 로그아웃 버튼
         SelfBellButton(
             text = "로그아웃",
             onClick = {

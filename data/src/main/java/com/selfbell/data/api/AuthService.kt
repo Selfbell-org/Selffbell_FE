@@ -65,8 +65,10 @@ interface AuthService {
     @POST("api/v1/auth/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
-    //@GET("/api/v1/users/profile")
-    //suspend fun getUserProfile(@Header("Authorization") token: String): ProfileResponseDto
+    // 프로필 조회 (인터셉터가 Authorization 헤더 자동 추가)
+    @GET("/api/v1/users/profile")
+    suspend fun getUserProfile(): ProfileResponseDto
+
     /**
      * 리프레시 토큰을 사용해 새로운 액세스 토큰을 발급받습니다.
      * @param request 리프레시 토큰 요청 데이터

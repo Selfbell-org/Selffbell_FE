@@ -99,10 +99,6 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    /**
-     * 리프레시 토큰을 사용해 새로운 액세스 토큰을 발급받습니다.
-     * @return 새로운 액세스 토큰, 실패 시 null
-     */
     suspend fun refreshAccessToken(): String? {
         try {
             val refreshToken = tokenManager.getRefreshToken()
@@ -134,6 +130,17 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e("AuthRepository", "액세스 토큰 재발급 실패: ${e.message}", e)
             return null
+        }
+    }
+
+    // 프로필 조회 추가
+    suspend fun getUserProfile(): Profile {
+        try {
+            val dto = authService.getUserProfile()
+            return dto.toProfile()
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "사용자 프로필 가져오기 실패", e)
+            throw e
         }
     }
 }

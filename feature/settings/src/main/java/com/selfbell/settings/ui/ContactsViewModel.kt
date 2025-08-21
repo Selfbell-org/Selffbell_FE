@@ -41,65 +41,13 @@ class ContactsViewModel @Inject constructor(
     fun loadAllContactData() {
         viewModelScope.launch {
             _uiState.value = ContactsUiState.Loading
-            delay(1000) // Simulate network delay
-
             try {
-                // --- Mock Data for Testing ---
-                // In a real app, you would call the repository here.
-                val accepted = listOf(
-                    ContactRelationship(
-                        id = "rel_1",
-                        fromUserId = "me_id",
-                        toUserId = "friend_1_id",
-                        fromPhoneNumber = "010-1234-5678",
-                        toPhoneNumber = "010-1111-2222",
-                        status = ContactRelationshipStatus.ACCEPTED,
-                        createdAt = "...", updatedAt = "...",
-                        sharePermission = true
-                    )
-                )
-
-                val pendingSent = listOf(
-                    ContactRelationship(
-                        id = "rel_2",
-                        fromUserId = "me_id",
-                        toUserId = "friend_2_id",
-                        fromPhoneNumber = "010-1234-5678",
-                        toPhoneNumber = "010-3333-4444",
-                        status = ContactRelationshipStatus.PENDING,
-                        createdAt = "...", updatedAt = "...",
-                        sharePermission = true
-                    )
-                )
-
-                val pendingReceived = listOf(
-                    ContactRelationship(
-                        id = "rel_3",
-                        fromUserId = "friend_3_id",
-                        toUserId = "me_id",
-                        fromPhoneNumber = "010-5555-6666",
-                        toPhoneNumber = "010-1234-5678",
-                        status = ContactRelationshipStatus.PENDING,
-                        createdAt = "...", updatedAt = "...",
-                        sharePermission = true
-                    )
-                )
-
-                val deviceContacts = listOf(
-                    ContactUser(
-                        id = "contact_1", name = "등록된 친구", phoneNumber = "010-1111-2222", isExists = true
-                    ),
-                    ContactUser(
-                        id = "contact_2", name = "수락 대기중", phoneNumber = "010-3333-4444", isExists = true
-                    ),
-                    ContactUser(
-                        id = "contact_3", name = "가입 안한 친구", phoneNumber = "010-7777-8888", isExists = false
-                    ),
-                    ContactUser(
-                        id = "contact_4", name = "가입한 친구", phoneNumber = "010-9999-0000", isExists = true
-                    )
-                )
-
+                val accepted = contactRepository.getContactsFromServer(status = "ACCEPTED", page = 0, size = 50)
+                val pendingAll = contactRepository.getContactsFromServer(status = "PENDING", page = 0, size = 50)
+                // 서버 응답에 발신/수신 구분 정보가 부족하여 일단 전부 받은 요청으로 분류
+                val pendingSent = emptyList<ContactRelationship>()
+                val pendingReceived = pendingAll
+                val deviceContacts = contactRepository.loadDeviceContactsOnly()
                 _uiState.value = ContactsUiState.Success(accepted, pendingSent, pendingReceived, deviceContacts)
             } catch (e: Exception) {
                 _uiState.value = ContactsUiState.Error(e.message ?: "데이터 로드 실패")
@@ -111,21 +59,19 @@ class ContactsViewModel @Inject constructor(
     fun acceptContactRequest(contactId: Long) {
         viewModelScope.launch {
             try {
-                // contactRepository.acceptContactRequest(contactId)
-                // 성공적으로 수락한 후, 목록을 새로고침
+                contactRepository.acceptContactRequest(contactId)
                 loadAllContactData()
             } catch (e: Exception) {
-                // 에러 처리
+                // 에러 처리 (토스트/스낵바 등)
             }
         }
     }
 
-    // 위치 공유 권한 변경 로직
+    // 위치 공유 권한 변경 로직 (서버 API 준비 후 연결)
     fun toggleSharePermission(contactId: String, allow: Boolean) {
         viewModelScope.launch {
             try {
-                // contactRepository.toggleSharePermission(contactId, allow)
-                // 성공적으로 변경한 후, 목록 새로고침
+                // TODO: 서버 API 연동
                 loadAllContactData()
             } catch (e: Exception) {
                 // 에러 처리
@@ -137,12 +83,26 @@ class ContactsViewModel @Inject constructor(
     fun sendContactRequest(toPhoneNumber: String) {
         viewModelScope.launch {
             try {
-                // contactRepository.sendContactRequest(toPhoneNumber)
-                // 요청 성공 후 목록 새로고침
+                contactRepository.sendContactRequest(toPhoneNumber)
                 loadAllContactData()
             } catch (e: Exception) {
                 // 에러 처리
             }
         }
+    }
+
+    fun checkUserExists(phoneNumber: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val exists = contactRepository.checkUserExists(phoneNumber)
+                onResult(exists)
+            } catch (_: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
+    fun inviteContact(phoneNumber: String) {
+        // TODO: 초대(SMS/딥링크) 연동
     }
 }

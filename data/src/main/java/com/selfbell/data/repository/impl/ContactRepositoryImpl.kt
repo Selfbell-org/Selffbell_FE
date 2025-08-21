@@ -7,7 +7,9 @@ import android.provider.ContactsContract
 import android.util.Log
 import com.selfbell.data.api.ContactService
 import com.selfbell.data.api.request.ContactRequestRequest
+import com.selfbell.data.api.response.ContactResponseDto
 import com.selfbell.domain.model.ContactRelationship
+import com.selfbell.domain.model.ContactRelationshipStatus
 import com.selfbell.domain.model.ContactUser
 import com.selfbell.domain.repository.ContactRepository
 import javax.inject.Inject
@@ -52,6 +54,11 @@ class ContactRepositoryImpl @Inject constructor(
         return contactsWithUserCheck
     }
 
+    override suspend fun loadDeviceContactsOnly(): List<ContactUser> {
+        // 서버 체크 없이 즉시 로컬 연락처 반환
+        return loadDeviceContacts()
+    }
+
     override suspend fun checkUserExists(phoneNumber: String): Boolean {
         return try {
             val response = contactService.checkUserExists(phoneNumber)
@@ -65,8 +72,7 @@ class ContactRepositoryImpl @Inject constructor(
     override suspend fun getContactsFromServer(status: String, page: Int, size: Int): List<ContactRelationship> {
         return try {
             val response = contactService.getContacts(status, page, size)
-            // TODO: 서버 응답 DTO를 도메인 모델로 변환하는 로직 구현
-            emptyList()
+            response.items.map { dto -> dto.toDomainFallback() }
         } catch (e: Exception) {
             Log.e("ContactRepo", "서버 연락처 목록 로드 실패", e)
             throw e
@@ -164,4 +170,24 @@ class ContactRepositoryImpl @Inject constructor(
         
         return phoneNumbers
     }
+}
+
+private fun ContactResponseDto.toDomainFallback(): ContactRelationship {
+    val statusEnum = when (status.uppercase()) {
+        "PENDING" -> ContactRelationshipStatus.PENDING
+        "ACCEPTED" -> ContactRelationshipStatus.ACCEPTED
+        "REJECTED" -> ContactRelationshipStatus.REJECTED
+        else -> ContactRelationshipStatus.NONE
+    }
+    return ContactRelationship(
+        id = contactId.toString(),
+        fromUserId = "",
+        toUserId = "",
+        fromPhoneNumber = "", // 서버 응답에 송신자 번호가 없으므로 비워둠
+        toPhoneNumber = other.phoneNumber,
+        status = statusEnum,
+        createdAt = "",
+        updatedAt = "",
+        sharePermission = sharePermission
+    )
 }

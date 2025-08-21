@@ -16,6 +16,11 @@ interface ContactRepository {
     suspend fun loadDeviceContactsWithUserCheck(): List<ContactUser>
 
     /**
+     * 디바이스 연락처만 불러옵니다. (서버 체크 없음)
+     */
+    suspend fun loadDeviceContactsOnly(): List<ContactUser>
+
+    /**
      * 특정 전화번호로 가입된 사용자가 존재하는지 확인합니다.
      * @param phoneNumber 확인할 전화번호
      * @return 사용자 존재 여부

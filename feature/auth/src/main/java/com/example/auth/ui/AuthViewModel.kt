@@ -26,7 +26,6 @@ class AuthViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val uiState = _uiState.asStateFlow()
-    // 📌 Add the missing state variable
     private val _userName = MutableStateFlow<String?>(null)
     val userName = _userName.asStateFlow()
 
@@ -37,7 +36,6 @@ class AuthViewModel @Inject constructor(
             _uiState.value = AuthUiState.Loading
 
             try {
-                // ✅ FCM 토큰 가져오기
                 val deviceToken = fcmTokenManager.getFCMToken() ?: "deviceToken2"
                 Log.d("AuthViewModel", "FCM 토큰 가져오기: $deviceToken")
 
@@ -49,7 +47,6 @@ class AuthViewModel @Inject constructor(
                     password = password
                 )
 
-                // ✅ 회원가입 성공 후 즉시 로그인하여 토큰 저장
                 authRepository.login(phoneNumber, password)
 
                 _uiState.value = AuthUiState.Success
@@ -62,19 +59,20 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-//    fun fetchUserProfile() {
-//        viewModelScope.launch {
-//            try {
-//                // ✅ AuthRepository에 구현된 getUserProfile 함수를 호출합니다.
-//                val profile = authRepository.getUserProfile()
-//                _userName.value = profile.name // ✅ ViewModel 상태 업데이트
-//                Log.d("AuthViewModel", "사용자 프로필 불러오기 성공: ${profile.name}")
-//            } catch (e: Exception) {
-//                Log.e("AuthViewModel", "사용자 프로필 불러오기 실패", e)
-//                _userName.value = null // 에러 발생 시 이름 초기화
-//            }
-//        }
-//    }
+    fun fetchUserProfile() {
+        viewModelScope.launch {
+            try {
+                // Downcast to call impl extension; better to add to interface later
+                val profile = (authRepository as? com.selfbell.data.repository.impl.AuthRepositoryImpl)?.getUserProfile()
+                _userName.value = profile?.name
+                Log.d("AuthViewModel", "사용자 프로필 불러오기 성공: ${profile?.name}")
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "사용자 프로필 불러오기 실패", e)
+                _userName.value = null
+            }
+        }
+    }
+
     fun login(phoneNumber: String, password: String) {
         if (_uiState.value is AuthUiState.Loading) return
 
@@ -94,7 +92,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // 📌 메인 주소 등록 API 호출 로직 추가
     fun registerMainAddress(name: String, address: String, lat: Double, lon: Double) {
         if (_uiState.value is AuthUiState.Loading) return
 
@@ -112,7 +109,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // 📌 FCM 토큰 새로고침 함수 추가
     fun refreshFCMToken() {
         viewModelScope.launch {
             try {

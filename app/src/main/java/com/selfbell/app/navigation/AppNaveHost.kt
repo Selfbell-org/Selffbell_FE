@@ -170,7 +170,7 @@ fun AppNavHost(
                         LoginScreen(
                             phoneNumber = phoneNumber,
                             onLoginSuccess = {
-                                navController.navigate(AppRoute.HOME_ROUTE) {
+                                navController.navigate(AppRoute.ONBOARDING_COMPLETE_ROUTE) {
                                     popUpTo(AppRoute.LANDING_ROUTE) { inclusive = true }
                                 }
                             }
