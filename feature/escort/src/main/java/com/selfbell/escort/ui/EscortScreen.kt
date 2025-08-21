@@ -31,6 +31,7 @@ import androidx.core.app.ActivityCompat
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.location.LocationServices
 import android.util.Log
+import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
 
 @Composable
 fun EscortScreen(
@@ -72,6 +73,8 @@ fun EscortScreen(
         }
     }
 
+    // 플로팅 바텀바 패딩 (오버레이 전용)
+    val floatingBottomPadding = LocalFloatingBottomBarPadding.current
 
     val filteredContacts = remember(searchQuery, allContacts) {
         if (searchQuery.isEmpty()) allContacts
@@ -155,6 +158,7 @@ fun EscortScreen(
                     enabled = isSetupComplete,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
+                        .padding(floatingBottomPadding)
                         .padding(bottom = 32.dp)
                         .fillMaxWidth(0.9f)
                 )
@@ -205,6 +209,7 @@ fun EscortScreen(
                     onClick = { viewModel.endSafeWalk() },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
+                        .padding(floatingBottomPadding)
                         .padding(bottom = 32.dp)
                         .fillMaxWidth(0.9f)
                 )

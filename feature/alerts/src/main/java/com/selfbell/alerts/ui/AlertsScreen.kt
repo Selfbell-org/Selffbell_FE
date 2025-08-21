@@ -42,6 +42,7 @@ import androidx.compose.material.rememberModalBottomSheetState
 import com.naver.maps.map.CameraAnimation
 import com.naver.maps.map.CameraUpdate
 import com.selfbell.domain.model.AddressModel
+import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +76,9 @@ fun AlertsScreen(
 
     // 마커 리스트를 상태로 관리
     val currentMarkers = remember { mutableStateListOf<Marker>() }
+
+    // 플로팅 바텀바 패딩 (오버레이 전용)
+    val floatingBottomPadding = LocalFloatingBottomBarPadding.current
 
     // 지도 준비 및 알림 마커 업데이트
     Box(modifier = Modifier.fillMaxSize()) {
@@ -176,7 +180,7 @@ fun AlertsScreen(
                 AlertModal( // 컴포저블 이름 변경 고려
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(WindowInsets.navigationBars.asPaddingValues())
+                        .padding(floatingBottomPadding)
                         .padding(bottom = 0.dp, start = 16.dp, end = 16.dp),
                     // 알림 필터 관련
                     alertItems = filteredAlerts,
