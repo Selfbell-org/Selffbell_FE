@@ -18,6 +18,7 @@ import com.selfbell.core.ui.composables.ContactListItem
 import com.selfbell.core.ui.composables.SelfBellButton // SelfBellButton 추가
 import com.selfbell.core.ui.composables.SelfBellButtonType // SelfBellButtonType 추가
 import com.selfbell.core.ui.composables.AcceptedFriendsList
+import com.selfbell.core.ui.composables.UnregisteredContactItem
 import com.selfbell.domain.model.ContactRelationship
 import com.selfbell.domain.model.ContactUser
 import com.selfbell.settings.ui.ContactsUiState
@@ -115,20 +116,7 @@ fun PendingRequestsList(
     onAcceptClick: (Long) -> Unit // contactId Long
 ) {
     LazyColumn(modifier = Modifier.padding(16.dp)) {
-//        item { Text("내가 보낸 요청", style = Typography.titleMedium) }
-//        items(pendingSent, key = { it.id }) { request ->
-//            val phone = request.toPhoneNumber
-//            val displayName = displayNameFromPhone(phone, prefix = "보낸 요청")
-//            // 보낸 요청: "수락 대기 중" → 버튼 비활성화 동일 UI 사용
-//            ContactListItem(
-//                name = displayName,
-//                phoneNumber = phone,
-//                isSelected = false,
-//                isEnabled = false, // 비활성화
-//                onButtonClick = { /* 비활성화 */ }
-//            )
-//            Divider()
-//        }
+
         item {
             Spacer(modifier = Modifier.height(24.dp))
             Text("요청 목록", style = Typography.titleMedium)
@@ -156,14 +144,14 @@ fun InviteFriendsList(
     onSendRequest: (String) -> Unit
 ) {
     LazyColumn(modifier = Modifier.padding(16.dp)) {
-        items(deviceContacts) { contact ->
+        // 서버에 존재하지 않는 연락처만 노출
+        val unregistered = deviceContacts.filter { !it.isExists }
+        items(unregistered) { contact ->
             val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "연락처")
-            ContactListItem(
+            UnregisteredContactItem(
                 name = contact.name.ifBlank { fallbackName },
                 phoneNumber = contact.phoneNumber,
-                isSelected = false,
-                isEnabled = contact.isExists,
-                onButtonClick = { onSendRequest(contact.phoneNumber) }
+                onInviteClick = { onSendRequest(contact.phoneNumber) }
             )
         }
     }

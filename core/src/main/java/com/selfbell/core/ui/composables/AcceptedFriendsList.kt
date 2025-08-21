@@ -22,7 +22,7 @@ fun AcceptedFriendsList(
                 name = displayName,
                 phoneNumber = phone,
                 isSelected = false, // 초대/요청 스타일과 동일한 틀 유지
-                isEnabled = false,  // 친구 목록은 버튼 비활성화 (추후 기능 연결 가능)
+                isEnabled = true,  // 친구 목록은 버튼 비활성화 (추후 기능 연결 가능)
                 onButtonClick = { /* 친구 항목: 별도 버튼 동작 없음 (추후 권한 토글 등 연결) */ }
             )
             Divider()
