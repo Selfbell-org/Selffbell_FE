@@ -39,9 +39,9 @@ fun ContactRegistrationScreen(
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
-    // 📌 화면이 처음 나타날 때 연락처를 불러옵니다.
+    // 📌 화면이 처음 나타날 때 연락처를 불러옵니다. (서버 체크 없이 로컬만)
     LaunchedEffect(Unit) {
-        viewModel.loadContactsWithUserCheck()
+        viewModel.loadDeviceContactsOnly()
     }
 
     // 📌 UI 상태에 따라 표시할 연락처 목록을 결정합니다.
@@ -61,14 +61,12 @@ fun ContactRegistrationScreen(
     }
 
     var selectedContacts by remember { mutableStateOf(setOf<String>()) }
+    var inviteContacts by remember { mutableStateOf(setOf<String>()) }
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     
-    // ✅ 서버에 등록된 사용자만 선택 가능하도록 수정
-    val availableContacts = filteredContacts.filter { it.isExists }
-    val isButtonEnabled = selectedContacts.isNotEmpty() && selectedContacts.all { phoneNumber ->
-        availableContacts.any { it.phoneNumber == phoneNumber }
-    }
+    // 버튼 활성화: 선택된 유저만 기준 (초대는 제외)
+    val isButtonEnabled = selectedContacts.isNotEmpty()
 
     // 📌 선택된 연락처의 전화번호 목록을 가져옵니다.
     val selectedPhoneNumbers = remember(selectedContacts, contactList) {
@@ -157,21 +155,31 @@ fun ContactRegistrationScreen(
                         } else {
                             LazyColumn(modifier = Modifier.weight(1f)) {
                                 items(filteredContacts, key = { it.phoneNumber }) { contact ->
+                                    val isInvite = inviteContacts.contains(contact.phoneNumber)
                                     ContactListItem(
                                         name = contact.name,
                                         phoneNumber = contact.phoneNumber,
                                         isSelected = selectedContacts.contains(contact.phoneNumber),
-                                        isEnabled = contact.isExists, // ✅ 서버 등록 여부에 따라 활성화/비활성화
+                                        isEnabled = !isInvite, // 미가입자는 안내 문구 표시
+                                        forceInvite = isInvite,
                                         onButtonClick = {
-                                            if (contact.isExists) {
-                                                selectedContacts = if (selectedContacts.contains(contact.phoneNumber)) {
-                                                    selectedContacts - contact.phoneNumber
-                                                } else {
+                                            if (selectedContacts.contains(contact.phoneNumber)) {
+                                                selectedContacts = selectedContacts - contact.phoneNumber
+                                                return@ContactListItem
+                                            }
+                                            if (inviteContacts.contains(contact.phoneNumber)) {
+                                                // 초대 플로우 실행 (TODO: 초대 SMS/링크 등)
+                                                viewModel.inviteContact(contact.phoneNumber)
+                                                return@ContactListItem
+                                            }
+                                            // 서버 존재 여부 확인 후 분기
+                                            viewModel.checkUserExists(contact.phoneNumber) { exists ->
+                                                if (exists) {
                                                     if (selectedContacts.size < 3) {
-                                                        selectedContacts + contact.phoneNumber
-                                                    } else {
-                                                        selectedContacts
+                                                        selectedContacts = selectedContacts + contact.phoneNumber
                                                     }
+                                                } else {
+                                                    inviteContacts = inviteContacts + contact.phoneNumber
                                                 }
                                             }
                                         }

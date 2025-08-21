@@ -26,7 +26,8 @@ fun ContactListItem(
     isSelected: Boolean,
     isEnabled: Boolean = true,
     onButtonClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    forceInvite: Boolean = false
 ) {
     Row(
         modifier = modifier
@@ -68,13 +69,25 @@ fun ContactListItem(
             }
         }
 
+        val btnText = when {
+            forceInvite -> "초대"
+            isSelected -> "해제"
+            else -> "선택"
+        }
+        val btnType = when {
+            forceInvite -> SelfBellButtonType.PRIMARY_FILLED
+            isSelected -> SelfBellButtonType.PRIMARY_FILLED
+            else -> SelfBellButtonType.OUTLINED
+        }
+        val btnEnabled = if (forceInvite) true else isEnabled
+
         SelfBellButton(
-            text = if (isSelected) "해제" else "선택",
+            text = btnText,
             onClick = onButtonClick,
             modifier = Modifier.width(72.dp),
-            buttonType = if (isSelected) SelfBellButtonType.PRIMARY_FILLED else SelfBellButtonType.OUTLINED,
+            buttonType = btnType,
             isSmall = true,
-            enabled = isEnabled // ✅ 서버 등록 여부에 따라 버튼 활성화/비활성화
+            enabled = btnEnabled
         )
     }
 }
@@ -94,6 +107,14 @@ fun ContactListItemPreview() {
                 name = "김민석",
                 phoneNumber = "010-1111-1111",
                 isSelected = false,
+                onButtonClick = {}
+            )
+            ContactListItem(
+                name = "미가입자",
+                phoneNumber = "010-2222-3333",
+                isSelected = false,
+                isEnabled = false,
+                forceInvite = true,
                 onButtonClick = {}
             )
         }
