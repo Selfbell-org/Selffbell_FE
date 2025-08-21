@@ -29,6 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import android.util.Log
 import com.example.auth.ui.AddressRegisterScreen
 import com.example.auth.ui.ContactRegistrationScreen
 import com.example.auth.ui.LandingScreen
@@ -115,13 +116,17 @@ fun AppNavHost(
                             navController = navController,
                             onAddressSelected = { address, lat, lon ->
                                 // ✅ 결과를 이전 화면(EscortScreen)의 ViewModel로 전달하고 뒤로가기
+                                Log.d("AddressSearch", "onAddressSelected 호출 address=" + address + ", lat=" + lat + ", lon=" + lon)
+                                Log.d("AddressSearch", "previousBackStackEntry=" + (navController.previousBackStackEntry?.destination?.route ?: "null"))
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle?.set("address_name", address)
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle?.set("address_lat", lat)
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle?.set("address_lon", lon)
+                                Log.d("AddressSearch", "SavedStateHandle set 완료 (address_name/address_lat/address_lon)")
                                 navController.popBackStack()
+                                Log.d("AddressSearch", "popBackStack 실행 완료")
                             }
                         )
                     }
