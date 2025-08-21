@@ -30,10 +30,10 @@ fun EscortSetupSheet(
     onFavoriteClick: (FavoriteAddress) -> Unit,
     onDirectInputClick: () -> Unit,
     isDestinationSelected: Boolean,
-    arrivalMode: ArrivalMode,
+    arrivalMode: EscortViewModel.ArrivalMode,
     timerMinutes: Int,
     expectedArrivalTime: LocalTime?,
-    onModeChange: (ArrivalMode) -> Unit,
+    onModeChange: (EscortViewModel.ArrivalMode) -> Unit,
     onTimerChange: (Int) -> Unit,
     onExpectedArrivalTimeChange: (LocalTime) -> Unit,
     showTimeInputModal: Boolean,
@@ -117,8 +117,6 @@ fun EscortSetupSheet(
             if (showTimeInputModal) {
                 // 시간 입력 모달이 표시될 때 - 즐겨찾기와 직접 입력 버튼 영역을 대체
                 Column {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text("도착 시간 설정", style = Typography.titleMedium)
                     Spacer(modifier = Modifier.height(16.dp))
                     ArrivalTimerSection(
                         arrivalMode = arrivalMode,
