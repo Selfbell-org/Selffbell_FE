@@ -52,6 +52,11 @@ class ContactRepositoryImpl @Inject constructor(
         return contactsWithUserCheck
     }
 
+    override suspend fun loadDeviceContactsOnly(): List<ContactUser> {
+        // 서버 체크 없이 즉시 로컬 연락처 반환
+        return loadDeviceContacts()
+    }
+
     override suspend fun checkUserExists(phoneNumber: String): Boolean {
         return try {
             val response = contactService.checkUserExists(phoneNumber)

@@ -39,15 +39,15 @@ class ContactRegistrationViewModel @Inject constructor(
         filterContacts()
     }
 
-    fun loadContactsWithUserCheck() {
+    // 로컬 디바이스 연락처만 불러오기 (서버 체크 없이)
+    fun loadDeviceContactsOnly() {
         _uiState.value = ContactUiState.Loading
-
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val contactsWithUserCheck = contactRepository.loadDeviceContactsWithUserCheck()
-                _contacts.value = contactsWithUserCheck
-                _uiState.value = ContactUiState.Success(contactsWithUserCheck)
-                Log.d("ContactRegistrationVM", "연락처 로드 완료: ${contactsWithUserCheck.size}개")
+                val deviceContacts = contactRepository.loadDeviceContactsWithUserCheck() // TODO: 로컬 전용으로 대체 필요 시 구현
+                _contacts.value = deviceContacts
+                _uiState.value = ContactUiState.Success(deviceContacts)
+                Log.d("ContactRegistrationVM", "연락처 로드 완료: ${deviceContacts.size}개")
             } catch (e: Exception) {
                 Log.e("ContactRegistrationVM", "연락처 로드 실패", e)
                 _uiState.value = ContactUiState.Error(e.message ?: "연락처를 불러오는데 실패했습니다.")
@@ -55,15 +55,28 @@ class ContactRegistrationViewModel @Inject constructor(
         }
     }
 
+    fun checkUserExists(phoneNumber: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val exists = contactRepository.checkUserExists(phoneNumber)
+                onResult(exists)
+            } catch (e: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
+    fun inviteContact(phoneNumber: String) {
+        // TODO: 초대 로직 (SMS/딥링크 등) 연결
+        Log.d("ContactRegistrationVM", "초대 전송: $phoneNumber")
+    }
+
     fun sendContactRequest(toPhoneNumber: String) {
         viewModelScope.launch {
             try {
                 contactRepository.sendContactRequest(toPhoneNumber)
                 Log.d("ContactRegistrationVM", "보호자 요청 성공: $toPhoneNumber")
-                
-                // 요청 성공 후 해당 연락처의 상태를 업데이트
                 updateContactStatus(toPhoneNumber, true)
-                
             } catch (e: Exception) {
                 Log.e("ContactRegistrationVM", "보호자 요청 실패: $toPhoneNumber", e)
                 _uiState.value = ContactUiState.Error(e.message ?: "요청 전송 중 오류가 발생했습니다.")
@@ -103,6 +116,6 @@ class ContactRegistrationViewModel @Inject constructor(
     }
 
     fun refreshContacts() {
-        loadContactsWithUserCheck()
+        loadDeviceContactsOnly()
     }
 }
