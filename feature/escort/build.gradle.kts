@@ -39,6 +39,7 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":core"))
     implementation(project(":data"))
+    implementation(project(":feature:settings"))
 
     //네이버
     implementation("com.naver.maps:map-sdk:3.22.1")
