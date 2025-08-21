@@ -33,6 +33,7 @@ import retrofit2.HttpException
 
 enum class EscortFlowState {
     SETUP,
+    GUARDIAN_SELECTION,
     IN_PROGRESS
 }
 
@@ -102,12 +103,23 @@ class EscortViewModel @Inject constructor(
     private val _selectedAddressForConfirmation = MutableStateFlow<AddressModel?>(null)
     val selectedAddressForConfirmation = _selectedAddressForConfirmation.asStateFlow()
 
+    // ✅ 2. '출발하기' 버튼의 활성화 상태를 별도로 관리
+    private val _isStartButtonEnabled = MutableStateFlow(false)
+    val isStartButtonEnabled = _isStartButtonEnabled.asStateFlow()
+    
+    // ✅ 주소 입력 후 시간 입력 모달 표시 여부
+    private val _showTimeInputModal = MutableStateFlow(false)
+    val showTimeInputModal = _showTimeInputModal.asStateFlow()
+
 
     init {
         loadContacts()
         checkCurrentSession() // ✅ ViewModel 생성 시 진행 중인 세션 확인
         loadFavoriteAddresses()
+        observeAddressSearchResult()
+    }
 
+    private fun observeAddressSearchResult() {
         viewModelScope.launch {
             savedStateHandle.getStateFlow<String?>("address_name", null).collect { name ->
                 val lat = savedStateHandle.get<Double>("address_lat")
@@ -115,22 +127,21 @@ class EscortViewModel @Inject constructor(
 
                 if (name != null && lat != null && lon != null) {
                     onDirectAddressSelected(name, LatLng(lat, lon))
-                    // 처리 후에는 값을 초기화하여 중복 처리를 방지
                     savedStateHandle["address_name"] = null
                     savedStateHandle["address_lat"] = null
                     savedStateHandle["address_lon"] = null
                 }
             }
         }
-
     }
 
     private fun checkSetupCompletion() {
         val isTimeSet = (_arrivalMode.value == ArrivalMode.TIMER && _timerMinutes.value > 0) ||
                 (_arrivalMode.value == ArrivalMode.SCHEDULED_TIME && _expectedArrivalTime.value != null)
 
-        // ✅ 목적지와 시간이 모두 설정되어야 버튼 활성화
-        _isSetupComplete.value = _isDestinationSelected.value && isTimeSet
+        if (_isDestinationSelected.value && isTimeSet) {
+            _escortFlowState.value = EscortFlowState.GUARDIAN_SELECTION
+        }
     }
 
     // ✅ 즐겨찾기 선택 시, 목적지를 업데이트하고 isDestinationSelected를 true로 변경
@@ -140,26 +151,62 @@ class EscortViewModel @Inject constructor(
             latLng = LatLng(favoriteAddress.lat, favoriteAddress.lon)
         )
         _isDestinationSelected.value = true
+        _showTimeInputModal.value = true // 시간 입력 모달 표시
     }
 
     // ✅ 직접 주소 입력 완료 후 호출될 함수 (가정)
     fun onDirectAddressSelected(name: String, latLng: LatLng) {
         _destinationLocation.value = LocationState(name, latLng)
         _isDestinationSelected.value = true
+        _showTimeInputModal.value = true // 시간 입력 모달 표시
     }
 
-    // ✅ 진행 중인 세션 확인 함수
     private fun checkCurrentSession() {
         viewModelScope.launch {
-            val currentSession = safeWalkRepository.getCurrentSafeWalk()
-            if (currentSession != null) {
-                _sessionId.value = currentSession.sessionId
-                _isSessionActive.value = true
-                startLocationTracking() // 세션이 활성화되면 위치 추적 시작
+            // 1. 먼저 토큰 상태 확인
+            if (!tokenManager.hasValidToken()) {
+                Log.d("EscortViewModel", "유효한 토큰이 없습니다. SETUP 상태로 초기화")
+                _sessionId.value = null
+                _isSessionActive.value = false
+                _escortFlowState.value = EscortFlowState.SETUP
+                return@launch
+            }
+            
+            // 2. 서버에서 현재 세션 확인
+            try {
+                val currentSession = safeWalkRepository.getCurrentSafeWalk()
+                if (currentSession != null) {
+                    Log.d("EscortViewModel", "서버에서 진행 중인 세션 발견: ${currentSession.sessionId}")
+                    
+                    // 3. 세션이 있지만 로컬 상태가 초기화된 경우 (앱 데이터 삭제 후 재시작)
+                    // 세션을 강제로 종료하고 SETUP 상태로 시작
+                    try {
+                        Log.d("EscortViewModel", "앱 데이터 삭제 후 재시작으로 인식. 기존 세션 종료 시도")
+                        safeWalkRepository.endSafeWalkSession(currentSession.sessionId, SessionEndReason.MANUAL)
+                        Log.d("EscortViewModel", "기존 세션 종료 완료")
+                    } catch (e: Exception) {
+                        Log.w("EscortViewModel", "기존 세션 종료 실패 (무시하고 진행)", e)
+                    }
+                    
+                    // SETUP 상태로 초기화
+                    _sessionId.value = null
+                    _isSessionActive.value = false
+                    _escortFlowState.value = EscortFlowState.SETUP
+                } else {
+                    Log.d("EscortViewModel", "서버에 진행 중인 세션이 없습니다. SETUP 상태로 초기화")
+                    _sessionId.value = null
+                    _isSessionActive.value = false
+                    _escortFlowState.value = EscortFlowState.SETUP
+                }
+            } catch (e: Exception) {
+                Log.e("EscortViewModel", "현재 세션 확인 중 오류 발생", e)
+                // 오류 발생 시 SETUP 상태로 초기화
+                _sessionId.value = null
+                _isSessionActive.value = false
+                _escortFlowState.value = EscortFlowState.SETUP
             }
         }
     }
-
     // ✅ 위치 추적 시작 함수
     private fun startLocationTracking() {
         viewModelScope.launch {
@@ -173,7 +220,7 @@ class EscortViewModel @Inject constructor(
         }
     }
 
-    // ✅ 보호자 선택/해제 함수
+    // ✅ 4. 보호자 선택/해제 시 '출발하기' 버튼 활성화 여부 업데이트
     fun toggleGuardianSelection(contact: Contact) {
         val currentSelected = _selectedGuardians.value.toMutableSet()
         if (currentSelected.contains(contact)) {
@@ -182,6 +229,7 @@ class EscortViewModel @Inject constructor(
             currentSelected.add(contact)
         }
         _selectedGuardians.value = currentSelected
+        _isStartButtonEnabled.value = currentSelected.isNotEmpty()
     }
 
     // ✅ 타이머 또는 도착 예정 시간이 변경될 때마다 활성화 여부 체크
@@ -211,20 +259,12 @@ class EscortViewModel @Inject constructor(
                 Log.d("EscortViewModel", "현재 토큰: $currentToken")
 
                 // ✅ 보호자 ID 없이 세션을 시작 (빈 리스트 전달)
-                val guardianIds = emptyList<Long>()
+                val guardianIds = _selectedGuardians.value.map { it.id } // TODO: 보호자 ID 리스트로 대체
                 
                 // 예상 도착 시간 계산
                 val expectedArrival: LocalDateTime? = when (_arrivalMode.value) {
-                    ArrivalMode.TIMER -> {
-                        // 현재 시간 + 타이머 분
-                        LocalDateTime.now().plusMinutes(_timerMinutes.value.toLong())
-                    }
-                    ArrivalMode.SCHEDULED_TIME -> {
-                        // 선택된 시간을 오늘 날짜와 결합
-                        _expectedArrivalTime.value?.let { time ->
-                            LocalDateTime.now().withHour(time.hour).withMinute(time.minute)
-                        }
-                    }
+                    ArrivalMode.TIMER -> LocalDateTime.now().plusMinutes(_timerMinutes.value.toLong())
+                    ArrivalMode.SCHEDULED_TIME -> _expectedArrivalTime.value?.let { LocalDateTime.now().withHour(it.hour).withMinute(it.minute) }
                 }
 
                 // ✅ 디버깅을 위한 로그 추가
@@ -284,19 +324,25 @@ class EscortViewModel @Inject constructor(
     fun endSafeWalk() {
         _sessionId.value?.let { currentSessionId ->
             viewModelScope.launch {
-                val success = safeWalkRepository.endSafeWalkSession(currentSessionId, SessionEndReason.MANUAL)
-                if (success) {
+                try {
+                    val success = safeWalkRepository.endSafeWalkSession(currentSessionId, SessionEndReason.MANUAL)
+                    if (success) {
+                        Log.d("EscortViewModel", "안심귀가 세션 종료 성공")
+                    } else {
+                        Log.w("EscortViewModel", "안심귀가 세션 종료 실패")
+                    }
+                } catch (e: Exception) {
+                    Log.e("EscortViewModel", "안심귀가 세션 종료 중 오류", e)
+                } finally {
+                    // 성공/실패와 관계없이 로컬 상태 초기화
                     _isSessionActive.value = false
                     _sessionId.value = null
-                    _escortFlowState.value = EscortFlowState.SETUP // 초기 화면으로 복귀
-
-                    // 위치 추적 중지
+                    _escortFlowState.value = EscortFlowState.SETUP // 초기 설정 화면으로 복귀
+                    _isDestinationSelected.value = false // 목적지 선택 초기화
+                    _selectedGuardians.value = emptySet() // 선택된 보호자 초기화
+                    _isStartButtonEnabled.value = false // 버튼 비활성화
                     locationTracker.stopLocationUpdates()
-
                     stompManager.disconnect()
-                } else {
-                    // TODO: 종료 실패 처리
-                    Log.d("EscortViewModel", "안심귀가 종료 실패")
                 }
             }
         }
@@ -341,6 +387,11 @@ class EscortViewModel @Inject constructor(
     // ✅ 보호자 공유 UI 토글 함수
     fun toggleGuardianShareSheet() {
         _showGuardianShareSheet.value = !_showGuardianShareSheet.value
+    }
+    
+    // ✅ 시간 입력 모달 닫기 함수
+    fun closeTimeInputModal() {
+        _showTimeInputModal.value = false
     }
 
     fun setArrivalMode(mode: ArrivalMode) {

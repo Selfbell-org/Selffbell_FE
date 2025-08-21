@@ -35,7 +35,9 @@ fun EscortSetupSheet(
     expectedArrivalTime: LocalTime?,
     onModeChange: (ArrivalMode) -> Unit,
     onTimerChange: (Int) -> Unit,
-    onExpectedArrivalTimeChange: (LocalTime) -> Unit
+    onExpectedArrivalTimeChange: (LocalTime) -> Unit,
+    showTimeInputModal: Boolean,
+    onCloseTimeInputModal: () -> Unit
 ) {
     var activeTab by remember { mutableStateOf("destination") }
 
@@ -68,49 +70,79 @@ fun EscortSetupSheet(
             }
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text("즐겨찾기", style = Typography.bodyMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp)
-            ) {
-                items(favoriteAddresses) { address ->
-                    FavoriteButton(
-                        text = address.name,
-                        // ✅ 현재 선택된 목적지 이름과 버튼의 이름이 같으면 isSelected = true
-                        isSelected = (destinationLocationName == address.name),
-                        onClick = { onFavoriteClick(address) }
-                    )
+            // 즐겨찾기와 직접 입력 버튼은 항상 표시 (시간 입력 모달이 표시될 때는 숨김)
+            if (!showTimeInputModal) {
+                Text("즐겨찾기", style = Typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
+                ) {
+                    items(favoriteAddresses) { address ->
+                        FavoriteButton(
+                            text = address.name,
+                            // ✅ 현재 선택된 목적지 이름과 버튼의 이름이 같으면 isSelected = true
+                            isSelected = (destinationLocationName == address.name),
+                            onClick = { onFavoriteClick(address) }
+                        )
+                    }
                 }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // ✅ '직접 입력' 버튼의 텍스트와 스타일을 isDestinationSelected 상태에 따라 변경
-            val isFavoriteSelected = favoriteAddresses.any { it.name == destinationLocationName }
-            Button(
-                onClick = onDirectInputClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    // 직접 입력으로 주소가 선택되었을 때(즐겨찾기 선택이 아닐 때) 활성화 색상 표시
-                    containerColor = if (isDestinationSelected && !isFavoriteSelected) Primary else Color(0xFFF5F5F5)
-                ),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-                elevation = ButtonDefaults.buttonElevation(0.dp)
-            ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    if (isDestinationSelected && !isFavoriteSelected) {
-                        // ✅ 직접 입력으로 선택된 경우: 버튼 라벨을 설정한 주소로 표시
-                        Text(destinationLocationName, color = Color.White)
-                    } else {
-                        Text("도착지 주소 직접 입력..", color = Color.Gray)
+                // ✅ '직접 입력' 버튼의 텍스트와 스타일을 isDestinationSelected 상태에 따라 변경
+                val isFavoriteSelected = favoriteAddresses.any { it.name == destinationLocationName }
+                Button(
+                    onClick = onDirectInputClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        // 직접 입력으로 주소가 선택되었을 때(즐겨찾기 선택이 아닐 때) 활성화 색상 표시
+                        containerColor = if (isDestinationSelected && !isFavoriteSelected) Primary else Color(0xFFF5F5F5)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                    elevation = ButtonDefaults.buttonElevation(0.dp)
+                ) {
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        if (isDestinationSelected && !isFavoriteSelected) {
+                            // ✅ 직접 입력으로 선택된 경우: 버튼 라벨을 설정한 주소로 표시
+                            Text(destinationLocationName, color = Color.White)
+                        } else {
+                            Text("도착지 주소 직접 입력..", color = Color.Gray)
+                        }
                     }
                 }
             }
 
             // --- 도착 시간 설정 섹션 ---
-            AnimatedVisibility(visible = isDestinationSelected) {
+            if (showTimeInputModal) {
+                // 시간 입력 모달이 표시될 때 - 즐겨찾기와 직접 입력 버튼 영역을 대체
                 Column {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text("도착 시간 설정", style = Typography.titleMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ArrivalTimerSection(
+                        arrivalMode = arrivalMode,
+                        timerMinutes = timerMinutes,
+                        expectedArrivalTime = expectedArrivalTime,
+                        onModeChange = onModeChange,
+                        onTimerChange = onTimerChange,
+                        onExpectedArrivalTimeChange = onExpectedArrivalTimeChange
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onCloseTimeInputModal,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFF5F5F5)
+                        )
+                    ) {
+                        Text("주소 다시 선택", color = Color.Gray)
+                    }
+                }
+            } else {
+                // 시간 입력 모달이 표시되지 않을 때는 주소 선택 상태에 따라 시간 설정 표시
+                if (isDestinationSelected) {
                     Spacer(modifier = Modifier.height(24.dp))
                     ArrivalTimerSection(
                         arrivalMode = arrivalMode,

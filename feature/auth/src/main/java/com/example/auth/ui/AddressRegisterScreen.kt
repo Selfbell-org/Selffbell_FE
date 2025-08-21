@@ -44,7 +44,6 @@ import kotlin.text.isBlank
 @Composable
 fun AddressRegisterScreen(
     navController: NavController,
-    onNextClick: (address: String, lat: Double, lon: Double) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AddressRegisterViewModel = hiltViewModel()
 ) {
@@ -53,6 +52,7 @@ fun AddressRegisterScreen(
     val addressResults by viewModel.addressResults.collectAsState()
     val isAddressSelected by viewModel.isAddressSelected.collectAsState()
     val selectedLatLng by viewModel.selectedLatLng.collectAsState()
+    val selectedAddressDetail by viewModel.selectedAddressDetail.collectAsState()
 
     val totalOnboardingSteps = 4
     val currentOnboardingStep = 3
@@ -249,26 +249,25 @@ fun AddressRegisterScreen(
             SelfBellButton(
                 text = "다음으로",
                 onClick = {
-                    val name = viewModel.searchAddress.value
-                    val latLng = selectedLatLng
-                    if (name.isNotBlank() && latLng != null) {
-                        // 이전 화면으로 데이터 전달
-                        navController.previousBackStackEntry?.savedStateHandle?.apply {
-                            set("address_name", name)
-                            set("address_lat", latLng.latitude)
-                            set("address_lon", latLng.longitude)
+                    // 선택된 주소 정보를 파라미터로 전달
+                    selectedLatLng?.let { latLng ->
+                        selectedAddressDetail?.let { selectedAddress ->
+                            val addressText = selectedAddress.roadAddress.ifEmpty { selectedAddress.jibunAddress }
+                            navController.navigate(
+                                AppRoute.mainAddressSetupRoute(
+                                    address = addressText,
+                                    lat = latLng.latitude.toFloat(),
+                                    lng = latLng.longitude.toFloat()
+                                )
+                            )
                         }
-                        // 필요 시 외부 콜백도 유지
-                        onNextClick(name, latLng.latitude, latLng.longitude)
-                        // 화면 복귀
-                        navController.popBackStack()
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp, bottom = 20.dp) // 상단 간격 및 하단 시스템 네비게이션 바 고려
                     .navigationBarsPadding(), // 하단 시스템 네비게이션 바 영역 피하기
-                enabled = isAddressSelected // 주소 선택 시에만 활성화
+                enabled = isAddressSelected && selectedLatLng != null && selectedAddressDetail != null // 주소 선택 시에만 활성화
             )
         }
     }
@@ -278,8 +277,7 @@ fun AddressRegisterScreen(
 fun AddressRegisterScreenPreview() {
     SelfBellTheme {
         AddressRegisterScreen(
-            navController = rememberNavController(),
-            onNextClick = { _, _, _ -> } // 📌 새로운 콜백 파라미터 추가
+            navController = rememberNavController()
         )
     }
 }

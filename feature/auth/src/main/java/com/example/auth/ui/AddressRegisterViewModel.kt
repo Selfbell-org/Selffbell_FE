@@ -115,6 +115,7 @@ class AddressRegisterViewModel @Inject constructor(
         _searchAddress.value = address.roadAddress.ifEmpty { address.jibunAddress } // TextField에 선택된 주소 표시
         _addressResults.value = listOf(address) // 선택된 주소만 남기거나, 혹은 그대로 둘 수도 있음 (UI/UX 결정)
         _selectedLatLng.value = LatLng(address.y.toDouble(), address.x.toDouble())
+        _selectedAddressDetail.value = address // 선택된 주소 상세 정보 저장
         _isAddressSelected.value = true
     }
 
@@ -128,7 +129,8 @@ class AddressRegisterViewModel @Inject constructor(
     // 내부적으로 사용될 선택 해제 함수 (검색창 내용, 결과 목록 유지 가능)
     private fun resetSelectionInternal() {
         _isAddressSelected.value = false
-        // _selectedAddressDetail.value = null
+        _selectedAddressDetail.value = null
+        _selectedLatLng.value = null
         // 지도 초기화 로직
     }
 
@@ -147,7 +149,7 @@ class AddressRegisterViewModel @Inject constructor(
             // }
             // 임시로 하드코딩된 주소 선택 (실제 구현 필요)
             val tempAddress = AddressModel("임시 현재 위치 도로명", "임시 현재 위치 지번", "0.0", "0.0")
-            selectAddress(tempAddress) // selectAddress를 통해 UI 상태 업데이트
+            selectAddress(tempAddress) // selectAddress를 통해 UI 상태 업데이트 (이미 _selectedAddressDetail 설정됨)
         }
     }
 }

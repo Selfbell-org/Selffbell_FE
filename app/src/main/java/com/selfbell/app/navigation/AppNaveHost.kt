@@ -212,10 +212,7 @@ fun AppNavHost(
                     // 📌 AddressRegisterScreen에 onNextClick 콜백 추가
                     composable(AppRoute.ADDRESS_REGISTER_ROUTE) {
                         AddressRegisterScreen(
-                            navController = navController,
-                            onNextClick = { address, lat, lng ->
-                                navController.navigate(AppRoute.mainAddressSetupRoute(address, lat.toFloat(), lng.toFloat()))
-                            }
+                            navController = navController
                         )
                     }
 
