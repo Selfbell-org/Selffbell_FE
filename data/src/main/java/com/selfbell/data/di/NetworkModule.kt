@@ -4,10 +4,13 @@ import com.selfbell.data.api.AuthInterceptor
 import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.ContactService
 import com.selfbell.data.api.EmergencyBellApi
+import com.selfbell.data.api.FavoriteAddressService
 import com.selfbell.data.api.SafeWalksApi
 import com.selfbell.data.repository.impl.EmergencyBellRepositoryImpl
+import com.selfbell.data.repository.impl.FavoriteAddressRepositoryImpl
 import com.selfbell.data.repository.impl.TokenManager
 import com.selfbell.domain.repository.EmergencyBellRepository
+import com.selfbell.domain.repository.FavoriteAddressRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -137,5 +140,18 @@ object NetworkModule {
     @Singleton
     fun provideSafeWalksApi(@Named("backendRetrofit") retrofit: Retrofit): SafeWalksApi {
         return retrofit.create(SafeWalksApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAddressService(@Named("backendRetrofit") retrofit: Retrofit): FavoriteAddressService
+     {
+        return retrofit.create(FavoriteAddressService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAddressRepository(impl: FavoriteAddressRepositoryImpl): FavoriteAddressRepository {
+        return impl
     }
 }

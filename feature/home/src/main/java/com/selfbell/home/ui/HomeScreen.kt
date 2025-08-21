@@ -89,7 +89,6 @@ fun HomeScreen(
                 }
             }
             is HomeUiState.Success -> {
-                //val userProfile = state.userProfile
                 val userLatLng = state.userLatLng
                 val criminalMarkers = state.criminalMarkers
                 val safetyBellMarkers = state.safetyBellMarkers
@@ -103,13 +102,6 @@ fun HomeScreen(
                     cameraPosition = cameraTargetLatLng ?: DEFAULT_LAT_LNG,
                     onMapReady = { map ->
                         naverMapInstance = map
-                        // 유저 마커를 추가합니다.
-                        addOrUpdateMarker(
-                            naverMap = map,
-                            latLng = userLatLng,
-                            data = MapMarkerData(userLatLng, "내 위치", MapMarkerData.MarkerType.USER, 0.0),
-                            onClick = { markerData -> infoWindowData = markerData.latLng to markerData.address }
-                        )
                         criminalMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { markerData -> infoWindowData = markerData.latLng to markerData.address } }
                         safetyBellMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { markerData -> infoWindowData = markerData.latLng to markerData.address } }
 

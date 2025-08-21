@@ -122,6 +122,9 @@ dependencies {
     //안드로이드 기본 스플래시 지우기
     implementation("androidx.core:core-splashscreen:1.0.1")
 
+    //Stomp 프로토콜
+    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
+
     // 테스트 관련
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -53,6 +53,7 @@ import com.selfbell.escort.ui.EscortScreen
 import com.selfbell.home.ui.HomeScreen
 import com.selfbell.settings.ui.SettingsScreen
 import com.selfbell.app.ui.SplashScreen
+import com.selfbell.escort.ui.AddressSearchScreen
 import com.selfbell.settings.ui.ContactListScreen // ✅ New screen import
 
 
@@ -107,7 +108,24 @@ fun AppNavHost(
                     }
 
                     composable(AppRoute.ALERTS_ROUTE) { AlertsScreen() }
-                    composable(AppRoute.ESCORT_ROUTE) { EscortScreen() }
+                    composable(AppRoute.ESCORT_ROUTE) { EscortScreen(navController) }
+
+                    composable(AppRoute.ADDRESS_SEARCH_ROUTE) {
+                        AddressSearchScreen(
+                            navController = navController,
+                            onAddressSelected = { address, lat, lon ->
+                                // ✅ 결과를 이전 화면(EscortScreen)의 ViewModel로 전달하고 뒤로가기
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle?.set("address_name", address)
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle?.set("address_lat", lat)
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle?.set("address_lon", lon)
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
                     composable(AppRoute.SETTINGS_ROUTE) { SettingsScreen(navController = navController) }
                     composable(AppRoute.FRIENDS_ROUTE) { }
 

@@ -89,6 +89,14 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
 
+    //Stomp 프로토콜
+    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
+
+    // Stomp 라이브러리가 사용하는 RxJava 종속성 추가
+    implementation("io.reactivex.rxjava2:rxjava:2.2.21")
+    implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
+
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
