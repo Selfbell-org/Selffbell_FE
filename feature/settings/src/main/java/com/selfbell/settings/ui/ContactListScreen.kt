@@ -18,6 +18,7 @@ import com.selfbell.core.ui.composables.ContactListItem
 import com.selfbell.core.ui.composables.SelfBellButton // SelfBellButton 추가
 import com.selfbell.core.ui.composables.SelfBellButtonType // SelfBellButtonType 추가
 import com.selfbell.core.ui.composables.AcceptedFriendsList
+import com.selfbell.core.ui.composables.UnregisteredContactItem
 import com.selfbell.domain.model.ContactRelationship
 import com.selfbell.domain.model.ContactUser
 import com.selfbell.settings.ui.ContactsUiState
@@ -143,14 +144,14 @@ fun InviteFriendsList(
     onSendRequest: (String) -> Unit
 ) {
     LazyColumn(modifier = Modifier.padding(16.dp)) {
-        items(deviceContacts) { contact ->
+        // 서버에 존재하지 않는 연락처만 노출
+        val unregistered = deviceContacts.filter { !it.isExists }
+        items(unregistered) { contact ->
             val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "연락처")
-            ContactListItem(
+            UnregisteredContactItem(
                 name = contact.name.ifBlank { fallbackName },
                 phoneNumber = contact.phoneNumber,
-                isSelected = false,
-                isEnabled = contact.isExists,
-                onButtonClick = { onSendRequest(contact.phoneNumber) }
+                onInviteClick = { onSendRequest(contact.phoneNumber) }
             )
         }
     }

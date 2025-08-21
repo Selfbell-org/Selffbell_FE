@@ -47,7 +47,8 @@ class ContactsViewModel @Inject constructor(
                 // 서버 응답에 발신/수신 구분 정보가 부족하여 일단 전부 받은 요청으로 분류
                 val pendingSent = emptyList<ContactRelationship>()
                 val pendingReceived = pendingAll
-                val deviceContacts = contactRepository.loadDeviceContactsOnly()
+                // 서버 존재 여부까지 포함해서 디바이스 연락처 로드
+                val deviceContacts = contactRepository.loadDeviceContactsWithUserCheck()
                 _uiState.value = ContactsUiState.Success(accepted, pendingSent, pendingReceived, deviceContacts)
             } catch (e: Exception) {
                 _uiState.value = ContactsUiState.Error(e.message ?: "데이터 로드 실패")
