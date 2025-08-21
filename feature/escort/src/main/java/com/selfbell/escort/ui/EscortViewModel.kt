@@ -26,6 +26,8 @@ import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.model.FavoriteAddress
 import com.selfbell.domain.repository.AddressRepository
 import com.selfbell.domain.repository.FavoriteAddressRepository
+import com.selfbell.domain.repository.ContactRepository
+import com.selfbell.domain.model.ContactRelationship
 import java.time.LocalDateTime
 import java.time.LocalTime
 import retrofit2.HttpException
@@ -46,7 +48,8 @@ class EscortViewModel @Inject constructor(
     private val FavoriteAddressRepository: FavoriteAddressRepository,
     private val addressRepository: AddressRepository,
     private val locationTracker: LocationTracker,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val contactRepository: ContactRepository
 ) : ViewModel() {
 
     private val stompManager = StompManager()
@@ -80,6 +83,10 @@ class EscortViewModel @Inject constructor(
     val allContacts: StateFlow<List<Contact>> = _allContacts
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
+    
+    // 친구 목록 상태 추가
+    private val _acceptedFriends = MutableStateFlow<List<ContactRelationship>>(emptyList())
+    val acceptedFriends: StateFlow<List<ContactRelationship>> = _acceptedFriends
 
     // ✅ 세션 관리 상태
     private val _isSessionActive = MutableStateFlow(false)
@@ -111,6 +118,7 @@ class EscortViewModel @Inject constructor(
 
     init {
         loadContacts()
+        loadAcceptedFriends() // 친구 목록 로드 추가
         checkCurrentSession() // ✅ ViewModel 생성 시 진행 중인 세션 확인
         loadFavoriteAddresses()
         observeAddressSearchResult()
@@ -495,6 +503,20 @@ class EscortViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e("EscortViewModel", "연락처 로딩 실패: ${e.message}")
                 _allContacts.value = emptyList()
+            }
+        }
+    }
+
+    // 친구 목록을 가져오는 함수
+    private fun loadAcceptedFriends() {
+        viewModelScope.launch {
+            try {
+                val friends = contactRepository.getContactsFromServer("ACCEPTED", 0, 100)
+                _acceptedFriends.value = friends
+                Log.d("EscortViewModel", "친구 목록 로딩 완료: ${friends.size}명")
+            } catch (e: Exception) {
+                Log.e("EscortViewModel", "친구 목록 로딩 실패: ${e.message}")
+                _acceptedFriends.value = emptyList()
             }
         }
     }
