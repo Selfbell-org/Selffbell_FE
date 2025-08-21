@@ -19,6 +19,7 @@ import com.selfbell.core.model.Contact
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.selfbell.core.ui.composables.SelfBellButton
+import com.selfbell.core.ui.composables.AcceptedFriendsList
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
 import com.naver.maps.map.CameraUpdate
@@ -52,6 +53,7 @@ fun EscortScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedGuardians by viewModel.selectedGuardians.collectAsState()
     val showTimeInputModal by viewModel.showTimeInputModal.collectAsState()
+    val acceptedFriends by viewModel.acceptedFriends.collectAsState()
 
     // 주소 검색 화면에서 전달된 SavedStateHandle 값을 직접 구독하여 ViewModel로 위임
     LaunchedEffect(Unit) {
@@ -80,6 +82,18 @@ fun EscortScreen(
     }
 
     val context = LocalContext.current
+
+    // GUARDIAN_SELECTION에서 사용할 '등록 친구'를 Contact 형태로 변환
+    val acceptedContacts = remember(acceptedFriends) {
+        acceptedFriends.map { friend ->
+            val phone = if (friend.toPhoneNumber.isNotBlank()) friend.toPhoneNumber else friend.fromPhoneNumber
+            com.selfbell.core.model.Contact(
+                friend.id.toLongOrNull() ?: 0L,
+                phone, // 이름은 일단 전화번호로 표시
+                phone
+            )
+        }
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         var naverMapRef by remember { mutableStateOf<NaverMap?>(null) }
 
@@ -152,10 +166,10 @@ fun EscortScreen(
             EscortFlowState.GUARDIAN_SELECTION -> {
                 // --- 보호자 선택 단계 UI ---
                 ShareRouteTopSheet(
-                    modifier = Modifier.align(Alignment.TopCenter), // Modifier 수정
+                    modifier = Modifier.align(Alignment.TopCenter),
                     searchQuery = searchQuery,
                     onSearchQueryChange = viewModel::updateSearchQuery,
-                    filteredContacts = filteredContacts,
+                    filteredContacts = acceptedContacts,
                     selectedGuardians = selectedGuardians,
                     onGuardianToggle = viewModel::toggleGuardianSelection,
                     onStartWithGuardians = { viewModel.startSafeWalk() },
@@ -204,7 +218,7 @@ fun EscortScreen(
     }
 }
 
-// --- EscortScreen에서 사용하는 새로운 Composable 함수들 ---
+// --- EscortScreen에서 사용하는 새로운 Composable 함수들zz ---
 
 @Composable
 fun EscortingInfoCard(

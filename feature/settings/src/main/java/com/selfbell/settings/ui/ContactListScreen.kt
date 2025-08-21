@@ -17,6 +17,7 @@ import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.composables.ContactListItem
 import com.selfbell.core.ui.composables.SelfBellButton // SelfBellButton 추가
 import com.selfbell.core.ui.composables.SelfBellButtonType // SelfBellButtonType 추가
+import com.selfbell.core.ui.composables.AcceptedFriendsList
 import com.selfbell.domain.model.ContactRelationship
 import com.selfbell.domain.model.ContactUser
 import com.selfbell.settings.ui.ContactsUiState
@@ -104,27 +105,7 @@ fun ContactListScreen(
     }
 }
 
-// ✅ 등록 친구 목록
-@Composable
-fun AcceptedFriendsList(
-    friends: List<ContactRelationship>,
-    onTogglePermission: (String, Boolean) -> Unit
-) {
-    LazyColumn(modifier = Modifier.padding(16.dp)) {
-        items(friends, key = { it.id }) { friend ->
-            val phone = friend.toPhoneNumber // 현재 더미에서는 상대방 번호로 표시
-            val displayName = displayNameFromPhone(phone, prefix = "친구")
-            ContactListItem(
-                name = displayName,
-                phoneNumber = phone,
-                isSelected = false, // 초대/요청 스타일과 동일한 틀 유지
-                isEnabled = false,  // 친구 목록은 버튼 비활성화 (추후 기능 연결 가능)
-                onButtonClick = { /* 친구 항목: 별도 버튼 동작 없음 (추후 권한 토글 등 연결) */ }
-            )
-            Divider()
-        }
-    }
-}
+
 
 // ✅ 요청 목록
 @Composable
@@ -134,23 +115,23 @@ fun PendingRequestsList(
     onAcceptClick: (Long) -> Unit // contactId Long
 ) {
     LazyColumn(modifier = Modifier.padding(16.dp)) {
-        item { Text("내가 보낸 요청", style = Typography.titleMedium) }
-        items(pendingSent, key = { it.id }) { request ->
-            val phone = request.toPhoneNumber
-            val displayName = displayNameFromPhone(phone, prefix = "보낸 요청")
-            // 보낸 요청: "수락 대기 중" → 버튼 비활성화 동일 UI 사용
-            ContactListItem(
-                name = displayName,
-                phoneNumber = phone,
-                isSelected = false,
-                isEnabled = false, // 비활성화
-                onButtonClick = { /* 비활성화 */ }
-            )
-            Divider()
-        }
+//        item { Text("내가 보낸 요청", style = Typography.titleMedium) }
+//        items(pendingSent, key = { it.id }) { request ->
+//            val phone = request.toPhoneNumber
+//            val displayName = displayNameFromPhone(phone, prefix = "보낸 요청")
+//            // 보낸 요청: "수락 대기 중" → 버튼 비활성화 동일 UI 사용
+//            ContactListItem(
+//                name = displayName,
+//                phoneNumber = phone,
+//                isSelected = false,
+//                isEnabled = false, // 비활성화
+//                onButtonClick = { /* 비활성화 */ }
+//            )
+//            Divider()
+//        }
         item {
             Spacer(modifier = Modifier.height(24.dp))
-            Text("내가 받은 요청", style = Typography.titleMedium)
+            Text("요청 목록", style = Typography.titleMedium)
         }
         items(pendingReceived, key = { it.id }) { request ->
             val phone = request.fromPhoneNumber.ifBlank { request.toPhoneNumber }
