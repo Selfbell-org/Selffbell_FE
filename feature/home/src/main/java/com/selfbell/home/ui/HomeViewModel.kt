@@ -7,9 +7,12 @@ import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
 import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.repository.AddressRepository
+import com.selfbell.domain.model.Criminal
 import com.selfbell.domain.model.EmergencyBell
 import com.selfbell.domain.model.EmergencyBellDetail
+import com.selfbell.domain.repository.CriminalRepository
 import com.selfbell.domain.repository.EmergencyBellRepository
+import com.selfbell.data.repository.impl.TokenManager
 import com.selfbell.home.model.MapMarkerData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,9 +29,8 @@ sealed interface HomeUiState {
     object Loading : HomeUiState
     data class Success(
         val userLatLng: LatLng,
-        val criminalMarkers: List<MapMarkerData>,
-        val safetyBellMarkers: List<MapMarkerData>,
         val emergencyBells: List<EmergencyBell>,
+        val criminals: List<Criminal>,
         val selectedEmergencyBellDetail: EmergencyBellDetail? = null
     ) : HomeUiState
     data class Error(val message: String) : HomeUiState
@@ -40,7 +42,9 @@ val DEFAULT_LAT_LNG = LatLng(37.5665, 126.9780)
 class HomeViewModel @Inject constructor(
     private val addressRepository: AddressRepository,
     private val emergencyBellRepository: EmergencyBellRepository,
-    private val locationTracker: LocationTracker
+    private val criminalRepository: CriminalRepository,
+    private val locationTracker: LocationTracker,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -64,27 +68,44 @@ class HomeViewModel @Inject constructor(
             try {
                 locationTracker.getLocationUpdates().collectLatest { location ->
                     val userLatLng = LatLng(location.latitude, location.longitude)
+                    
+                    // 안전벨과 범죄자 정보를 병렬로 가져오기
                     val emergencyBells = emergencyBellRepository.getNearbyEmergencyBells(
-                    lat = userLatLng.latitude,
-                    lon = userLatLng.longitude,
+                        lat = userLatLng.latitude,
+                        lon = userLatLng.longitude,
                         radius = 500
-                    ).sortedBy { it.distance ?: Double.MAX_VALUE } // 거리순 정렬 (null인 경우 맨 뒤로)
+                    ).sortedBy { it.distance ?: Double.MAX_VALUE }
+                    
+                    // 범죄자 정보는 인증된 사용자만 가져오기
+                    val criminals = if (tokenManager.hasValidToken()) {
+                        try {
+                            criminalRepository.getNearbyCriminals(
+                                lat = userLatLng.latitude,
+                                lon = userLatLng.longitude,
+                                radius = 300
+                            )
+                        } catch (e: Exception) {
+                            Log.w("HomeViewModel", "범죄자 정보 로드 실패 (인증 문제일 수 있음)", e)
+                            emptyList()
+                        }
+                    } else {
+                        Log.d("HomeViewModel", "토큰이 없어 범죄자 정보를 로드하지 않습니다")
+                        emptyList()
+                    }
 
                     val current = _uiState.value
                     if (current is HomeUiState.Success) {
                         _uiState.value = current.copy(
                             userLatLng = userLatLng,
-                            emergencyBells = emergencyBells
+                            emergencyBells = emergencyBells,
+                            criminals = criminals
                         )
                     } else {
-                        val criminalMarkers = loadDummyCriminalMarkers()
-                        val safetyBellMarkers = loadDummySafetyBellMarkers()
-                _uiState.value = HomeUiState.Success(
+                        _uiState.value = HomeUiState.Success(
                             userLatLng = userLatLng,
-                    criminalMarkers = criminalMarkers,
-                    safetyBellMarkers = safetyBellMarkers,
-                    emergencyBells = emergencyBells
-                )
+                            emergencyBells = emergencyBells,
+                            criminals = criminals
+                        )
                     }
                     if (_cameraTargetLatLng.value == null) {
                 _cameraTargetLatLng.value = userLatLng
@@ -94,6 +115,12 @@ class HomeViewModel @Inject constructor(
                     Log.d("HomeViewModel", "안전벨 ${emergencyBells.size}개 로드 완료")
                     emergencyBells.take(3).forEach { bell ->
                         Log.d("HomeViewModel", "안전벨: ${bell.detail}, 거리: ${bell.distance?.let { "${it.toInt()}m" } ?: "알 수 없음"}")
+                    }
+                    
+                    // 범죄자 정보 로깅
+                    Log.d("HomeViewModel", "범죄자 ${criminals.size}개 로드 완료")
+                    criminals.take(3).forEach { criminal ->
+                        Log.d("HomeViewModel", "범죄자: ${criminal.address}, 거리: ${criminal.distanceMeters.toInt()}m")
                     }
                 }
             } catch (e: Exception) {
@@ -135,19 +162,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun loadDummyCriminalMarkers(): List<MapMarkerData> {
-        return listOf(
-            MapMarkerData(LatLng(37.5650, 126.9760), "범죄 발생 지역 A", MapMarkerData.MarkerType.CRIMINAL, 250.0),
-            MapMarkerData(LatLng(37.5680, 126.9790), "범죄 발생 지역 B", MapMarkerData.MarkerType.CRIMINAL, 300.0)
-        )
-    }
 
-    private fun loadDummySafetyBellMarkers(): List<MapMarkerData> {
-        return listOf(
-            MapMarkerData(LatLng(37.5655, 126.9770), "안심벨 1", MapMarkerData.MarkerType.SAFETY_BELL, 150.0),
-            MapMarkerData(LatLng(37.5675, 126.9785), "안심벨 2", MapMarkerData.MarkerType.SAFETY_BELL, 50.0)
-        )
-    }
 
     fun onSearchTextChanged(newText: String) {
         _searchText.value = newText

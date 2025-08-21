@@ -123,10 +123,16 @@ class EscortViewModel @Inject constructor(
                 val lon = savedStateHandle.get<Double>("address_lon")
 
                 if (name != null && lat != null && lon != null) {
+                    Log.d(
+                        "EscortViewModel",
+                        "[observeAddressSearchResult] 수신됨 name=$name, lat=$lat, lon=$lon"
+                    )
                     onDirectAddressSelected(name, LatLng(lat, lon))
+                    Log.d("EscortViewModel", "[observeAddressSearchResult] onDirectAddressSelected 호출 완료")
                     savedStateHandle["address_name"] = null
                     savedStateHandle["address_lat"] = null
                     savedStateHandle["address_lon"] = null
+                    Log.d("EscortViewModel", "[observeAddressSearchResult] SavedStateHandle 키 초기화 완료")
                 }
             }
         }
@@ -145,19 +151,35 @@ class EscortViewModel @Inject constructor(
 
     // ✅ 즐겨찾기 선택 시, 목적지를 업데이트하고 isDestinationSelected를 true로 변경
     fun onFavoriteAddressSelected(favoriteAddress: FavoriteAddress) {
+        Log.d(
+            "EscortViewModel",
+            "[onFavoriteAddressSelected] name=${favoriteAddress.name}, lat=${favoriteAddress.lat}, lon=${favoriteAddress.lon}"
+        )
         _destinationLocation.value = LocationState(
             name = favoriteAddress.name,
             latLng = LatLng(favoriteAddress.lat, favoriteAddress.lon)
         )
         _isDestinationSelected.value = true
         _showTimeInputModal.value = true // 시간 입력 모달 표시
+        Log.d(
+            "EscortViewModel",
+            "[onFavoriteAddressSelected] destination=${_destinationLocation.value.name}, lat=${_destinationLocation.value.latLng.latitude}, lon=${_destinationLocation.value.latLng.longitude}, isDestinationSelected=${_isDestinationSelected.value}, showTimeInputModal=${_showTimeInputModal.value}"
+        )
     }
 
     // ✅ 직접 주소 입력 완료 후 호출될 함수 (가정)
     fun onDirectAddressSelected(name: String, latLng: LatLng) {
+        Log.d(
+            "EscortViewModel",
+            "[onDirectAddressSelected] 입력 name=$name, lat=${latLng.latitude}, lon=${latLng.longitude}"
+        )
         _destinationLocation.value = LocationState(name, latLng)
         _isDestinationSelected.value = true
         _showTimeInputModal.value = true // 시간 입력 모달 표시
+        Log.d(
+            "EscortViewModel",
+            "[onDirectAddressSelected] destination=${_destinationLocation.value.name}, lat=${_destinationLocation.value.latLng.latitude}, lon=${_destinationLocation.value.latLng.longitude}, isDestinationSelected=${_isDestinationSelected.value}, showTimeInputModal=${_showTimeInputModal.value}"
+        )
     }
 
     private fun checkCurrentSession() {
@@ -398,7 +420,15 @@ class EscortViewModel @Inject constructor(
     }
 
     fun updateDestinationLocation(name: String, latLng: LatLng) {
+        Log.d(
+            "EscortViewModel",
+            "[updateDestinationLocation] name=$name, lat=${latLng.latitude}, lon=${latLng.longitude}"
+        )
         _destinationLocation.value = LocationState(name, latLng)
+        Log.d(
+            "EscortViewModel",
+            "[updateDestinationLocation] 상태 반영 destination=${_destinationLocation.value.name}, lat=${_destinationLocation.value.latLng.latitude}, lon=${_destinationLocation.value.latLng.longitude}"
+        )
     }
 
     // ✅ 보호자 공유 UI 토글 함수

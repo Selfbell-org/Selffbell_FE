@@ -90,11 +90,31 @@ fun HomeScreen(
             }
             is HomeUiState.Success -> {
                 val userLatLng = state.userLatLng
-                val criminalMarkers = state.criminalMarkers
-                val safetyBellMarkers = state.safetyBellMarkers
                 val emergencyBells = state.emergencyBells
-                val modalMapMarkers = remember(criminalMarkers, safetyBellMarkers) {
-                    (criminalMarkers + safetyBellMarkers).sortedBy { it.distance }
+                val criminals = state.criminals
+                
+                // 실제 안심벨과 범죄자 데이터를 MapMarkerData로 변환
+                val modalMapMarkers = remember(emergencyBells, criminals) {
+                    val emergencyBellMarkers = emergencyBells.map { bell ->
+                        MapMarkerData(
+                            latLng = LatLng(bell.lat, bell.lon),
+                            address = bell.detail,
+                            type = MapMarkerData.MarkerType.SAFETY_BELL,
+                            distance = bell.distance ?: 0.0,
+                            objtId = bell.id
+                        )
+                    }
+                    
+                    val criminalMarkers = criminals.map { criminal ->
+                        MapMarkerData(
+                            latLng = LatLng(criminal.lat, criminal.lon),
+                            address = criminal.address,
+                            type = MapMarkerData.MarkerType.CRIMINAL,
+                            distance = criminal.distanceMeters
+                        )
+                    }
+                    
+                    (emergencyBellMarkers + criminalMarkers).sortedBy { it.distance }
                 }
 
                 ReusableNaverMap(
@@ -102,9 +122,7 @@ fun HomeScreen(
                     cameraPosition = cameraTargetLatLng ?: DEFAULT_LAT_LNG,
                     onMapReady = { map ->
                         naverMapInstance = map
-                        criminalMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { markerData -> infoWindowData = markerData.latLng to markerData.address } }
-                        safetyBellMarkers.forEach { data -> addOrUpdateMarker(map, data.latLng, data) { markerData -> infoWindowData = markerData.latLng to markerData.address } }
-
+                        
                         // ✅ 안심벨 마커를 지도에 추가하는 로직
                         emergencyBells.forEach { bell ->
                             addOrUpdateMarker(
@@ -122,6 +140,23 @@ fun HomeScreen(
                                     viewModel.getEmergencyBellDetail(markerData.objtId!!)
                                     // 모달 모드를 상세 정보 보기로 전환
                                     currentModalMode = ModalMode.DETAIL
+                                }
+                            )
+                        }
+                        
+                        // ✅ 범죄자 마커를 지도에 추가하는 로직
+                        criminals.forEach { criminal ->
+                            addOrUpdateMarker(
+                                naverMap = map,
+                                latLng = LatLng(criminal.lat, criminal.lon),
+                                data = MapMarkerData(
+                                    latLng = LatLng(criminal.lat, criminal.lon),
+                                    address = criminal.address,
+                                    type = MapMarkerData.MarkerType.CRIMINAL,
+                                    distance = criminal.distanceMeters
+                                ),
+                                onClick = { markerData ->
+                                    infoWindowData = markerData.latLng to markerData.address
                                 }
                             )
                         }
@@ -192,7 +227,9 @@ fun HomeScreen(
                     // ✅ ViewModel에서 가져온 상세정보를 모달에 전달
                     selectedEmergencyBellDetail = state.selectedEmergencyBellDetail,
                     // ✅ 모달의 현재 모드 전달
-                    modalMode = currentModalMode
+                    modalMode = currentModalMode,
+                    // ✅ 모달 모드 변경 콜백 추가
+                    onModalModeChange = { newMode -> currentModalMode = newMode }
                 )
             }
             is HomeUiState.Error -> {

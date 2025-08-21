@@ -81,6 +81,13 @@ fun AddressSearchScreen(
                 AddressConfirmView(
                     address = currentSelectedAddress,
                     onConfirm = {
+                        // 디버깅 로그: 지도 확인에서 확정 누른 시점
+                        android.util.Log.d(
+                            "AddressSearch",
+                            "AddressConfirmView onConfirm: address=" +
+                                currentSelectedAddress.roadAddress.ifEmpty { currentSelectedAddress.jibunAddress } +
+                                ", y(lat)=" + currentSelectedAddress.y + ", x(lon)=" + currentSelectedAddress.x
+                        )
                         onAddressSelected(
                             currentSelectedAddress.roadAddress.ifEmpty { currentSelectedAddress.jibunAddress },
                             currentSelectedAddress.y.toDouble(),

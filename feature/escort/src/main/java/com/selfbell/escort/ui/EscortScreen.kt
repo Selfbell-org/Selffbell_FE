@@ -29,6 +29,7 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.location.LocationServices
+import android.util.Log
 
 @Composable
 fun EscortScreen(
@@ -50,6 +51,24 @@ fun EscortScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedGuardians by viewModel.selectedGuardians.collectAsState()
     val showTimeInputModal by viewModel.showTimeInputModal.collectAsState()
+
+    // 주소 검색 화면에서 전달된 SavedStateHandle 값을 직접 구독하여 ViewModel로 위임
+    LaunchedEffect(Unit) {
+        val handle = navController.currentBackStackEntry?.savedStateHandle
+        val nameFlow = handle?.getStateFlow<String?>("address_name", null)
+        nameFlow?.collect { name ->
+            val lat = handle.get<Double>("address_lat")
+            val lon = handle.get<Double>("address_lon")
+            if (name != null && lat != null && lon != null) {
+                Log.d("EscortScreen", "SavedState 수신 name=$name, lat=$lat, lon=$lon -> ViewModel로 전달")
+                viewModel.onDirectAddressSelected(name, com.naver.maps.geometry.LatLng(lat, lon))
+                handle["address_name"] = null
+                handle["address_lat"] = null
+                handle["address_lon"] = null
+                Log.d("EscortScreen", "SavedState 키 초기화 완료")
+            }
+        }
+    }
 
 
     val filteredContacts = remember(searchQuery, allContacts) {
