@@ -175,7 +175,7 @@ fun ContactRegistrationScreen(
                                             // 서버 존재 여부 확인 후 분기
                                             viewModel.checkUserExists(contact.phoneNumber) { exists ->
                                                 if (exists) {
-                                                    if (selectedContacts.size < 3) {
+                                                if (selectedContacts.size < 3) {
                                                         selectedContacts = selectedContacts + contact.phoneNumber
                                                     }
                                                 } else {

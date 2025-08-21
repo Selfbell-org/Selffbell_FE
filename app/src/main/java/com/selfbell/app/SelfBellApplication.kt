@@ -42,6 +42,6 @@ class SelfBellApplication : Application() {
                 } else {
                     Log.e(TAG, "FCM 토큰 초기화 실패", task.exception)
                 }
-            }
+        }
     }
 }

@@ -65,8 +65,8 @@ class HomeViewModel @Inject constructor(
                 locationTracker.getLocationUpdates().collectLatest { location ->
                     val userLatLng = LatLng(location.latitude, location.longitude)
                     val emergencyBells = emergencyBellRepository.getNearbyEmergencyBells(
-                        lat = userLatLng.latitude,
-                        lon = userLatLng.longitude,
+                    lat = userLatLng.latitude,
+                    lon = userLatLng.longitude,
                         radius = 500
                     ).sortedBy { it.distance ?: Double.MAX_VALUE } // 거리순 정렬 (null인 경우 맨 뒤로)
 
@@ -79,15 +79,15 @@ class HomeViewModel @Inject constructor(
                     } else {
                         val criminalMarkers = loadDummyCriminalMarkers()
                         val safetyBellMarkers = loadDummySafetyBellMarkers()
-                        _uiState.value = HomeUiState.Success(
+                _uiState.value = HomeUiState.Success(
                             userLatLng = userLatLng,
-                            criminalMarkers = criminalMarkers,
-                            safetyBellMarkers = safetyBellMarkers,
-                            emergencyBells = emergencyBells
-                        )
+                    criminalMarkers = criminalMarkers,
+                    safetyBellMarkers = safetyBellMarkers,
+                    emergencyBells = emergencyBells
+                )
                     }
                     if (_cameraTargetLatLng.value == null) {
-                        _cameraTargetLatLng.value = userLatLng
+                _cameraTargetLatLng.value = userLatLng
                     }
                     
                     // 안전벨 정보 로깅
