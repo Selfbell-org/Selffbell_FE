@@ -85,9 +85,8 @@ fun ContactListScreen(
                         PendingRequestsList(
                             pendingSent = successState.pendingSent,
                             pendingReceived = successState.pendingReceived,
-                            onAcceptClick = {
-                                // TODO: 실제 contactId(Long)로 교체 예정
-                                viewModel.acceptContactRequest(0L)
+                            onAcceptClick = { contactId ->
+                                viewModel.acceptContactRequest(contactId)
                             }
                         )
                     }
@@ -132,7 +131,7 @@ fun AcceptedFriendsList(
 fun PendingRequestsList(
     pendingSent: List<ContactRelationship>,
     pendingReceived: List<ContactRelationship>,
-    onAcceptClick: () -> Unit // contactId(Long) 준비 전, 무파라미터 콜백
+    onAcceptClick: (Long) -> Unit // contactId Long
 ) {
     LazyColumn(modifier = Modifier.padding(16.dp)) {
         item { Text("내가 보낸 요청", style = Typography.titleMedium) }
@@ -154,7 +153,7 @@ fun PendingRequestsList(
             Text("내가 받은 요청", style = Typography.titleMedium)
         }
         items(pendingReceived, key = { it.id }) { request ->
-            val phone = request.fromPhoneNumber
+            val phone = request.fromPhoneNumber.ifBlank { request.toPhoneNumber }
             val displayName = displayNameFromPhone(phone, prefix = "받은 요청")
             // 받은 요청: '수락' 가능 → 같은 UI에서 활성 버튼처럼 동작
             ContactListItem(
@@ -162,7 +161,7 @@ fun PendingRequestsList(
                 phoneNumber = phone,
                 isSelected = true, // 선택 가능 느낌 유지
                 isEnabled = true,
-                onButtonClick = { onAcceptClick() }
+                onButtonClick = { onAcceptClick(request.id.toLongOrNull() ?: return@ContactListItem) }
             )
             Divider()
         }

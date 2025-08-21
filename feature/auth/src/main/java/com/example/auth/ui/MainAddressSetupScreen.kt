@@ -228,7 +228,7 @@ fun MainAddressSetupScreen(
                     }
                 }
 
-                // 다음으로 버튼
+                // 버튼
                 SelfBellButton(
                     text = if (authUiState is AuthUiState.Loading) "등록 중..." else "다음으로",
                     onClick = {
