@@ -40,6 +40,7 @@ dependencies {
     // domain 모듈 의존성 (필수)
     implementation(project(":domain"))
     implementation(project(":core"))
+    implementation(project(":data"))
     //Naver Maps api
     implementation("com.naver.maps:map-sdk:3.22.1")
 

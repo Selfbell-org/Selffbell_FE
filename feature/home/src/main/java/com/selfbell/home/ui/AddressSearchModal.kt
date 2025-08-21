@@ -44,7 +44,8 @@ fun AddressSearchModal(
     mapMarkers: List<MapMarkerData>,
     onMarkerItemClick: (MapMarkerData) -> Unit,
     selectedEmergencyBellDetail: EmergencyBellDetail?, // ✅ 안심벨 상세정보 파라미터 추가
-    modalMode: ModalMode // ✅ 모달 모드 파라미터 추가
+    modalMode: ModalMode, // ✅ 모달 모드 파라미터 추가
+    onModalModeChange: (ModalMode) -> Unit = {} // ✅ 모달 모드 변경 콜백 추가
 ) {
     Surface(
         modifier = modifier
@@ -101,7 +102,13 @@ fun AddressSearchModal(
                         ) {
                             items(mapMarkers) { markerData ->
                                 Row(
-                                    Modifier.fillMaxWidth().height(40.dp).clickable { onMarkerItemClick(markerData) },
+                                    Modifier.fillMaxWidth().height(40.dp).clickable { 
+                                        if (markerData.type == MapMarkerData.MarkerType.SAFETY_BELL && markerData.objtId != null) {
+                                            // 안심벨 마커 클릭 시 상세정보 모드로 전환
+                                            onModalModeChange(ModalMode.DETAIL)
+                                        }
+                                        onMarkerItemClick(markerData) 
+                                    },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Image(
@@ -131,10 +138,23 @@ fun AddressSearchModal(
                         Column(
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = "안심벨 상세 정보",
-                                style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.backstack_icon),
+                                    contentDescription = "뒤로가기",
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clickable { onModalModeChange(ModalMode.SEARCH) }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = "안심벨 상세 정보",
+                                    style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            }
                             Spacer(Modifier.height(16.dp))
                             Text("상세 주소: ${detail.address}", style = Typography.bodyMedium)
                             Text("관리 전화: ${detail.managerTel}", style = Typography.bodyMedium)
