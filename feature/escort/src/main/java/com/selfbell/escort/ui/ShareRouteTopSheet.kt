@@ -1,4 +1,3 @@
-// feature/escort/ui/ShareRouteTopSheet.kt
 package com.selfbell.escort.ui
 
 import androidx.compose.foundation.Image

@@ -32,6 +32,7 @@ import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.theme.SelfBellTheme
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import com.selfbell.escort.ui.EscortViewModel.ArrivalMode
 
 // EscortViewModel에 필요한 데이터 클래스와 Enum (이 파일에 추가)
 

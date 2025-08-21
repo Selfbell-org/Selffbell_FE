@@ -24,11 +24,14 @@ object AppRoute {
     fun loginPinRoute(phoneNumber: String): String = "$LOGIN_PIN_ROUTE/$phoneNumber"
     const val PROFILE_REGISTER_ROUTE = "profile_register_route" // 📌 인자 없는 기본 경로 추가
     const val PROFILE_REGISTER_ROUTE_WITH_ARGS = "$PROFILE_REGISTER_ROUTE/{phoneNumber}/{password}"
+
     // 📌 헬퍼 함수가 올바른 경로를 생성하도록 수정
     fun profileRegisterRoute(phoneNumber: String, password: String): String =
         "$PROFILE_REGISTER_ROUTE/$phoneNumber/$password"
     const val PERMISSION_ROUTE = "permission_route"
+
     const val ADDRESS_REGISTER_ROUTE = "address_register_route"
+    const val MAIN_ADDRESS_SETUP_ROUTE = "main_address_setup_route"
     const val MAIN_ADDRESS_SETUP_ROUTE_WITH_ARGS = "main_address_setup_route/{address}/{lat}/{lng}"
     fun mainAddressSetupRoute(address: String, lat: Float, lng: Float): String {
         val encodedAddress = Uri.encode(address)

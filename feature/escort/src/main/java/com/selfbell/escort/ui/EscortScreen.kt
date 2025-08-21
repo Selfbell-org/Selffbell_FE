@@ -49,6 +49,7 @@ fun EscortScreen(
     val allContacts by viewModel.allContacts.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedGuardians by viewModel.selectedGuardians.collectAsState()
+    val showTimeInputModal by viewModel.showTimeInputModal.collectAsState()
 
 
     val filteredContacts = remember(searchQuery, allContacts) {
@@ -109,7 +110,9 @@ fun EscortScreen(
                     expectedArrivalTime = expectedArrivalTime,
                     onModeChange = viewModel::setArrivalMode,
                     onTimerChange = viewModel::setTimerMinutes,
-                    onExpectedArrivalTimeChange = viewModel::setExpectedArrivalTime
+                    onExpectedArrivalTimeChange = viewModel::setExpectedArrivalTime,
+                    showTimeInputModal = showTimeInputModal,
+                    onCloseTimeInputModal = viewModel::closeTimeInputModal
                 )
 
                 // 하단 '출발하기' 버튼
@@ -121,6 +124,19 @@ fun EscortScreen(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 32.dp)
                         .fillMaxWidth(0.9f)
+                )
+            }
+            EscortFlowState.GUARDIAN_SELECTION -> {
+                // --- 보호자 선택 단계 UI ---
+                ShareRouteTopSheet(
+                    modifier = Modifier.align(Alignment.TopCenter), // Modifier 수정
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = viewModel::updateSearchQuery,
+                    filteredContacts = filteredContacts,
+                    selectedGuardians = selectedGuardians,
+                    onGuardianToggle = viewModel::toggleGuardianSelection,
+                    onStartWithGuardians = { viewModel.startSafeWalk() },
+                    onCloseClick = { viewModel.toggleGuardianShareSheet() }
                 )
             }
             EscortFlowState.IN_PROGRESS -> {
@@ -138,12 +154,13 @@ fun EscortScreen(
                     )
 
                     if (showGuardianShareSheet) {
-                        GuardianShareSheet(
+                        ShareRouteTopSheet(
                             searchQuery = searchQuery,
                             onSearchQueryChange = viewModel::updateSearchQuery,
                             filteredContacts = filteredContacts,
                             selectedGuardians = selectedGuardians,
                             onGuardianToggle = viewModel::toggleGuardianSelection,
+                            onStartWithGuardians = { viewModel.startSafeWalk() },
                             onCloseClick = { viewModel.toggleGuardianShareSheet() }
                         )
                     }
@@ -194,29 +211,7 @@ fun EscortingInfoCard(
     }
 }
 
-@Composable
-fun GuardianShareSheet(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    filteredContacts: List<Contact>,
-    selectedGuardians: Set<Contact>,
-    onGuardianToggle: (Contact) -> Unit,
-    onCloseClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("동선을 공유할 친구를 선택해주세요.", style = Typography.titleMedium)
-            // TODO: ShareRouteTopSheet의 검색창, 연락처 목록(LazyColumn) 등 내부 UI 구현 필요
-        }
-    }
-}
+
 
 @Preview(showBackground = true)
 @Composable
