@@ -35,6 +35,7 @@ import com.selfbell.feature.home.R
 import com.selfbell.home.model.MapMarkerData
 import kotlinx.coroutines.launch
 import com.naver.maps.map.overlay.OverlayImage
+import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +75,8 @@ fun HomeScreen(
             Toast.makeText(context, "문자 발송 권한이 거부되었습니다.", Toast.LENGTH_SHORT).show()
         }
     }
+    // 플로팅 바텀바 패딩 (오버레이 전용)
+    val floatingBottomPadding = LocalFloatingBottomBarPadding.current
 
     LaunchedEffect(cameraTargetLatLng) {
         cameraTargetLatLng?.let { latLng ->
@@ -218,6 +221,7 @@ fun HomeScreen(
                 AddressSearchModal(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
+                        .padding(floatingBottomPadding)
                         .padding(bottom = 24.dp),
                     searchText = searchText,
                     onSearchTextChange = viewModel::onSearchTextChanged,
