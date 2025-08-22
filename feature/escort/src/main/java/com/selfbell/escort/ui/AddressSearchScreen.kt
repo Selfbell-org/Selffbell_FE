@@ -1,5 +1,6 @@
 package com.selfbell.escort.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,22 +42,27 @@ fun AddressSearchScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("도착지 검색", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        // 지도 확인 화면에서는 검색 목록으로, 검색 화면에서는 이전 화면으로
-                        if (selectedAddress != null) {
-                            viewModel.clearConfirmation()
-                        } else {
-                            navController.popBackStack()
-                        }
-                    }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
+            // TopAppBar 대신 커스텀 Row를 사용하여 공간을 줄였습니다.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp) // 원하는 높이로 직접 설정
+                    .background(Color.White)
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = {
+                    if (selectedAddress != null) {
+                        viewModel.clearConfirmation()
+                    } else {
+                        navController.popBackStack()
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+                }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "뒤로가기")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("도착지 검색", fontWeight = FontWeight.Bold)
+            }
         }
     ) { paddingValues ->
         Column(
@@ -65,11 +71,9 @@ fun AddressSearchScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            // ✅ 상태 변수를 불변의 지역 변수로 복사합니다.
             val currentSelectedAddress = selectedAddress
 
             if (currentSelectedAddress == null) {
-                // --- 1 & 2. 주소 검색 및 결과 목록 UI ---
                 AddressSearchView(
                     searchQuery = searchQuery,
                     searchResults = searchResults,
@@ -77,16 +81,14 @@ fun AddressSearchScreen(
                     onAddressSelect = viewModel::selectAddressForConfirmation
                 )
             } else {
-                // --- 3. 지도 확인 UI ---
                 AddressConfirmView(
                     address = currentSelectedAddress,
                     onConfirm = {
-                        // 디버깅 로그: 지도 확인에서 확정 누른 시점
                         android.util.Log.d(
                             "AddressSearch",
                             "AddressConfirmView onConfirm: address=" +
-                                currentSelectedAddress.roadAddress.ifEmpty { currentSelectedAddress.jibunAddress } +
-                                ", y(lat)=" + currentSelectedAddress.y + ", x(lon)=" + currentSelectedAddress.x
+                                    currentSelectedAddress.roadAddress.ifEmpty { currentSelectedAddress.jibunAddress } +
+                                    ", y(lat)=" + currentSelectedAddress.y + ", x(lon)=" + currentSelectedAddress.x
                         )
                         onAddressSelected(
                             currentSelectedAddress.roadAddress.ifEmpty { currentSelectedAddress.jibunAddress },
@@ -131,7 +133,6 @@ private fun AddressSearchView(
         }
     }
 }
-
 @Composable
 private fun AddressConfirmView(
     address: AddressModel,
@@ -142,11 +143,13 @@ private fun AddressConfirmView(
     val position = LatLng(address.y.toDouble(), address.x.toDouble())
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(), // 👈 Column이 화면 전체를 차지하도록 합니다.
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // 상단 정보 영역
+        Spacer(modifier = Modifier.height(12.dp))
         Text("이 위치가 맞는지 확인해주세요", style = Typography.titleMedium)
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Column(modifier = Modifier.fillMaxWidth()) {
             Text("주소", style = Typography.labelMedium, color = Color.Gray)
@@ -154,12 +157,13 @@ private fun AddressConfirmView(
         }
         Spacer(modifier = Modifier.height(16.dp))
 
+        // 지도가 남은 공간을 모두 채우도록 weight(1f) 적용
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f) // 남은 공간 모두 차지
+                .fillMaxSize() // 👈 Box가 부모의 남은 공간을 모두 차지하도록 합니다.
                 .clip(RoundedCornerShape(12.dp))
         ) {
+            // 1. ReusableNaverMap을 첫 번째 자식으로 배치하여 배경이 되게 합니다.
             ReusableNaverMap(
                 cameraPosition = position,
                 onMapReady = { map ->
@@ -168,16 +172,20 @@ private fun AddressConfirmView(
                     map.moveCamera(CameraUpdate.scrollTo(position))
                 }
             )
+
+            // 2. SelfBellButton을 그 위에 배치하고, 정렬 및 위치를 조정합니다.
+            SelfBellButton(
+                text = "도착지 설정",
+                onClick = onConfirm,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.Center) // 👈 지도의 수평/수직 중앙에 위치시킵니다.
+                    .offset(y = 180.dp) // 👈 중앙에서 아래로 60dp만큼 이동시킵니다.
+            )
         }
+
         Spacer(modifier = Modifier.height(24.dp))
 
-        SelfBellButton(
-            text = "도착지 설정",
-            onClick = onConfirm,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-        )
     }
 }
 
