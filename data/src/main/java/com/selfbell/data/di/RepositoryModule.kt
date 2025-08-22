@@ -12,6 +12,9 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import com.selfbell.data.repository.impl.CriminalRepositoryImpl // ✅ 추가
+import com.selfbell.domain.repository.CriminalRepository // ✅ 추가
+
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -32,4 +35,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAddressRepository(impl: AddressRepositoryImpl): AddressRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCriminalRepository(impl: CriminalRepositoryImpl): CriminalRepository
 }

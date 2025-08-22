@@ -41,6 +41,7 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":core"))
     implementation(project(":data"))
+    implementation(project(":feature:alerts"))
     //Naver Maps api
     implementation("com.naver.maps:map-sdk:3.22.1")
 
