@@ -95,7 +95,7 @@ fun AppNavHost(
     var currentMapMarker by remember { mutableStateOf<Marker?>(null) }
 
     // 바텀바 높이 계산 (70dp + 패딩 24dp = 104dp)
-    val bottomBarHeight = remember { 104.dp }
+    val bottomBarHeight = remember { 114.dp }
 
     SelfBellTheme {
         CompositionLocalProvider(
@@ -121,7 +121,7 @@ fun AppNavHost(
                         }
 
                         composable(AppRoute.ALERTS_ROUTE) { AlertsScreen() }
-
+                        composable(AppRoute.ESCORT_ROUTE) { EscortScreen(navController) }
 
 
                         homeGraph(navController)

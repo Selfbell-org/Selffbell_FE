@@ -16,7 +16,7 @@ data class LocationRequest(val lat: Double, val lon: Double)
 
 data class SafeWalkCreateResponse(
     @SerializedName("sessionId") val sessionId: Long,
-    @SerializedName("status") val status: String,
+    @SerializedName("safeWalkStatus") val status: String,
     @SerializedName("startedAt") val startedAt: String,
     @SerializedName("expectedArrival") val expectedArrival: String? = null,
     @SerializedName("timerEnd") val timerEnd: String? = null,
