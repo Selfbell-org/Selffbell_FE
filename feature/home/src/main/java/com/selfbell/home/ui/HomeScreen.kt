@@ -207,7 +207,11 @@ fun HomeScreen(
 
                         }
                         IconButton(
-                            onClick = onMsgReportClick
+                            onClick = {
+                                currentModalMode = ModalMode.SEARCH
+                                coroutineScope.launch { sheetState.show() }
+                                onMsgReportClick()
+                            }
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.msg_report_icon),

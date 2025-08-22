@@ -21,19 +21,14 @@ enum class MessageReportStep {
 fun MessageReportFlow(
     onDismissRequest: () -> Unit,
     sendSms: (guardians: List<Contact>, message: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: HomeContactsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     var currentStep by remember { mutableStateOf(MessageReportStep.SELECT_RECIPIENT) }
     var selectedGuardians by remember { mutableStateOf(emptyList<Contact>()) }
     var selectedMessage by remember { mutableStateOf("") }
 
-    val dummyGuardians = remember {
-        listOf(
-            Contact(1, "김민석", "010-1111-1111"),
-            Contact(2, "김민준", "010-2222-2222"),
-            Contact(3, "김민서", "010-3333-3333")
-        )
-    }
+    val guardians by viewModel.guardians.collectAsState()
     val dummyMessageTemplates = remember {
         listOf(
             "위급 상황입니다. 전화하지 마시고 위치를 확인해 주세요.",
@@ -56,7 +51,7 @@ fun MessageReportFlow(
         when (currentStep) {
             MessageReportStep.SELECT_RECIPIENT -> {
                 SelectRecipientScreen(
-                    guardians = dummyGuardians,
+                    guardians = guardians,
                     messageTemplates = dummyMessageTemplates,
                     onCancelClick = onDismissRequest,
                     onNextClick = { guardians, message ->
