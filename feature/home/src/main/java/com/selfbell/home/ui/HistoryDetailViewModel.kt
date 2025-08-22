@@ -50,16 +50,20 @@ class HistoryDetailViewModel @Inject constructor(
 
 // 더미데이터 생성 함수
 private fun createDummyDetail(sessionId: Long): SafeWalkDetail {
+    val startTime = LocalDateTime.of(2025, 8, 15, 10, 40) // 2025년 8월 15일 오전 10시 40분
+    val expectedTime = LocalDateTime.of(2025, 8, 15, 10, 45) // 10:45 예상 도착
+    val actualTime = LocalDateTime.of(2025, 8, 15, 10, 40) // 10:40 실제 도착 (5분 전)
+    
     return SafeWalkDetail(
         sessionId = sessionId,
-        ward = Ward(id = 123, nickname = "나의 귀가"),
+        ward = Ward(id = 123, nickname = "아빠"),
         origin = LocationDetail(37.5665, 126.9780, "출발지"),
-        destination = LocationDetail(37.4943, 126.9583, "집"),
+        destination = LocationDetail(37.4943, 126.9583, "서울특별시 동작구 현충로 119 효창공원앞"),
         status = SafeWalkStatus.COMPLETED,
-        startedAt = LocalDateTime.now().minusHours(1),
-        expectedArrival = LocalDateTime.now().minusMinutes(30),
+        startedAt = startTime,
+        expectedArrival = expectedTime,
         timerEnd = null,
         guardians = listOf(Guardian(id = 456, nickname = "엄마")),
-        endedAt = LocalDateTime.now().minusMinutes(25)
+        endedAt = actualTime
     )
 }
