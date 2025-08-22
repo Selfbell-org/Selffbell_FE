@@ -62,9 +62,19 @@ data class SafeWalkDetailResponse(
     @SerializedName("timerEnd") val timerEnd: String? = null,
     @SerializedName("guardians") val guardians: List<GuardianResponse>
 )
-data class WardResponse(val id: Long, val nickname: String)
-data class LocationDetailResponse(val lat: Double, val lon: Double, val addressText: String)
-data class GuardianResponse(val id: Long, val nickname: String)
+data class WardResponse(
+    @SerializedName("id") val id: Long, 
+    @SerializedName("name") val name: String
+)
+data class LocationDetailResponse(
+    @SerializedName("lat") val lat: Double, 
+    @SerializedName("lon") val lon: Double, 
+    @SerializedName("addressText") val addressText: String
+)
+data class GuardianResponse(
+    @SerializedName("id") val id: Long, 
+    @SerializedName("name") val name: String
+)
 
 data class CurrentSafeWalkResponse(
     @SerializedName("sessionId") val sessionId: Long,
@@ -82,32 +92,4 @@ data class TrackItemResponse(
     @SerializedName("lon") val lon: Double,
     @SerializedName("accuracyM") val accuracyM: Double,
     @SerializedName("capturedAt") val capturedAt: String
-)
-// 히스토리 목록 응답 (History List)
-data class SafeWalkHistoryResponse(
-    @SerializedName("items") val items: List<SafeWalkHistoryItemResponse>,
-    @SerializedName("page") val page: PageResponse
-)
-
-// 히스토리 항목 (History Item)
-data class SafeWalkHistoryItemResponse(
-    @SerializedName("sessionId") val sessionId: Long,
-    @SerializedName("type") val type: String,
-    @SerializedName("targetUser") val targetUser: HistoryUserResponse,
-    @SerializedName("destinationAddress") val destinationAddress: String,
-    @SerializedName("startedAt") val startedAt: String,
-    @SerializedName("status") val status: String
-)
-
-data class HistoryUserResponse(
-    @SerializedName("id") val id: Long,
-    @SerializedName("name") val name: String,
-    @SerializedName("profileImageUrl") val profileImageUrl: String?
-)
-
-data class PageResponse(
-    @SerializedName("size") val size: Int,
-    @SerializedName("number") val number: Int,
-    @SerializedName("totalElements") val totalElements: Int,
-    @SerializedName("totalPages") val totalPages: Int
 )

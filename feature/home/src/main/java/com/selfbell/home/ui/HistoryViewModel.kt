@@ -42,8 +42,6 @@ class HistoryViewModel @Inject constructor(
     private fun loadHistory() {
         _uiState.value = HistoryUiState.Loading
         viewModelScope.launch {
-            /*
-            // --- ⬇️ 실제 API 연동 코드 (현재 주석 처리) ⬇️ ---
             try {
                 val filter = currentFilter.value
                 val history = safeWalkRepository.getSafeWalkHistory(filter)
@@ -51,25 +49,6 @@ class HistoryViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.value = HistoryUiState.Error(e.message ?: "히스토리 로드 실패")
             }
-            */
-
-            // --- ⬇️ 더미데이터 테스트 코드 (현재 사용) ⬇️ ---
-            delay(1000) // 로딩 효과를 위한 딜레이
-            val dummyData = createDummyHistoryData()
-
-            // 필터에 따라 더미데이터 필터링
-            val filteredData = dummyData.filter {
-                when (currentFilter.value.userType) {
-                    HistoryUserFilter.ALL -> true
-                    HistoryUserFilter.GUARDIANS -> it.userType == "GUARDIAN"
-                    HistoryUserFilter.MINE -> it.userType == "MINE"
-                }
-            }.let {
-                if (currentFilter.value.sortOrder == HistorySortOrder.LATEST) it.sortedByDescending { item -> item.dateTime }
-                else it.sortedBy { item -> item.dateTime }
-            }
-
-            _uiState.value = HistoryUiState.Success(filteredData)
         }
     }
 
@@ -77,46 +56,4 @@ class HistoryViewModel @Inject constructor(
         currentFilter.value = newFilter
         loadHistory()
     }
-}
-
-// 더미데이터 생성 함수
-private fun createDummyHistoryData(): List<SafeWalkHistoryItem> {
-    return listOf(
-        SafeWalkHistoryItem(
-            id = 1,
-            userProfileUrl = null,
-            userName = "엄마",
-            userType = "GUARDIAN",
-            destinationName = "집",
-            dateTime = LocalDateTime.now().minusDays(1),
-            status = SafeWalkStatus.IN_PROGRESS
-        ),
-        SafeWalkHistoryItem(
-            id = 2,
-            userProfileUrl = null,
-            userName = "나의 귀가",
-            userType = "MINE",
-            destinationName = "회사",
-            dateTime = LocalDateTime.now().minusDays(2),
-            status = SafeWalkStatus.COMPLETED
-        ),
-        SafeWalkHistoryItem(
-            id = 3,
-            userProfileUrl = null,
-            userName = "친구",
-            userType = "GUARDIAN",
-            destinationName = "집",
-            dateTime = LocalDateTime.now().minusDays(3),
-            status = SafeWalkStatus.ENDED
-        ),
-        SafeWalkHistoryItem(
-            id = 4,
-            userProfileUrl = null,
-            userName = "나의 귀가",
-            userType = "MINE",
-            destinationName = "학교",
-            dateTime = LocalDateTime.now().minusDays(4),
-            status = SafeWalkStatus.CANCELED
-        ),
-    )
 }

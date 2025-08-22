@@ -37,13 +37,5 @@ interface SafeWalksApi {
         @Query("size") size: Int?,
         @Query("order") order: String?
     ): TracksResponse
-
-    // ✅ 히스토리 조회 API 추가
-    @GET("/api/v1/safe-walks/history")
-    suspend fun getSafeWalkHistory(
-        @Query("userType") userType: String,
-        @Query("dateRange") dateRange: String,
-        @Query("sortOrder") sortOrder: String
-    ): Response<SafeWalkHistoryResponse>
 }
 

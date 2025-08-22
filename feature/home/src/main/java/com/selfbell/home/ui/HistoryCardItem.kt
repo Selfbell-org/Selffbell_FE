@@ -14,18 +14,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkHistoryItem
-import com.selfbell.domain.model.SafeWalkStatus
-import com.selfbell.feature.home.R
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryCardItem(
-    historyItem: SafeWalkHistoryItem,
+    historyItem: SafeWalkHistoryItem, // SafeWalkDetail 타입
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -44,7 +40,7 @@ fun HistoryCardItem(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // 프로필 이미지
                 Image(
-                    painter = painterResource(id = com.selfbell.core.R.drawable.default_profile_icon2), // ✅ 기본 이미지 사용
+                    painter = painterResource(id = com.selfbell.core.R.drawable.default_profile_icon2),
                     contentDescription = "Profile Picture",
                     modifier = Modifier
                         .size(48.dp)
@@ -55,13 +51,13 @@ fun HistoryCardItem(
                 // 이름 및 주소/날짜
                 Column {
                     Text(
-                        text = historyItem.userName,
+                        text = historyItem.ward.name, // 실제 사용자 이름
                         style = Typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${historyItem.destinationName} · ${historyItem.dateTime.toLocalDate()}",
+                        text = "${historyItem.destination.addressText} · ${historyItem.startedAt.toLocalDate()}", // 실제 목적지와 시작 시간
                         style = Typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -70,47 +66,14 @@ fun HistoryCardItem(
             // ✅ 상태 텍스트
             Text(
                 text = when (historyItem.status) {
-                    SafeWalkStatus.IN_PROGRESS -> "귀가중"
-                    SafeWalkStatus.COMPLETED -> "완료"
-                    SafeWalkStatus.CANCELED -> "취소"
-                    SafeWalkStatus.ENDED -> "완료" // ✅ ENDED 상태 추가
+                    "IN_PROGRESS" -> "귀가중"
+                    "COMPLETED" -> "완료"
+                    "CANCELED" -> "취소"
+                    "ENDED" -> "완료"
+                    else -> historyItem.status
                 },
                 style = Typography.bodyMedium,
-                color = if (historyItem.status == SafeWalkStatus.IN_PROGRESS) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HistoryCardItemPreview() {
-    MaterialTheme {
-        Column(modifier = Modifier.padding(16.dp)) {
-            HistoryCardItem(
-                historyItem = SafeWalkHistoryItem(
-                    id = 1,
-                    userProfileUrl = null,
-                    userName = "엄마",
-                    userType = "WARD",
-                    destinationName = "우리집",
-                    dateTime = LocalDateTime.now(),
-                    status = SafeWalkStatus.IN_PROGRESS
-                ),
-                onClick = {}
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            HistoryCardItem(
-                historyItem = SafeWalkHistoryItem(
-                    id = 2,
-                    userProfileUrl = null,
-                    userName = "나의 귀가",
-                    userType = "MINE",
-                    destinationName = "회사",
-                    dateTime = LocalDateTime.now().minusDays(2),
-                    status = SafeWalkStatus.COMPLETED
-                ),
-                onClick = {}
+                color = if (historyItem.status == "IN_PROGRESS") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

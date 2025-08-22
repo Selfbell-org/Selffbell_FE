@@ -282,7 +282,6 @@ class EscortViewModel @Inject constructor(
                 Log.d("EscortViewModel", "현재 토큰: $currentToken")
 
                 // ✅ 선택된 연락처의 전화번호를 친구 목록과 매칭하여 userId 추출
-                val friends = _acceptedFriends.value
                 val guardianIds = _selectedGuardians.value.mapNotNull { it.userId }
 
                 Log.d("EscortViewModel", "Guardian IDs: $guardianIds") // 이제 여기에 ID가 표시됩니다.

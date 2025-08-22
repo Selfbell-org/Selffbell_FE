@@ -20,7 +20,6 @@ import com.selfbell.core.ui.composables.ReportScreenHeader
 import com.selfbell.core.ui.composables.ReusableNaverMap // ✅ ReusableNaverMap import
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkDetail
-import com.selfbell.domain.model.SafeWalkStatus
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -124,7 +123,7 @@ fun HistoryDetailCard(
                 Text("위치 기록", style = Typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = detail.ward.nickname,
+                    text = detail.ward.name, // nickname -> name으로 변경
                     style = Typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -145,10 +144,12 @@ fun HistoryDetailCard(
             Spacer(modifier = Modifier.height(8.dp))
             DetailItem(
                 label = "도착시간",
-                value = if (detail.status == SafeWalkStatus.IN_PROGRESS) {
-                    "진행 중"
-                } else {
-                    detail.endedAt?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "알 수 없음"
+                value = when (detail.status) { // SafeWalkStatus enum 대신 String 사용
+                    "IN_PROGRESS" -> "진행 중"
+                    "COMPLETED" -> "완료됨"
+                    "ENDED" -> "종료됨"
+                    "CANCELED" -> "취소됨"
+                    else -> "알 수 없음"
                 }
             )
             Spacer(modifier = Modifier.height(8.dp))

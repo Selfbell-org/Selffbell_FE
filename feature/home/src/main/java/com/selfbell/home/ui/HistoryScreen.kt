@@ -12,8 +12,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.HistoryUserFilter
 import com.selfbell.home.ui.composables.HistoryCardItem
-import com.selfbell.home.ui.HistoryDateFilterDropdown // ✅ import 추가
-import com.selfbell.home.ui.HistorySortDropdown // ✅ import 추가
+import com.selfbell.home.ui.HistoryDateFilterDropdown
+import com.selfbell.home.ui.HistorySortDropdown
 import com.selfbell.domain.model.SafeWalkHistoryItem
 
 @Composable
@@ -107,10 +107,10 @@ fun HistoryList(
     onNavigateToDetail: (sessionId: Long) -> Unit
 ) {
     LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
-        items(historyItems, key = { it.id }) { item ->
+        items(historyItems, key = { it.sessionId }) { item -> // id -> sessionId로 변경
             HistoryCardItem(
                 historyItem = item,
-                onClick = { onNavigateToDetail(item.id) }
+                onClick = { onNavigateToDetail(item.sessionId) } // id -> sessionId로 변경
             )
             Divider()
         }

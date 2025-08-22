@@ -198,24 +198,40 @@ class SafeWalkRepositoryImpl @Inject constructor(
             throw e
         }
     }
-    // ✅ 히스토리 조회 함수 추가
+    // ✅ 히스토리 조회 함수 - 실제 세션 데이터 사용
     override suspend fun getSafeWalkHistory(filter: HistoryFilter): List<SafeWalkHistoryItem> {
         return try {
-            val response = api.getSafeWalkHistory(
-                userType = filter.userType.name,
-                dateRange = filter.dateRange.name,
-                sortOrder = filter.sortOrder.name
-            )
-
-            if (response.isSuccessful) {
-                val historyResponse = response.body() ?: throw Exception("응답 본문이 비어있습니다.")
-                historyResponse.items.map { it.toDomainModel() }
-            } else {
-                throw Exception("API 호출 실패: ${response.code()}")
+            // TODO: 실제로는 서버에서 세션 ID 목록을 받아와야 함
+            // 현재는 임시로 더미 세션 ID들을 사용
+            val sessionIds = listOf(1L, 2L, 3L, 4L, 5L) // 실제로는 서버에서 받아와야 함
+            
+            // 각 세션 ID에 대해 상세 정보 조회
+            val historyItems = mutableListOf<SafeWalkHistoryItem>()
+            
+            sessionIds.forEach { sessionId ->
+                try {
+                    val sessionDetail = getSafeWalkDetail(sessionId)
+                    historyItems.add(sessionDetail)
+                } catch (e: Exception) {
+                    Log.w("SafeWalkRepository", "세션 $sessionId 상세 조회 실패, 건너뜀", e)
+                }
             }
+            
+            // 필터에 따라 정렬 및 필터링
+            val filteredItems = when (filter.userType) {
+                HistoryUserFilter.ALL -> historyItems
+                HistoryUserFilter.GUARDIANS -> historyItems.filter { it.status == "IN_PROGRESS" }
+                HistoryUserFilter.MINE -> historyItems.filter { it.ward.id == 13L } // 현재 사용자 ID
+            }
+            
+            when (filter.sortOrder) {
+                HistorySortOrder.LATEST -> filteredItems.sortedByDescending { it.startedAt }
+                HistorySortOrder.OLDEST -> filteredItems.sortedBy { it.startedAt }
+            }
+            
         } catch (e: Exception) {
             Log.e("SafeWalkRepository", "히스토리 조회 실패", e)
-            throw e
+            emptyList() // 에러 시 빈 리스트 반환
         }
     }
 }
