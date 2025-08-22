@@ -17,6 +17,7 @@ import javax.inject.Named
 import javax.inject.Singleton
 import com.selfbell.data.api.CriminalApi // ✅ 추가
 import com.selfbell.data.api.AuthInterceptor // ✅ 추가
+import java.util.concurrent.TimeUnit
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -95,16 +96,21 @@ object DataModule {
     @Singleton
     @Named("criminalOkHttpClient")
     fun provideCriminalOkHttpClient(
-        authInterceptor: AuthInterceptor // ✅ AuthInterceptor 주입
+        authInterceptor: AuthInterceptor
     ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
         return OkHttpClient.Builder()
-            .addInterceptor(authInterceptor) // ✅ AuthInterceptor 추가
+            .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
+            // ✅ 타임아웃 설정 추가
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
+
 
     @Provides
     @Singleton
