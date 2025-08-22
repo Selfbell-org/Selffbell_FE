@@ -85,12 +85,14 @@ fun EscortScreen(
 
     // GUARDIAN_SELECTION에서 사용할 '등록 친구'를 Contact 형태로 변환
     val acceptedContacts = remember(acceptedFriends) {
-        acceptedFriends.map { friend ->
-            val phone = if (friend.toPhoneNumber.isNotBlank()) friend.toPhoneNumber else friend.fromPhoneNumber
-            com.selfbell.core.model.Contact(
-                friend.id.toLongOrNull() ?: 0L,
-                phone, // 이름은 일단 전화번호로 표시
-                phone
+        acceptedFriends.mapNotNull { friend ->
+            val contactId = friend.id.toLongOrNull() ?: return@mapNotNull null
+            val otherUserId = friend.toUserId.toLongOrNull()
+            Contact(
+                id = contactId,
+                userId = otherUserId,
+                name = friend.name,
+                phoneNumber = friend.toPhoneNumber
             )
         }
     }

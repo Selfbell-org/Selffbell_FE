@@ -17,13 +17,18 @@ class StompManager {
         val headers = mapOf("Authorization" to "Bearer $token")
 
         // 2. 엔드포인트 URL 형식을 올바르게 수정
-        val endpoint = "wss://3.37.244.247:8080/ws"
+        // SockJS 지원 엔드포인트는 /ws/websocket 경로를 사용합니다.
+        val endpoint = "ws://3.37.244.247:8080/ws/websocket"
         stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, endpoint, headers)
 
         // 연결 라이프사이클 이벤트 로그 추가 (디버깅에 유용)
         val lifecycleDisposable = stompClient?.lifecycle()?.subscribe { lifecycleEvent ->
             when (lifecycleEvent.type) {
-                LifecycleEvent.Type.OPENED -> Log.d("StompManager", "Stomp connection opened")
+                LifecycleEvent.Type.OPENED -> {
+                    Log.d("StompManager", "Stomp connection opened")
+                    // 연결이 열리면 토픽 구독 시작
+                    subscribeToTopic(sessionId)
+                }
                 LifecycleEvent.Type.ERROR -> Log.e("StompManager", "Error", lifecycleEvent.exception)
                 LifecycleEvent.Type.CLOSED -> Log.d("StompManager", "Stomp connection closed")
                 LifecycleEvent.Type.FAILED_SERVER_HEARTBEAT -> Log.w("StompManager", "Failed server heartbeat")
@@ -35,10 +40,6 @@ class StompManager {
 
         // 연결 시도
         stompClient?.connect()
-
-        // 연결이 성공적으로 열렸을 때 토픽을 구독하도록 로직을 수정하는 것이 더 안정적입니다.
-        // 여기서는 기존 로직을 유지하되, 라이프사이클 이벤트를 참고하여 개선할 수 있습니다.
-        subscribeToTopic(sessionId)
     }
 
     // 2. 토픽 구독 (보호자용)

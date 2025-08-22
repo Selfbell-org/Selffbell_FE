@@ -14,6 +14,7 @@ import com.selfbell.domain.model.ContactUser
 import com.selfbell.domain.repository.ContactRepository
 import javax.inject.Inject
 import kotlinx.coroutines.delay
+import com.selfbell.data.mapper.toDomain
 
 class ContactRepositoryImpl @Inject constructor(
     private val contactService: ContactService,
@@ -72,7 +73,7 @@ class ContactRepositoryImpl @Inject constructor(
     override suspend fun getContactsFromServer(status: String, page: Int, size: Int): List<ContactRelationship> {
         return try {
             val response = contactService.getContacts(status, page, size)
-            response.items.map { dto -> dto.toDomainFallback() }
+            response.items.map { dto -> dto.toDomain() }
         } catch (e: Exception) {
             Log.e("ContactRepo", "서버 연락처 목록 로드 실패", e)
             throw e
@@ -172,22 +173,22 @@ class ContactRepositoryImpl @Inject constructor(
     }
 }
 
-private fun ContactResponseDto.toDomainFallback(): ContactRelationship {
-    val statusEnum = when (status.uppercase()) {
-        "PENDING" -> ContactRelationshipStatus.PENDING
-        "ACCEPTED" -> ContactRelationshipStatus.ACCEPTED
-        "REJECTED" -> ContactRelationshipStatus.REJECTED
-        else -> ContactRelationshipStatus.NONE
-    }
-    return ContactRelationship(
-        id = contactId.toString(),
-        fromUserId = "",
-        toUserId = "",
-        fromPhoneNumber = "", // 서버 응답에 송신자 번호가 없으므로 비워둠
-        toPhoneNumber = other.phoneNumber,
-        status = statusEnum,
-        createdAt = "",
-        updatedAt = "",
-        sharePermission = sharePermission
-    )
-}
+//private fun ContactResponseDto.toDomainFallback(): ContactRelationship {
+//    val statusEnum = when (status.uppercase()) {
+//        "PENDING" -> ContactRelationshipStatus.PENDING
+//        "ACCEPTED" -> ContactRelationshipStatus.ACCEPTED
+//        "REJECTED" -> ContactRelationshipStatus.REJECTED
+//        else -> ContactRelationshipStatus.NONE
+//    }
+//    return ContactRelationship(
+//        id = contactId.toString(),
+//        fromUserId = "",
+//        toUserId = "",
+//        fromPhoneNumber = "", // 서버 응답에 송신자 번호가 없으므로 비워둠
+//        toPhoneNumber = other.phoneNumber,
+//        status = statusEnum,
+//        createdAt = "",
+//        updatedAt = "",
+//        sharePermission = sharePermission
+//    )
+//}

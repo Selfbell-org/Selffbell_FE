@@ -206,24 +206,10 @@ class EscortViewModel @Inject constructor(
                 val currentSession = safeWalkRepository.getCurrentSafeWalk()
                 if (currentSession != null) {
                     Log.d("EscortViewModel", "서버에서 진행 중인 세션 발견: ${currentSession.sessionId}")
-
-                    // 3. 세션이 있지만 로컬 상태가 초기화된 경우 (앱 데이터 삭제 후 재시작)
-                    // 세션을 강제로 종료하고 SETUP 상태로 시작
-                    try {
-                        Log.d("EscortViewModel", "앱 데이터 삭제 후 재시작으로 인식. 기존 세션 종료 시도")
-                        safeWalkRepository.endSafeWalkSession(
-                            currentSession.sessionId,
-                            SessionEndReason.MANUAL
-                        )
-                        Log.d("EscortViewModel", "기존 세션 종료 완료")
-                    } catch (e: Exception) {
-                        Log.w("EscortViewModel", "기존 세션 종료 실패 (무시하고 진행)", e)
-                    }
-
-                    // SETUP 상태로 초기화
-                    _sessionId.value = null
-                    _isSessionActive.value = false
-                    _escortFlowState.value = EscortFlowState.SETUP
+                    // 진행 중인 세션을 그대로 이어서 IN_PROGRESS 화면으로 전환
+                    _sessionId.value = currentSession.sessionId
+                    _isSessionActive.value = true
+                    _escortFlowState.value = EscortFlowState.IN_PROGRESS
                 } else {
                     Log.d("EscortViewModel", "서버에 진행 중인 세션이 없습니다. SETUP 상태로 초기화")
                     _sessionId.value = null
@@ -295,8 +281,12 @@ class EscortViewModel @Inject constructor(
                 val currentToken = tokenManager.getAccessToken()
                 Log.d("EscortViewModel", "현재 토큰: $currentToken")
 
-                // ✅ 보호자 ID 없이 세션을 시작 (빈 리스트 전달)
-                val guardianIds = _selectedGuardians.value.map { it.id } // TODO: 보호자 ID 리스트로 대체
+                // ✅ 선택된 연락처의 전화번호를 친구 목록과 매칭하여 userId 추출
+                val friends = _acceptedFriends.value
+                val guardianIds = _selectedGuardians.value.mapNotNull { it.userId }
+
+                Log.d("EscortViewModel", "Guardian IDs: $guardianIds") // 이제 여기에 ID가 표시됩니다.
+
 
                 // 예상 도착 시간 계산
                 val expectedArrival: LocalDateTime? = when (_arrivalMode.value) {
@@ -334,8 +324,10 @@ class EscortViewModel @Inject constructor(
                 // 보호자 선택 초기화
                 _selectedGuardians.value = emptySet()
 
-                // ✅ WebSocket 연결
-                stompManager.connect("USER_TOKEN", session.sessionId)
+                // ✅ WebSocket 연결 - 실제 액세스 토큰 사용
+                tokenManager.getAccessToken()?.let { token ->
+                    stompManager.connect(token, session.sessionId)
+                }
 
                 // 위치 추적 시작
                 startLocationTracking()
@@ -486,9 +478,10 @@ class EscortViewModel @Inject constructor(
                         if (name.isNotEmpty() && number.isNotEmpty()) {
                             contactsList.add(
                                 Contact(
-                                    contactId,
-                                    name,
-                                    number.replace("-", "").trim()
+                                    id = contactId,
+                                    userId = null, // 👈 기기 연락처에는 userId가 없으므로 null
+                                    name = name,
+                                    phoneNumber = number.replace("-", "").trim()
                                 )
                             )
                         }
