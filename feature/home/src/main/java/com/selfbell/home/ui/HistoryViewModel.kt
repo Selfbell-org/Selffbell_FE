@@ -42,7 +42,8 @@ class HistoryViewModel @Inject constructor(
     private fun loadHistory() {
         _uiState.value = HistoryUiState.Loading
         viewModelScope.launch {
-            /* // TODO: API 연동 시 아래 주석을 해제하고, 더미데이터 코드를 삭제하세요.
+            /*
+            // --- ⬇️ 실제 API 연동 코드 (현재 주석 처리) ⬇️ ---
             try {
                 val filter = currentFilter.value
                 val history = safeWalkRepository.getSafeWalkHistory(filter)
@@ -52,14 +53,23 @@ class HistoryViewModel @Inject constructor(
             }
             */
 
-            // --- 더미데이터 로직 ---
+            // --- ⬇️ 더미데이터 테스트 코드 (현재 사용) ⬇️ ---
             delay(1000) // 로딩 효과를 위한 딜레이
             val dummyData = createDummyHistoryData()
-            val filteredData = dummyData.filter { it.userType == currentFilter.value.userType.name || currentFilter.value.userType == HistoryUserFilter.ALL }
-                .sortedBy { it.dateTime }
-                .let { if (currentFilter.value.sortOrder == HistorySortOrder.LATEST) it.reversed() else it }
+
+            // 필터에 따라 더미데이터 필터링
+            val filteredData = dummyData.filter {
+                when (currentFilter.value.userType) {
+                    HistoryUserFilter.ALL -> true
+                    HistoryUserFilter.GUARDIANS -> it.userType == "GUARDIAN"
+                    HistoryUserFilter.MINE -> it.userType == "MINE"
+                }
+            }.let {
+                if (currentFilter.value.sortOrder == HistorySortOrder.LATEST) it.sortedByDescending { item -> item.dateTime }
+                else it.sortedBy { item -> item.dateTime }
+            }
+
             _uiState.value = HistoryUiState.Success(filteredData)
-            // --- 더미데이터 로직 끝 ---
         }
     }
 
@@ -69,7 +79,7 @@ class HistoryViewModel @Inject constructor(
     }
 }
 
-// ✅ 더미데이터 생성 함수
+// 더미데이터 생성 함수
 private fun createDummyHistoryData(): List<SafeWalkHistoryItem> {
     return listOf(
         SafeWalkHistoryItem(
