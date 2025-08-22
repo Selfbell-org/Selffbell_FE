@@ -48,7 +48,7 @@ class ContactsViewModel @Inject constructor(
                 val pendingSent = emptyList<ContactRelationship>()
                 val pendingReceived = pendingAll
                 // 서버 존재 여부까지 포함해서 디바이스 연락처 로드
-                val deviceContacts = contactRepository.loadDeviceContactsWithUserCheck()
+                val deviceContacts = contactRepository.getDeviceContacts()
                 _uiState.value = ContactsUiState.Success(accepted, pendingSent, pendingReceived, deviceContacts)
             } catch (e: Exception) {
                 _uiState.value = ContactsUiState.Error(e.message ?: "데이터 로드 실패")

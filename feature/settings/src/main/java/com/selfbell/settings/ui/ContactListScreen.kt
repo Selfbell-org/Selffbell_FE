@@ -14,15 +14,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.auth.ui.ContactUiState
 import com.selfbell.core.ui.theme.Typography
-import com.selfbell.core.ui.composables.ContactListItem
-import com.selfbell.core.ui.composables.SelfBellButton // SelfBellButton 추가
-import com.selfbell.core.ui.composables.SelfBellButtonType // SelfBellButtonType 추가
+import com.selfbell.core.ui.composables.ContactRegistrationListItem // ✅ 재사용할 컴포넌트
+import com.selfbell.core.ui.composables.SelfBellButton
+import com.selfbell.core.ui.composables.SelfBellButtonType
 import com.selfbell.core.ui.composables.AcceptedFriendsList
 import com.selfbell.core.ui.composables.UnregisteredContactItem
 import com.selfbell.domain.model.ContactRelationship
 import com.selfbell.domain.model.ContactUser
 import com.selfbell.settings.ui.ContactsUiState
 import com.selfbell.settings.ui.ContactsViewModel
+import kotlinx.coroutines.launch
 
 // 탭 상태를 위한 enum
 enum class ContactsTab {
@@ -107,16 +108,13 @@ fun ContactListScreen(
 }
 
 
-
-// ✅ 요청 목록
 @Composable
 fun PendingRequestsList(
     pendingSent: List<ContactRelationship>,
     pendingReceived: List<ContactRelationship>,
-    onAcceptClick: (Long) -> Unit // contactId Long
+    onAcceptClick: (Long) -> Unit
 ) {
     LazyColumn(modifier = Modifier.padding(16.dp)) {
-
         item {
             Spacer(modifier = Modifier.height(24.dp))
             Text("요청 목록", style = Typography.titleMedium)
@@ -124,35 +122,64 @@ fun PendingRequestsList(
         items(pendingReceived, key = { it.id }) { request ->
             val phone = request.fromPhoneNumber.ifBlank { request.toPhoneNumber }
             val displayName = displayNameFromPhone(phone, prefix = "받은 요청")
-            // 받은 요청: '수락' 가능 → 같은 UI에서 활성 버튼처럼 동작
-            ContactListItem(
+            ContactRegistrationListItem(
                 name = displayName,
                 phoneNumber = phone,
-                isSelected = true, // 선택 가능 느낌 유지
+                buttonText = "수락",
                 isEnabled = true,
-                onButtonClick = { onAcceptClick(request.id.toLongOrNull() ?: return@ContactListItem) }
+                onButtonClick = { onAcceptClick(request.id.toLongOrNull() ?: return@ContactRegistrationListItem) }
             )
             Divider()
         }
     }
 }
 
-// ✅ 친구 초대 목록
 @Composable
 fun InviteFriendsList(
     deviceContacts: List<ContactUser>,
     onSendRequest: (String) -> Unit
 ) {
+    // 📌 서버 가입 여부 상태를 저장하는 맵
+    var checkedContacts by remember { mutableStateOf(mapOf<String, Boolean>()) }
+    val coroutineScope = rememberCoroutineScope()
+    val viewModel: ContactsViewModel = hiltViewModel()
+
     LazyColumn(modifier = Modifier.padding(16.dp)) {
-        // 서버에 존재하지 않는 연락처만 노출
-        val unregistered = deviceContacts.filter { !it.isExists }
-        items(unregistered) { contact ->
+        // ✅ 모든 디바이스 연락처를 노출
+        items(deviceContacts) { contact ->
             val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "연락처")
-            UnregisteredContactItem(
+            val isExists = checkedContacts[contact.phoneNumber]
+
+            // ✅ 상태에 따라 버튼 텍스트와 활성화 여부 결정
+            val buttonText = when (isExists) {
+                true -> "요청"
+                false -> "초대"
+                else -> "확인"
+            }
+            val isButtonEnabled = isExists != null
+
+            ContactRegistrationListItem(
                 name = contact.name.ifBlank { fallbackName },
                 phoneNumber = contact.phoneNumber,
-                onInviteClick = { onSendRequest(contact.phoneNumber) }
+                buttonText = buttonText,
+                isEnabled = isButtonEnabled,
+                onButtonClick = {
+                    when (isExists) {
+                        true -> onSendRequest(contact.phoneNumber) // 가입자: 요청
+                        false -> { /* TODO: 초대 로직 (SMS/딥링크) */
+                        } // 미가입자: 초대
+                        null -> { // 확인되지 않은 상태일 때만 서버에 요청
+                            coroutineScope.launch {
+                                // ✅ 콜백 함수를 전달하고, 콜백 내부에서 상태 업데이트
+                                viewModel.checkUserExists(contact.phoneNumber) { exists ->
+                                    checkedContacts =
+                                        checkedContacts + (contact.phoneNumber to exists)
+                                }
+                            }
+                        }
+                    }
+                }
             )
         }
     }
-}
+    }

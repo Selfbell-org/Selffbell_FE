@@ -1,5 +1,6 @@
 package com.example.auth.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,13 +21,14 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.OnboardingProgressBar
-import com.selfbell.core.ui.composables.ContactListItem
+import com.selfbell.core.ui.composables.ContactRegistrationListItem // ✅ 수정된 컴포넌트 import
 import com.selfbell.core.ui.composables.AgreeTermsBottomSheet
 import com.selfbell.core.ui.composables.SelfBellButton
 import com.selfbell.core.ui.theme.Typography
 import kotlinx.coroutines.launch
 import com.selfbell.domain.model.ContactUser
 import com.selfbell.domain.model.ContactRelationshipStatus
+import com.selfbell.core.ui.composables.SelfBellButtonType // SelfBellButtonType import 추가
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -35,16 +37,13 @@ fun ContactRegistrationScreen(
     modifier: Modifier = Modifier,
     viewModel: ContactRegistrationViewModel = hiltViewModel()
 ) {
-    // 📌 ViewModel의 상태를 관찰합니다.
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
-    // 📌 화면이 처음 나타날 때 연락처를 불러옵니다. (서버 체크 없이 로컬만)
     LaunchedEffect(Unit) {
         viewModel.loadDeviceContactsOnly()
     }
 
-    // 📌 UI 상태에 따라 표시할 연락처 목록을 결정합니다.
     val contactList = when (uiState) {
         is ContactUiState.Success -> (uiState as ContactUiState.Success).contacts
         else -> emptyList()
@@ -64,11 +63,9 @@ fun ContactRegistrationScreen(
     var inviteContacts by remember { mutableStateOf(setOf<String>()) }
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-    
-    // 버튼 활성화: 선택된 유저만 기준 (초대는 제외)
+
     val isButtonEnabled = selectedContacts.isNotEmpty()
 
-    // 📌 선택된 연락처의 전화번호 목록을 가져옵니다.
     val selectedPhoneNumbers = remember(selectedContacts, contactList) {
         contactList.filter { selectedContacts.contains(it.phoneNumber) }.map { it.phoneNumber }
     }
@@ -78,7 +75,6 @@ fun ContactRegistrationScreen(
         onAgreeAll = {
             coroutineScope.launch {
                 sheetState.hide()
-                // ✅ 선택된 모든 연락처에 대해 보호자 요청을 보냅니다.
                 selectedPhoneNumbers.forEach { phoneNumber ->
                     viewModel.sendContactRequest(phoneNumber)
                 }
@@ -116,7 +112,6 @@ fun ContactRegistrationScreen(
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-                // 📌 검색 입력 필드
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.updateSearchQuery(it) },
@@ -127,7 +122,6 @@ fun ContactRegistrationScreen(
                         .padding(bottom = 16.dp)
                 )
 
-                // 📌 ViewModel 상태에 따라 UI 표시
                 when (uiState) {
                     is ContactUiState.Loading -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -155,31 +149,37 @@ fun ContactRegistrationScreen(
                         } else {
                             LazyColumn(modifier = Modifier.weight(1f)) {
                                 items(filteredContacts, key = { it.phoneNumber }) { contact ->
-                                    val isInvite = inviteContacts.contains(contact.phoneNumber)
-                                    ContactListItem(
+                                    val isInvited = inviteContacts.contains(contact.phoneNumber)
+                                    val isSelected = selectedContacts.contains(contact.phoneNumber)
+
+                                    val buttonText = when {
+                                        isSelected -> "해제"
+                                        isInvited -> "초대"
+                                        else -> "선택"
+                                    }
+                                    val isButtonEnabled = if(isSelected) true else !isInvited
+
+                                    ContactRegistrationListItem(
                                         name = contact.name,
                                         phoneNumber = contact.phoneNumber,
-                                        isSelected = selectedContacts.contains(contact.phoneNumber),
-                                        isEnabled = !isInvite, // 미가입자는 안내 문구 표시
-                                        forceInvite = isInvite,
+                                        buttonText = buttonText,
+                                        isEnabled = isButtonEnabled,
                                         onButtonClick = {
-                                            if (selectedContacts.contains(contact.phoneNumber)) {
+                                            if (isSelected) {
                                                 selectedContacts = selectedContacts - contact.phoneNumber
-                                                return@ContactListItem
-                                            }
-                                            if (inviteContacts.contains(contact.phoneNumber)) {
-                                                // 초대 플로우 실행 (TODO: 초대 SMS/링크 등)
+                                            } else if (isInvited) {
                                                 viewModel.inviteContact(contact.phoneNumber)
-                                                return@ContactListItem
-                                            }
-                                            // 서버 존재 여부 확인 후 분기
-                                            viewModel.checkUserExists(contact.phoneNumber) { exists ->
-                                                if (exists) {
-                                                if (selectedContacts.size < 3) {
-                                                        selectedContacts = selectedContacts + contact.phoneNumber
+                                            } else {
+                                                viewModel.checkUserExists(contact.phoneNumber) { exists ->
+                                                    if (exists) {
+                                                        if (selectedContacts.size < 3) {
+                                                            selectedContacts = selectedContacts + contact.phoneNumber
+                                                        } else {
+                                                            // TODO: 최대 선택 개수 초과 알림
+                                                        }
+                                                    } else {
+                                                        inviteContacts = inviteContacts + contact.phoneNumber
                                                     }
-                                                } else {
-                                                    inviteContacts = inviteContacts + contact.phoneNumber
                                                 }
                                             }
                                         }

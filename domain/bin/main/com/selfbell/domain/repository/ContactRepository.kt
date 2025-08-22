@@ -13,12 +13,12 @@ interface ContactRepository {
      * 디바이스 연락처를 불러와서 서버에 등록된 사용자인지 확인합니다.
      * @return ContactUser 목록 (서버 등록 여부 포함)
      */
-    suspend fun loadDeviceContactsWithUserCheck(): List<ContactUser>
+    //suspend fun loadDeviceContactsWithUserCheck(): List<ContactUser>
 
     /**
      * 디바이스 연락처만 불러옵니다. (서버 체크 없음)
      */
-    suspend fun loadDeviceContactsOnly(): List<ContactUser>
+    //suspend fun loadDeviceContactsOnly(): List<ContactUser>
 
     /**
      * 특정 전화번호로 가입된 사용자가 존재하는지 확인합니다.
@@ -26,6 +26,8 @@ interface ContactRepository {
      * @return 사용자 존재 여부
      */
     suspend fun checkUserExists(phoneNumber: String): Boolean
+    suspend fun getDeviceContacts(): List<ContactUser> // ✅ 로컬 연락처만 가져오는 함수 추가
+
 
     /**
      * 서버에 등록된 보호자 연락처 목록을 가져옵니다.
