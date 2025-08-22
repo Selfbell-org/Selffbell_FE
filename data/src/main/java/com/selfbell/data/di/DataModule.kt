@@ -15,6 +15,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Named
 import javax.inject.Singleton
+import com.selfbell.data.api.CriminalApi // ✅ 추가
+import com.selfbell.data.api.AuthInterceptor // ✅ 추가
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -22,7 +24,7 @@ object DataModule {
 
     @Provides
     @Singleton
-    @Named("naverOkHttpClient") // 📌 OkHttpClient에 이름 지정
+    @Named("naverOkHttpClient")
     fun provideNaverOkHttpClient(
         @Named("X-NCP-APIGW-API-KEY-ID") clientId: String,
         @Named("X-NCP-APIGW-API-KEY") clientSecret: String
@@ -47,7 +49,7 @@ object DataModule {
     @Provides
     @Singleton
     @Named("naverRetrofit")
-    fun provideNaverRetrofit(@Named("naverOkHttpClient") okHttpClient: OkHttpClient): Retrofit { // 📌 이름으로 주입받음
+    fun provideNaverRetrofit(@Named("naverOkHttpClient") okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl("https://maps.apigw.ntruss.com/")
             .client(okHttpClient)
@@ -85,5 +87,39 @@ object DataModule {
             e.printStackTrace()
             "DEFAULT_SECRET_ON_ERROR"
         } ?: "DEFAULT_SECRET_IF_NULL"
+    }
+
+    // --- ✅ 범죄자 API를 위한 새로운 DI 설정 ---
+
+    @Provides
+    @Singleton
+    @Named("criminalOkHttpClient")
+    fun provideCriminalOkHttpClient(
+        authInterceptor: AuthInterceptor // ✅ AuthInterceptor 주입
+    ): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+        return OkHttpClient.Builder()
+            .addInterceptor(authInterceptor) // ✅ AuthInterceptor 추가
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @Named("criminalRetrofit")
+    fun provideCriminalRetrofit(@Named("criminalOkHttpClient") okHttpClient: OkHttpClient): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("http://3.37.244.247:8080/") // 📌 여기에 실제 API 베이스 URL 입력
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCriminalApi(@Named("criminalRetrofit") retrofit: Retrofit): CriminalApi {
+        return retrofit.create(CriminalApi::class.java)
     }
 }

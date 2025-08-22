@@ -1,5 +1,4 @@
 package com.selfbell.home.ui
-// HomeViewModel.kt (수정된 전체 코드)
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -24,6 +23,12 @@ import javax.inject.Inject
 import com.selfbell.core.location.LocationTracker
 import kotlin.text.ifEmpty
 import kotlin.text.toDoubleOrNull
+
+// ✅ 지도의 마커 표시 모드를 위한 enum 클래스 (HomeViewModel이 접근 가능하도록 이 파일에 추가)
+enum class MapMarkerMode {
+    SAFETY_BELL_ONLY,
+    SAFETY_BELL_AND_CRIMINALS
+}
 
 sealed interface HomeUiState {
     object Loading : HomeUiState
@@ -59,6 +64,19 @@ class HomeViewModel @Inject constructor(
     private val _searchResultMessage = MutableStateFlow<String?>(null)
     val searchResultMessage: StateFlow<String?> = _searchResultMessage.asStateFlow()
 
+    // ✅ 지도의 마커 모드를 관리하는 상태 (StateFlow)
+    private val _mapMarkerMode = MutableStateFlow(MapMarkerMode.SAFETY_BELL_ONLY)
+    val mapMarkerMode: StateFlow<MapMarkerMode> = _mapMarkerMode.asStateFlow()
+
+    // ✅ 범죄자 정보를 미리 로드하여 저장할 별도의 StateFlow
+    private val _preloadedCriminals = MutableStateFlow<List<Criminal>>(emptyList())
+    // UI에서 접근할 수 있도록 공개된 StateFlow 추가
+    val criminals: StateFlow<List<Criminal>> = _preloadedCriminals.asStateFlow()
+
+    // ✅ 범죄자 데이터 로딩 상태를 위한 StateFlow 추가
+    private val _isCriminalsLoading = MutableStateFlow(false)
+    val isCriminalsLoading: StateFlow<Boolean> = _isCriminalsLoading.asStateFlow()
+
     init {
         startHomeLocationStream()
     }
@@ -68,59 +86,34 @@ class HomeViewModel @Inject constructor(
             try {
                 locationTracker.getLocationUpdates().collectLatest { location ->
                     val userLatLng = LatLng(location.latitude, location.longitude)
-                    
-                    // 안전벨과 범죄자 정보를 병렬로 가져오기
+
+                    // 안전벨 정보만 가져오기
                     val emergencyBells = emergencyBellRepository.getNearbyEmergencyBells(
                         lat = userLatLng.latitude,
                         lon = userLatLng.longitude,
                         radius = 500
                     ).sortedBy { it.distance ?: Double.MAX_VALUE }
-                    
-                    // 범죄자 정보는 인증된 사용자만 가져오기
-                    val criminals = if (tokenManager.hasValidToken()) {
-                        try {
-                            criminalRepository.getNearbyCriminals(
-                                lat = userLatLng.latitude,
-                                lon = userLatLng.longitude,
-                                radius = 300
-                            )
-                        } catch (e: Exception) {
-                            Log.w("HomeViewModel", "범죄자 정보 로드 실패 (인증 문제일 수 있음)", e)
-                            emptyList()
-                        }
-                    } else {
-                        Log.d("HomeViewModel", "토큰이 없어 범죄자 정보를 로드하지 않습니다")
-                        emptyList()
-                    }
 
                     val current = _uiState.value
-                    if (current is HomeUiState.Success) {
-                        _uiState.value = current.copy(
-                            userLatLng = userLatLng,
-                            emergencyBells = emergencyBells,
-                            criminals = criminals
-                        )
-                    } else {
-                        _uiState.value = HomeUiState.Success(
-                            userLatLng = userLatLng,
-                            emergencyBells = emergencyBells,
-                            criminals = criminals
-                        )
+                    if (current !is HomeUiState.Success) {
+                        // 초기 로딩 시에만 범죄자 정보 미리 로드 시작
+                        fetchCriminals(userLatLng)
                     }
+
+                    // UI 상태 업데이트
+                    _uiState.value = HomeUiState.Success(
+                        userLatLng = userLatLng,
+                        emergencyBells = emergencyBells,
+                        criminals = _preloadedCriminals.value // 미리 로드된 데이터 사용
+                    )
+
                     if (_cameraTargetLatLng.value == null) {
-                _cameraTargetLatLng.value = userLatLng
+                        _cameraTargetLatLng.value = userLatLng
                     }
-                    
-                    // 안전벨 정보 로깅
+
                     Log.d("HomeViewModel", "안전벨 ${emergencyBells.size}개 로드 완료")
                     emergencyBells.take(3).forEach { bell ->
                         Log.d("HomeViewModel", "안전벨: ${bell.detail}, 거리: ${bell.distance?.let { "${it.toInt()}m" } ?: "알 수 없음"}")
-                    }
-                    
-                    // 범죄자 정보 로깅
-                    Log.d("HomeViewModel", "범죄자 ${criminals.size}개 로드 완료")
-                    criminals.take(3).forEach { criminal ->
-                        Log.d("HomeViewModel", "범죄자: ${criminal.address}, 거리: ${criminal.distanceMeters.toInt()}m")
                     }
                 }
             } catch (e: Exception) {
@@ -130,7 +123,47 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // ✅ UI 상태를 변경하는 함수 추가
+    /**
+     * ✅ 백그라운드에서 범죄자 정보를 미리 가져오는 함수
+     * 이 함수는 UI 로딩을 방해하지 않습니다.
+     */
+    private fun fetchCriminals(userLatLng: LatLng) {
+        viewModelScope.launch {
+            try {
+                _isCriminalsLoading.value = true // 로딩 시작
+                if (tokenManager.hasValidToken()) {
+                    val criminals = criminalRepository.getNearbyCriminals(
+                        lat = userLatLng.latitude,
+                        lon = userLatLng.longitude,
+                        radius = 300 // API 명세에 따라 500m~1000m 사이의 값으로 조정 가능
+                    )
+                    _preloadedCriminals.value = criminals
+                    Log.d("HomeViewModel", "범죄자 ${criminals.size}개 사전 로드 완료")
+                } else {
+                    Log.d("HomeViewModel", "토큰이 없어 범죄자 정보를 미리 로드하지 않습니다")
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "범죄자 정보 사전 로드 실패: ${e.message}", e)
+                _preloadedCriminals.value = emptyList() // 실패 시 빈 리스트로 초기화
+            } finally {
+                _isCriminalsLoading.value = false // 로딩 종료
+            }
+        }
+    }
+
+    /**
+     * ✅ 지도의 마커 모드를 전환하는 함수
+     * 이 함수는 즉시 상태를 전환하며, 네트워크 요청을 하지 않습니다.
+     */
+    fun toggleMapMarkerMode() {
+        _mapMarkerMode.value = if (_mapMarkerMode.value == MapMarkerMode.SAFETY_BELL_ONLY) {
+            MapMarkerMode.SAFETY_BELL_AND_CRIMINALS
+        } else {
+            MapMarkerMode.SAFETY_BELL_ONLY
+        }
+        Log.d("HomeViewModel", "마커 모드 전환: ${_mapMarkerMode.value}")
+    }
+
     fun setSelectedEmergencyBellDetail(detail: EmergencyBellDetail?) {
         val currentState = _uiState.value
         if (currentState is HomeUiState.Success) {
@@ -138,21 +171,18 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // ✅ 안심벨 상세 정보를 가져오는 함수 추가
     fun getEmergencyBellDetail(objtId: Int) {
         viewModelScope.launch {
             try {
                 val detail = emergencyBellRepository.getEmergencyBellDetail(objtId)
-                
-                // 이미 로드된 안전벨 목록에서 해당 ID의 거리 정보를 찾기
+
                 val currentState = _uiState.value
                 val distanceFromNearbyList = if (currentState is HomeUiState.Success) {
                     currentState.emergencyBells.find { it.id == objtId }?.distance
                 } else null
-                
-                // 거리 정보를 포함한 상세 정보 생성
+
                 val detailWithDistance = detail.copy(distance = distanceFromNearbyList)
-                
+
                 Log.d("HomeViewModel", "안전벨 상세 정보: ${detail.detail}, 거리: ${distanceFromNearbyList?.let { "${it.toInt()}m" } ?: "알 수 없음"}")
                 setSelectedEmergencyBellDetail(detailWithDistance)
             } catch (e: Exception) {
@@ -161,8 +191,6 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
-
-
 
     fun onSearchTextChanged(newText: String) {
         _searchText.value = newText
