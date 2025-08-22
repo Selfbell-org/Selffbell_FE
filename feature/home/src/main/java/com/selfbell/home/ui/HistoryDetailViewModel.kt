@@ -53,7 +53,7 @@ private fun createDummyDetail(sessionId: Long): SafeWalkDetail {
     return SafeWalkDetail(
         sessionId = sessionId,
         ward = Ward(id = 123, nickname = "나의 귀가"),
-        origin = LocationDetail(37.4989, 126.9560, "출발지"),
+        origin = LocationDetail(37.5665, 126.9780, "출발지"),
         destination = LocationDetail(37.4943, 126.9583, "집"),
         status = SafeWalkStatus.COMPLETED,
         startedAt = LocalDateTime.now().minusHours(1),

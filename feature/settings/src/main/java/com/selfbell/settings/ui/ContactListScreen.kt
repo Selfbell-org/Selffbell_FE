@@ -156,7 +156,7 @@ fun InviteFriendsList(
                 false -> "초대"
                 else -> "확인"
             }
-            val isButtonEnabled = isExists != null
+            val isButtonEnabled = isExists != false
 
             ContactRegistrationListItem(
                 name = contact.name.ifBlank { fallbackName },
