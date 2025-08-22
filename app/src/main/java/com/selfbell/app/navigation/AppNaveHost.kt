@@ -224,23 +224,34 @@ fun AppNavHost(
                         }
 
                         composable(
-                            route = AppRoute.PROFILE_REGISTER_ROUTE_WITH_ARGS,
+                            // ✅ route 문자열에 phoneNumber와 password 인수 추가
+                            route = "${AppRoute.PROFILE_REGISTER_ROUTE}?isFromSettings={isFromSettings}&phoneNumber={phoneNumber}&password={password}",
                             arguments = listOf(
-                                navArgument("phoneNumber") { type = NavType.StringType },
-                                navArgument("password") { type = NavType.StringType }
+                                navArgument("phoneNumber") { type = NavType.StringType; nullable = true; defaultValue = null },
+                                navArgument("password") { type = NavType.StringType; nullable = true; defaultValue = null },
+                                navArgument("isFromSettings") { type = NavType.BoolType; defaultValue = false }
                             )
                         ) { backStackEntry ->
-                            val phoneNumber = backStackEntry.arguments?.getString("phoneNumber") ?: ""
-                            val password = backStackEntry.arguments?.getString("password") ?: ""
+                            val phoneNumber = backStackEntry.arguments?.getString("phoneNumber")
+                            val password = backStackEntry.arguments?.getString("password")
+                            val isFromSettings = backStackEntry.arguments?.getBoolean("isFromSettings") ?: false
                             ProfileRegisterScreen(
                                 navController = navController,
-                                phoneNumber = phoneNumber,
-                                password = password
+                                phoneNumber = phoneNumber ?: "", // ✅ null일 경우 빈 문자열로 처리
+                                password = password ?: "",       // ✅ null일 경우 빈 문자열로 처리
+                                isFromSettings = isFromSettings
                             )
                         }
 
-                        composable(AppRoute.CONTACT_REGISTER_ROUTE) {
-                            ContactRegistrationScreen(navController = navController)
+                        composable(
+                            route = "${AppRoute.CONTACT_REGISTER_ROUTE}?isFromSettings={isFromSettings}",
+                            arguments = listOf(navArgument("isFromSettings") { type = NavType.BoolType; defaultValue = false })
+                        ) { backStackEntry ->
+                            val isFromSettings = backStackEntry.arguments?.getBoolean("isFromSettings") ?: false
+                            ContactRegistrationScreen(
+                                navController = navController,
+                                isFromSettings = isFromSettings // ✅ 파라미터 전달
+                            )
                         }
 
                         composable(AppRoute.ONBOARDING_COMPLETE_ROUTE) {
@@ -248,14 +259,26 @@ fun AppNavHost(
                         }
 
                         // 📌 AddressRegisterScreen에 onNextClick 콜백 추가
-                        composable(AppRoute.ADDRESS_REGISTER_ROUTE) {
+                        composable(
+                            route = "${AppRoute.ADDRESS_REGISTER_ROUTE}?isFromSettings={isFromSettings}",
+                            arguments = listOf(navArgument("isFromSettings") { type = NavType.BoolType; defaultValue = false })
+                        ) { backStackEntry ->
+                            val isFromSettings = backStackEntry.arguments?.getBoolean("isFromSettings") ?: false
                             AddressRegisterScreen(
-                                navController = navController
+                                navController = navController,
+                                isFromSettings = isFromSettings
                             )
                         }
 
-                        composable(AppRoute.PERMISSION_ROUTE) {
-                            PermissionScreen(navController = navController)
+                        composable(
+                            route = "${AppRoute.PERMISSION_ROUTE}?isFromSettings={isFromSettings}",
+                            arguments = listOf(navArgument("isFromSettings") { type = NavType.BoolType; defaultValue = false })
+                        ) { backStackEntry ->
+                            val isFromSettings = backStackEntry.arguments?.getBoolean("isFromSettings") ?: false
+                            PermissionScreen(
+                                navController = navController,
+                                isFromSettings = isFromSettings
+                            )
                         }
 
                         composable(AppRoute.REUSABEL_MAP) {

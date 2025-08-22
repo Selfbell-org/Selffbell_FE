@@ -43,6 +43,7 @@ enum class ButtonState {
 fun ContactRegistrationScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
+    isFromSettings: Boolean,
     viewModel: ContactRegistrationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()

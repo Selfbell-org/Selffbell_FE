@@ -39,6 +39,7 @@ fun ProfileRegisterScreen(
     phoneNumber: String,
     password: String,
     modifier: Modifier = Modifier,
+    isFromSettings: Boolean,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     var nickname by remember { mutableStateOf("") }

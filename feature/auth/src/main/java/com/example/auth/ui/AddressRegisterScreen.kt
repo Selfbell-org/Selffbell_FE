@@ -45,6 +45,7 @@ import kotlin.text.isBlank
 fun AddressRegisterScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
+    isFromSettings: Boolean,
     viewModel: AddressRegisterViewModel = hiltViewModel()
 ) {
     // ViewModel의 개별 StateFlow 변수들을 사용합니다.
@@ -272,12 +273,12 @@ fun AddressRegisterScreen(
         }
     }
 }
-@Preview(showBackground = true)
-@Composable
-fun AddressRegisterScreenPreview() {
-    SelfBellTheme {
-        AddressRegisterScreen(
-            navController = rememberNavController()
-        )
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun AddressRegisterScreenPreview() {
+//    SelfBellTheme {
+//        AddressRegisterScreen(
+//            navController = rememberNavController()
+//        )
+//    }
+//}
