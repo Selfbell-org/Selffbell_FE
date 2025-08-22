@@ -135,7 +135,7 @@ class HomeViewModel @Inject constructor(
                     val criminals = criminalRepository.getNearbyCriminals(
                         lat = userLatLng.latitude,
                         lon = userLatLng.longitude,
-                        radius = 300 // API 명세에 따라 500m~1000m 사이의 값으로 조정 가능
+                        radius = 10000 // API 명세에 따라 500m~1000m 사이의 값으로 조정 가능
                     )
                     _preloadedCriminals.value = criminals
                     Log.d("HomeViewModel", "범죄자 ${criminals.size}개 사전 로드 완료")

@@ -41,39 +41,39 @@ class AuthInterceptor @Inject constructor(
         // 요청 실행
         val response = chain.proceed(requestWithAuth)
 
-        // ✅ 401 또는 403 응답 시 토큰 재발급 시도 (주석 해제)
-//        if ((response.code == 401 || response.code == 403) && !cleanedToken.isNullOrBlank()) {
-//            Log.d(TAG, "토큰 만료 감지. 토큰 재발급 시도...")
-//
-//            response.close() // 기존 응답 닫기
-//
-//            // 토큰 재발급 후 요청 재시도
-//            val newToken = runBlocking { refreshTokenIfNeeded() }
-//
-//            return if (!newToken.isNullOrBlank()) {
-//                // 새 토큰으로 요청 재시도
-//                val newRequest = originalRequest.newBuilder()
-//                    .addHeader("Authorization", "Bearer $newToken")
-//                    .build()
-//
-//                Log.d(TAG, "새 토큰으로 요청 재시도")
-//                chain.proceed(newRequest)
-//            } else {
-//                // 토큰 재발급 실패 시 원래 응답 반환 (새 응답 생성)
-//                Log.e(TAG, "토큰 재발급 실패. 사용자 로그아웃 필요")
-//
-//                // 기존 응답 객체를 재사용할 수 없으므로, 새 응답 객체를 빌드해야 합니다.
-//                // OkHttp의 Response.Builder를 사용하여 상태 코드를 포함한 새 응답을 생성합니다.
-//                Response.Builder()
-//                    .request(originalRequest)
-//                    .protocol(response.protocol)
-//                    .code(response.code)
-//                    .message(response.message)
-//                    .headers(response.headers)
-//                    .body(response.body)
-//                    .build()
-//            }
-//        }
+//         ✅ 401 또는 403 응답 시 토큰 재발급 시도 (주석 해제)
+        if ((response.code == 401 || response.code == 403) && !cleanedToken.isNullOrBlank()) {
+            Log.d(TAG, "토큰 만료 감지. 토큰 재발급 시도...")
+
+            response.close() // 기존 응답 닫기
+
+            // 토큰 재발급 후 요청 재시도
+            val newToken = runBlocking { refreshTokenIfNeeded() }
+
+            return if (!newToken.isNullOrBlank()) {
+                // 새 토큰으로 요청 재시도
+                val newRequest = originalRequest.newBuilder()
+                    .addHeader("Authorization", "Bearer $newToken")
+                    .build()
+
+                Log.d(TAG, "새 토큰으로 요청 재시도")
+                chain.proceed(newRequest)
+            } else {
+                // 토큰 재발급 실패 시 원래 응답 반환 (새 응답 생성)
+                Log.e(TAG, "토큰 재발급 실패. 사용자 로그아웃 필요")
+
+                // 기존 응답 객체를 재사용할 수 없으므로, 새 응답 객체를 빌드해야 합니다.
+                // OkHttp의 Response.Builder를 사용하여 상태 코드를 포함한 새 응답을 생성합니다.
+                Response.Builder()
+                    .request(originalRequest)
+                    .protocol(response.protocol)
+                    .code(response.code)
+                    .message(response.message)
+                    .headers(response.headers)
+                    .body(response.body)
+                    .build()
+            }
+        }
 
         return response
     }
