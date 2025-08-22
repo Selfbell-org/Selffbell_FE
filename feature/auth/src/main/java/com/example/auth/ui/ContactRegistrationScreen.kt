@@ -21,14 +21,22 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.selfbell.core.navigation.AppRoute
 import com.selfbell.core.ui.composables.OnboardingProgressBar
-import com.selfbell.core.ui.composables.ContactRegistrationListItem // ✅ 수정된 컴포넌트 import
+import com.selfbell.core.ui.composables.ContactRegistrationListItem
 import com.selfbell.core.ui.composables.AgreeTermsBottomSheet
 import com.selfbell.core.ui.composables.SelfBellButton
 import com.selfbell.core.ui.theme.Typography
 import kotlinx.coroutines.launch
 import com.selfbell.domain.model.ContactUser
 import com.selfbell.domain.model.ContactRelationshipStatus
-import com.selfbell.core.ui.composables.SelfBellButtonType // SelfBellButtonType import 추가
+import com.selfbell.core.ui.composables.ButtonState
+import com.selfbell.core.ui.composables.SelfBellButtonType
+
+// ✅ ButtonState enum 클래스 정의 (ContactRegistrationListItem에서도 사용)
+enum class ButtonState {
+    SELECTED, // 해제 (빨간색)
+    INVITED,  // 초대 (초록색)
+    DEFAULT   // 선택 (기본색)
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -95,7 +103,7 @@ fun ContactRegistrationScreen(
             ) {
                 OnboardingProgressBar(
                     currentStep = 4,
-                    totalSteps = 5,
+                    totalSteps = 4,
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
@@ -152,38 +160,58 @@ fun ContactRegistrationScreen(
                                     val isInvited = inviteContacts.contains(contact.phoneNumber)
                                     val isSelected = selectedContacts.contains(contact.phoneNumber)
 
-                                    val buttonText = when {
-                                        isSelected -> "해제"
-                                        isInvited -> "초대"
-                                        else -> "선택"
+                                    val buttonState = when {
+                                        isSelected -> ButtonState.SELECTED
+                                        isInvited -> ButtonState.INVITED
+                                        else -> ButtonState.DEFAULT
                                     }
-                                    val isButtonEnabled = if(isSelected) true else !isInvited
 
-                                    ContactRegistrationListItem(
-                                        name = contact.name,
-                                        phoneNumber = contact.phoneNumber,
-                                        buttonText = buttonText,
-                                        isEnabled = isButtonEnabled,
-                                        onButtonClick = {
-                                            if (isSelected) {
-                                                selectedContacts = selectedContacts - contact.phoneNumber
-                                            } else if (isInvited) {
-                                                viewModel.inviteContact(contact.phoneNumber)
-                                            } else {
-                                                viewModel.checkUserExists(contact.phoneNumber) { exists ->
-                                                    if (exists) {
-                                                        if (selectedContacts.size < 3) {
-                                                            selectedContacts = selectedContacts + contact.phoneNumber
+                                    val buttonText = when (buttonState) {
+                                        ButtonState.SELECTED -> "해제"
+                                        ButtonState.INVITED -> "초대"
+                                        ButtonState.DEFAULT -> "선택"
+                                    }
+
+                                    val isButtonEnabled = true
+
+                                    Column { // ✅ ContactRegistrationListItem을 Column으로 감싸기
+                                        ContactRegistrationListItem(
+                                            name = contact.name,
+                                            phoneNumber = contact.phoneNumber,
+                                            buttonText = buttonText,
+                                            isEnabled = isButtonEnabled,
+                                            buttonState = buttonState,
+                                            onButtonClick = {
+                                                if (isSelected) {
+                                                    selectedContacts = selectedContacts - contact.phoneNumber
+                                                } else if (isInvited) {
+                                                    viewModel.inviteContact(contact.phoneNumber)
+                                                } else {
+                                                    viewModel.checkUserExists(contact.phoneNumber) { exists ->
+                                                        if (exists) {
+                                                            if (selectedContacts.size < 3) {
+                                                                selectedContacts = selectedContacts + contact.phoneNumber
+                                                            } else {
+                                                                // TODO: 최대 선택 개수 초과 알림
+                                                            }
                                                         } else {
-                                                            // TODO: 최대 선택 개수 초과 알림
+                                                            inviteContacts = inviteContacts + contact.phoneNumber
                                                         }
-                                                    } else {
-                                                        inviteContacts = inviteContacts + contact.phoneNumber
                                                     }
                                                 }
                                             }
+                                        )
+                                        // ✅ 상태 라벨을 ContactRegistrationListItem 아래에 조건부로 표시
+                                        if (isInvited) {
+                                            Text(
+                                                text = "서버에 등록되지 않은 사용자",
+                                                style = Typography.labelSmall,
+                                                color = Color.Red,
+                                                modifier = Modifier.padding(start = 64.dp) // 아이콘과 정렬 맞추기
+                                            )
                                         }
-                                    )
+                                        Divider()
+                                    }
                                 }
                             }
                         }

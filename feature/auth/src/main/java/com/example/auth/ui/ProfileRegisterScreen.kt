@@ -69,24 +69,29 @@ fun ProfileRegisterScreen(
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
+//    Scaffold(
+//        modifier = modifier.fillMaxSize(),
+//        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+//    ) { paddingValues ->
+//        Box(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .padding(paddingValues)
+//        ) {
             Column(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                    .padding(horizontal = 16.dp)
+                    .imePadding(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(modifier = Modifier.height(20.dp))
+                // --- 1. Top Fixed Area (Onboarding Bar) ---
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
                     OnboardingProgressBar(currentStep = currentOnboardingStep, totalSteps = totalOnboardingSteps)
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -106,23 +111,23 @@ fun ProfileRegisterScreen(
                                 .clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
-                        Text(
-                            text = "수정",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = Pretendard,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.White
-                            ),
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .background(
-                                    color = Color(0x99000000),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(vertical = 4.dp, horizontal = 12.dp)
-                                .clickable { /* TODO: 프로필 사진 변경 로직 구현 */ }
-                        )
+//                        Text(
+//                            text = "",
+//                            style = TextStyle(
+//                                fontSize = 12.sp,
+//                                fontFamily = Pretendard,
+//                                fontWeight = FontWeight.Medium,
+//                                color = Color.White
+//                            ),
+//                            modifier = Modifier
+//                                .align(Alignment.BottomCenter)
+//                                .background(
+//                                    color = Color(0x99000000),
+//                                    shape = RoundedCornerShape(8.dp)
+//                                )
+//                                .padding(vertical = 4.dp, horizontal = 12.dp)
+//                                .clickable { /* TODO: 프로필 사진 변경 로직 구현 */ }
+//                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -162,5 +167,3 @@ fun ProfileRegisterScreen(
                 }
             }
         }
-    }
-}

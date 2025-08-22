@@ -17,6 +17,21 @@ import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.R
 import com.selfbell.core.ui.theme.SelfBellTheme
 
+//// SelfBellButtonType에 필요한 상태
+//enum class SelfBellButtonType {
+//    PRIMARY_FILLED,
+//    SUCCESS_FILLED,
+//    DANGER_FILLED,
+//    OUTLINED
+//}
+
+// ButtonState enum은 상위 컴포저블에 정의되어야 합니다.
+// enum class ButtonState {
+//     SELECTED,
+//     INVITED,
+//     DEFAULT
+// }
+
 @Composable
 fun ContactRegistrationListItem(
     name: String,
@@ -24,6 +39,7 @@ fun ContactRegistrationListItem(
     buttonText: String,
     isEnabled: Boolean,
     onButtonClick: () -> Unit,
+    buttonState: ButtonState,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -55,21 +71,28 @@ fun ContactRegistrationListItem(
                     style = Typography.bodyMedium,
                     color = Color.Gray
                 )
-                if (!isEnabled) {
-                    Text(
-                        text = "서버에 등록되지 않은 사용자",
-                        style = Typography.labelSmall,
-                        color = Color.Red
-                    )
-                }
+                // ❌ 충돌하는 문구 로직을 제거
+                // if (buttonState == ButtonState.INVITED) {
+                //     Text(
+                //         text = "서버에 등록되지 않은 사용자",
+                //         style = Typography.labelSmall,
+                //         color = Color.Red
+                //     )
+                // }
             }
+        }
+
+        val buttonType = when (buttonState) {
+            ButtonState.SELECTED -> SelfBellButtonType.OUTLINED
+            ButtonState.INVITED -> SelfBellButtonType.PRIMARY_FILLED
+            ButtonState.DEFAULT -> SelfBellButtonType.PRIMARY_FILLED
         }
 
         SelfBellButton(
             text = buttonText,
             onClick = onButtonClick,
             modifier = Modifier.width(72.dp),
-            buttonType = if (isEnabled) SelfBellButtonType.PRIMARY_FILLED else SelfBellButtonType.OUTLINED,
+            buttonType = buttonType,
             isSmall = true,
             enabled = isEnabled
         )

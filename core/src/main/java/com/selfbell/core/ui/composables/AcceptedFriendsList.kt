@@ -1,5 +1,7 @@
 package com.selfbell.core.ui.composables
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +30,7 @@ fun AcceptedFriendsList(
             Divider()
         }
     }
+    Spacer(modifier = Modifier.height(90.dp)) // ✅ 바텀바 높이만큼의 공간 확보
 }
 
 // 헬퍼 함수
