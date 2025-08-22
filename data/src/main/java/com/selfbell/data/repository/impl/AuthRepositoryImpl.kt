@@ -78,7 +78,8 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Log.d("AuthRepository", "메인 주소 등록 성공: ${response.code()}")
             } else {
-                Log.e("AuthRepository", "메인 주소 등록 실패: ${response.code()}, ${response.errorBody()?.string()}")
+                val errorBody = response.errorBody()?.string()
+            Log.e("AuthRepository", "메인 주소 등록 실패: ${response.code()}, $errorBody")
                 throw Exception("메인 주소 등록 실패: ${response.code()}")
             }
         } catch (e: Exception) {

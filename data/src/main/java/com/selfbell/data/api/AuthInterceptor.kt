@@ -41,8 +41,8 @@ class AuthInterceptor @Inject constructor(
         // 요청 실행
         val response = chain.proceed(requestWithAuth)
 
-//         ✅ 401 또는 403 응답 시 토큰 재발급 시도 (주석 해제)
-        if ((response.code == 401 || response.code == 403) && !cleanedToken.isNullOrBlank()) {
+        // ✅ 401 응답 시에만 토큰 재발급 시도 (403은 권한 문제이므로 제외)
+        if (response.code == 401 && !cleanedToken.isNullOrBlank()) {
             Log.d(TAG, "토큰 만료 감지. 토큰 재발급 시도...")
 
             response.close() // 기존 응답 닫기
@@ -64,13 +64,14 @@ class AuthInterceptor @Inject constructor(
 
                 // 기존 응답 객체를 재사용할 수 없으므로, 새 응답 객체를 빌드해야 합니다.
                 // OkHttp의 Response.Builder를 사용하여 상태 코드를 포함한 새 응답을 생성합니다.
+                val responseBody = response.body
                 Response.Builder()
                     .request(originalRequest)
                     .protocol(response.protocol)
                     .code(response.code)
                     .message(response.message)
                     .headers(response.headers)
-                    .body(response.body)
+                    .body(responseBody)
                     .build()
             }
         }

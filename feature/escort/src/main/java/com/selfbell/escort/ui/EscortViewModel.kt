@@ -278,14 +278,8 @@ class EscortViewModel @Inject constructor(
                     return@launch
                 }
 
-                val currentToken = tokenManager.getAccessToken()
-                Log.d("EscortViewModel", "현재 토큰: $currentToken")
-
                 // ✅ 선택된 연락처의 전화번호를 친구 목록과 매칭하여 userId 추출
                 val guardianIds = _selectedGuardians.value.mapNotNull { it.userId }
-
-                Log.d("EscortViewModel", "Guardian IDs: $guardianIds") // 이제 여기에 ID가 표시됩니다.
-
 
                 // 예상 도착 시간 계산
                 val expectedArrival: LocalDateTime? = when (_arrivalMode.value) {
@@ -296,13 +290,6 @@ class EscortViewModel @Inject constructor(
                         LocalDateTime.now().withHour(it.hour).withMinute(it.minute)
                     }
                 }
-
-                // ✅ 디버깅을 위한 로그 추가
-                Log.d("EscortViewModel", "SafeWalk 세션 생성 시작")
-                Log.d("EscortViewModel", "Guardian IDs: $guardianIds")
-                Log.d("EscortViewModel", "Expected Arrival: $expectedArrival")
-                Log.d("EscortViewModel", "Timer Minutes: ${_timerMinutes.value}")
-                Log.d("EscortViewModel", "Arrival Mode: ${_arrivalMode.value}")
 
                 val session = safeWalkRepository.createSafeWalkSession(
                     originLat = _startLocation.value.latLng.latitude,
@@ -330,25 +317,8 @@ class EscortViewModel @Inject constructor(
 
                 // 위치 추적 시작
                 startLocationTracking()
-                Log.d("EscortViewModel", "SafeWalk 세션 생성 성공: ${session.sessionId}")
             } catch (e: Exception) {
                 Log.e("EscortViewModel", "세션 생성 실패", e)
-                // ✅ 더 자세한 에러 정보 로깅
-                when (e) {
-                    is HttpException -> {
-                        Log.e("EscortViewModel", "HTTP 에러: ${e.code()}")
-                        Log.e("EscortViewModel", "에러 응답: ${e.response()?.errorBody()?.string()}")
-
-                        // 401 또는 403 오류 시 로그만 남기고 토큰은 유지
-                        if (e.code() == 401 || e.code() == 403) {
-                            Log.e("EscortViewModel", "토큰이 만료되었거나 권한이 없습니다. (토큰 유지)")
-                        }
-                    }
-
-                    else -> {
-                        Log.e("EscortViewModel", "기타 에러: ${e.message}")
-                    }
-                }
             }
         }
     }
@@ -389,13 +359,8 @@ class EscortViewModel @Inject constructor(
         _sessionId.value?.let { sessionId ->
             viewModelScope.launch {
                 try {
-                    val success =
-                        safeWalkRepository.uploadLocationTrack(sessionId, lat, lon, accuracy)
-                    if (!success) {
-                        Log.w("EscortViewModel", "위치 트랙 업데이트 실패")
-                    }
+                    safeWalkRepository.uploadLocationTrack(sessionId, lat, lon, accuracy)
                     stompManager.sendLocation(sessionId, lat, lon)
-
                 } catch (e: Exception) {
                     Log.e("EscortViewModel", "위치 트랙 업데이트 중 오류", e)
                 }

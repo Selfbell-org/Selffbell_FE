@@ -38,27 +38,11 @@ class SafeWalkRepositoryImpl @Inject constructor(
             guardianIds = guardianIds
         )
 
-        // ✅ 디버깅을 위한 로그 추가
-        Log.d("SafeWalkRepository", "SafeWalk 세션 생성 요청")
-        Log.d("SafeWalkRepository", "Request Body: $requestBody")
-
         return try {
             val response = api.createSafeWalkSession(requestBody)
             response.toDomainModel()
         } catch (e: Exception) {
             Log.e("SafeWalkRepository", "SafeWalk 세션 생성 실패", e)
-            when (e) {
-                is retrofit2.HttpException -> {
-                    Log.e("SafeWalkRepository", "HTTP 에러 코드: ${e.code()}")
-                    Log.e("SafeWalkRepository", "에러 응답 헤더: ${e.response()?.headers()}")
-                    Log.e("SafeWalkRepository", "에러 응답: ${e.response()?.errorBody()?.string()}")
-                    Log.e("SafeWalkRepository", "요청 URL: ${e.response()?.raw()?.request?.url}")
-                }
-                else -> {
-                    Log.e("SafeWalkRepository", "기타 에러: ${e.message}")
-                    Log.e("SafeWalkRepository", "에러 타입: ${e.javaClass.simpleName}")
-                }
-            }
             throw e
         }
     }
@@ -69,55 +53,12 @@ class SafeWalkRepositoryImpl @Inject constructor(
             accuracyM = accuracy,
             capturedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         )
-        // 디버깅을 위한 로그 추가
-        Log.d("SafeWalkRepository", "위치 트랙 업로드 요청: sessionId=$sessionId, requestBody=$requestBody")
-        
-        // 현재 세션 상태 확인
-        try {
-            val currentSession = api.getCurrentSafeWalk()
-            Log.d("SafeWalkRepository", "현재 세션 상태: $currentSession")
-            
-            // 세션 상세 정보 조회로 소유자 확인
-            try {
-                val sessionDetail = api.getSafeWalkDetail(sessionId)
-                Log.d("SafeWalkRepository", "세션 상세 정보: $sessionDetail")
-            } catch (e: Exception) {
-                Log.w("SafeWalkRepository", "세션 상세 정보 조회 실패", e)
-            }
-        } catch (e: Exception) {
-            Log.w("SafeWalkRepository", "현재 세션 상태 확인 실패", e)
-        }
         
         return try {
             val response = api.uploadLocationTrack(sessionId, requestBody)
-            Log.d("SafeWalkRepository", "위치 트랙 업로드 성공: ${response.status}")
             response.status == "UPLOADED"
         } catch (e: Exception) {
             Log.e("SafeWalkRepository", "위치 트랙 업로드 실패", e)
-            when (e) {
-                is retrofit2.HttpException -> {
-                    Log.e("SafeWalkRepository", "위치 트랙 HTTP 에러: ${e.code()}")
-                    Log.e("SafeWalkRepository", "위치 트랙 에러 응답 헤더: ${e.response()?.headers()}")
-                    Log.e("SafeWalkRepository", "위치 트랙 에러 응답: ${e.response()?.errorBody()?.string()}")
-                    Log.e("SafeWalkRepository", "요청 URL: ${e.response()?.raw()?.request?.url}")
-                    
-                    // 403 에러 시 추가 디버깅
-                    if (e.code() == 403) {
-                        Log.e("SafeWalkRepository", "=== 403 권한 에러 상세 분석 ===")
-                        Log.e("SafeWalkRepository", "세션 ID: $sessionId")
-                        Log.e("SafeWalkRepository", "현재 사용자 토큰: ${e.response()?.raw()?.request?.header("Authorization")}")
-                        
-                        // 세션 소유자와 현재 사용자 비교
-                        try {
-                            val sessionDetail = api.getSafeWalkDetail(sessionId)
-                            Log.e("SafeWalkRepository", "세션 소유자 정보: ${sessionDetail.ward}")
-                            Log.e("SafeWalkRepository", "세션 상태: ${sessionDetail.status}")
-                        } catch (detailError: Exception) {
-                            Log.e("SafeWalkRepository", "세션 상세 조회 실패: $detailError")
-                        }
-                    }
-                }
-            }
             false
         }
     }
@@ -132,8 +73,9 @@ class SafeWalkRepositoryImpl @Inject constructor(
             Log.e("SafeWalkRepository", "세션 종료 실패", e)
             when (e) {
                 is retrofit2.HttpException -> {
+                    val errorBody = e.response()?.errorBody()?.string()
                     Log.e("SafeWalkRepository", "세션 종료 HTTP 에러: ${e.code()}")
-                    Log.e("SafeWalkRepository", "세션 종료 에러 응답: ${e.response()?.errorBody()?.string()}")
+                    Log.e("SafeWalkRepository", "세션 종료 에러 응답: $errorBody")
                 }
             }
             false
@@ -149,8 +91,9 @@ class SafeWalkRepositoryImpl @Inject constructor(
             Log.e("SafeWalkRepository", "세션 상세 조회 실패", e)
             when (e) {
                 is retrofit2.HttpException -> {
+                    val errorBody = e.response()?.errorBody()?.string()
                     Log.e("SafeWalkRepository", "세션 상세 조회 HTTP 에러: ${e.code()}")
-                    Log.e("SafeWalkRepository", "세션 상세 조회 에러 응답: ${e.response()?.errorBody()?.string()}")
+                    Log.e("SafeWalkRepository", "세션 상세 조회 에러 응답: $errorBody")
                 }
             }
             throw e
@@ -171,7 +114,6 @@ class SafeWalkRepositoryImpl @Inject constructor(
             when (e) {
                 is retrofit2.HttpException -> {
                     Log.e("SafeWalkRepository", "현재 세션 조회 HTTP 에러: ${e.code()}")
-                    Log.e("SafeWalkRepository", "현재 세션 조회 에러 응답: ${e.response()?.errorBody()?.string()}")
                 }
             }
             null
@@ -188,7 +130,6 @@ class SafeWalkRepositoryImpl @Inject constructor(
             when (e) {
                 is retrofit2.HttpException -> {
                     Log.e("SafeWalkRepository", "트랙 조회 HTTP 에러: ${e.code()}")
-                    Log.e("SafeWalkRepository", "트랙 조회 에러 응답: ${e.response()?.errorBody()?.string()}")
                 }
                 else -> {
                     Log.e("SafeWalkRepository", "기타 에러: ${e.message}")
@@ -198,30 +139,51 @@ class SafeWalkRepositoryImpl @Inject constructor(
             throw e
         }
     }
-    // ✅ 히스토리 조회 함수 - 실제 세션 데이터 사용
+    // ✅ 히스토리 조회 함수 - 더미 데이터 사용
     override suspend fun getSafeWalkHistory(filter: HistoryFilter): List<SafeWalkHistoryItem> {
         return try {
-            // TODO: 실제로는 서버에서 세션 ID 목록을 받아와야 함
-            // 현재는 임시로 더미 세션 ID들을 사용
-            val sessionIds = listOf(1L, 2L, 3L, 4L, 5L) // 실제로는 서버에서 받아와야 함
-            
-            // 각 세션 ID에 대해 상세 정보 조회
-            val historyItems = mutableListOf<SafeWalkHistoryItem>()
-            
-            sessionIds.forEach { sessionId ->
-                try {
-                    val sessionDetail = getSafeWalkDetail(sessionId)
-                    historyItems.add(sessionDetail)
-                } catch (e: Exception) {
-                    Log.w("SafeWalkRepository", "세션 $sessionId 상세 조회 실패, 건너뜀", e)
-                }
-            }
+            // 더미 데이터 생성
+            val dummyHistoryItems = listOf(
+                SafeWalkDetail(
+                    sessionId = 1L,
+                    ward = Ward(id = 13L, name = "사용자1"),
+                    origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지1"),
+                    destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지1"),
+                    status = "COMPLETED",
+                    startedAt = LocalDateTime.now().minusHours(2),
+                    expectedArrival = LocalDateTime.now().minusHours(1),
+                    timerEnd = LocalDateTime.now().minusHours(1),
+                    guardians = listOf(Guardian(id = 5L, name = "보호자1"))
+                ),
+                SafeWalkDetail(
+                    sessionId = 2L,
+                    ward = Ward(id = 13L, name = "사용자1"),
+                    origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지2"),
+                    destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지2"),
+                    status = "IN_PROGRESS",
+                    startedAt = LocalDateTime.now().minusMinutes(30),
+                    expectedArrival = LocalDateTime.now().plusMinutes(30),
+                    timerEnd = LocalDateTime.now().plusMinutes(30),
+                    guardians = listOf(Guardian(id = 5L, name = "보호자1"))
+                ),
+                SafeWalkDetail(
+                    sessionId = 3L,
+                    ward = Ward(id = 13L, name = "사용자1"),
+                    origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지3"),
+                    destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지3"),
+                    status = "COMPLETED",
+                    startedAt = LocalDateTime.now().minusDays(1),
+                    expectedArrival = LocalDateTime.now().minusDays(1).plusHours(1),
+                    timerEnd = LocalDateTime.now().minusDays(1).plusHours(1),
+                    guardians = listOf(Guardian(id = 5L, name = "보호자1"))
+                )
+            )
             
             // 필터에 따라 정렬 및 필터링
             val filteredItems = when (filter.userType) {
-                HistoryUserFilter.ALL -> historyItems
-                HistoryUserFilter.GUARDIANS -> historyItems.filter { it.status == "IN_PROGRESS" }
-                HistoryUserFilter.MINE -> historyItems.filter { it.ward.id == 13L } // 현재 사용자 ID
+                HistoryUserFilter.ALL -> dummyHistoryItems
+                HistoryUserFilter.GUARDIANS -> dummyHistoryItems.filter { it.status == "IN_PROGRESS" }
+                HistoryUserFilter.MINE -> dummyHistoryItems.filter { it.ward.id == 13L }
             }
             
             when (filter.sortOrder) {
