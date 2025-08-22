@@ -4,12 +4,11 @@ import com.selfbell.domain.model.*
 import java.time.LocalDateTime
 
 interface SafeWalkRepository {
-    // ✅ SafeWalkCreateRequest를 파라미터로 받는 대신 필요한 정보들을 직접 받도록 변경
     suspend fun createSafeWalkSession(
-        originLat: Double, // ✅ double 타입으로 위도 받기
+        originLat: Double,
         originLon: Double,
         originAddress: String,
-        destinationLat: Double, // ✅ double 타입으로 위도 받기
+        destinationLat: Double,
         destinationLon: Double,
         destinationAddress: String,
         expectedArrival: LocalDateTime?,
@@ -22,4 +21,11 @@ interface SafeWalkRepository {
     suspend fun getSafeWalkDetail(sessionId: Long): SafeWalkDetail
     suspend fun getCurrentSafeWalk(): SafeWalkSessionState?
     suspend fun getTracks(sessionId: Long, cursor: String?, size: Int, order: String): List<TrackItem>
+
+    /**
+     * ✅ 히스토리 목록을 가져오는 함수 추가
+     * @param filter 필터링 옵션 (사용자 유형, 기간, 정렬 순서)
+     * @return 필터링된 히스토리 목록
+     */
+    suspend fun getSafeWalkHistory(filter: HistoryFilter): List<SafeWalkHistoryItem>
 }

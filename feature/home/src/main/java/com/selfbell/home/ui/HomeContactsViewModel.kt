@@ -33,6 +33,7 @@ class HomeContactsViewModel @Inject constructor(
                     val name = phone // TODO: 서버에서 이름 제공 시 교체
                     Contact(
                         id = rel.id.toLongOrNull() ?: 0L,
+                        userId = null,
                         name = name,
                         phoneNumber = phone
                     )

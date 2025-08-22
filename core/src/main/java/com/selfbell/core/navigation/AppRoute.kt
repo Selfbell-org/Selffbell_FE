@@ -49,4 +49,10 @@ object AppRoute {
     //escort
     const val ADDRESS_SEARCH_ROUTE = "address_search_route"
 
+    //history
+    const val HISTORY_ROUTE = "history_route" // ✅ 히스토리 라우트 추가
+    const val HISTORY_DETAIL_ROUTE = "history_detail_route/{sessionId}"
+    fun historyDetailRoute(sessionId: Long): String = "history_detail_route/$sessionId"
+
+// ... 기존 코드 ...
 }
