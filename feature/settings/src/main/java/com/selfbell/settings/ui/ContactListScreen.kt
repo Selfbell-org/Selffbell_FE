@@ -144,42 +144,84 @@ fun InviteFriendsList(
     val coroutineScope = rememberCoroutineScope()
     val viewModel: ContactsViewModel = hiltViewModel()
 
-    LazyColumn(modifier = Modifier.padding(16.dp)) {
-        // ✅ 모든 디바이스 연락처를 노출
-        items(deviceContacts) { contact ->
-            val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "연락처")
-            val isExists = checkedContacts[contact.phoneNumber]
+    // Search state
+    var searchQuery by remember { mutableStateOf("") }
 
-            // ✅ 상태에 따라 버튼 텍스트와 활성화 여부 결정
-            val buttonText = when (isExists) {
-                true -> "요청"
-                false -> "초대"
-                else -> "확인"
-            }
-            val isButtonEnabled = isExists != false
+    val filteredContacts = remember(searchQuery, deviceContacts) {
+        if (searchQuery.isBlank()) deviceContacts
+        else deviceContacts.filter { c ->
+            c.name.contains(searchQuery, ignoreCase = true) ||
+            c.phoneNumber.contains(searchQuery)
+        }
+    }
 
-            ContactRegistrationListItem(
-                name = contact.name.ifBlank { fallbackName },
-                phoneNumber = contact.phoneNumber,
-                buttonText = buttonText,
-                isEnabled = isButtonEnabled,
-                onButtonClick = {
-                    when (isExists) {
-                        true -> onSendRequest(contact.phoneNumber) // 가입자: 요청
-                        false -> { /* TODO: 초대 로직 (SMS/딥링크) */
-                        } // 미가입자: 초대
-                        null -> { // 확인되지 않은 상태일 때만 서버에 요청
-                            coroutineScope.launch {
-                                // ✅ 콜백 함수를 전달하고, 콜백 내부에서 상태 업데이트
-                                viewModel.checkUserExists(contact.phoneNumber) { exists ->
-                                    checkedContacts =
-                                        checkedContacts + (contact.phoneNumber to exists)
+    Column(modifier = Modifier.padding(16.dp)) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text("\uc5f0\ub77d\ucc98 \uac80\uc0c9") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        LazyColumn {
+            // \u2705 \ubaa8\ub4e0 \ub514\ubc14\uc774\uc2a4 \uc5f0\ub77d\ucc98\ub97c \ub178\ucd9c (\uac80\uc0c9 \uc801\uc6a9)
+            items(filteredContacts) { contact ->
+                val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "\uc5f0\ub77d\ucc98")
+                val isExists = checkedContacts[contact.phoneNumber]
+
+                // \u2705 \uc0c1\ud0dc\uc5d0 \ub530\ub77c \ubc84\ud2bc \ud14d\uc2a4\ud2b8/\ud65c\uc131\ud654 \uacb0\uc815
+                val buttonText = when (isExists) {
+                    true -> "\uc694\uccad"
+                    false -> "\ucd08\ub300"
+                    else -> "\ud655\uc778"
+                }
+                val isButtonEnabled = when (isExists) {
+                    true -> false // already registered -> disable
+                    false -> true // unregistered -> allow invite
+                    null -> true // unknown -> allow check
+                }
+
+                // Derive status label inline without touching shared composable
+                val statusLabel: (@Composable () -> Unit)? = when (isExists) {
+                    true -> {
+                        { Text(text = "\uc774\ubbf8 \ub4f1\ub85d\ub41c \uac00\uc785\uc790\uc785\ub2c8\ub2e4", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
+                    }
+                    false -> {
+                        { Text(text = "\uc11c\ubc84\uc5d0 \ub4f1\ub85d\ub418\uc9c0 \uc54a\uc740 \uc0ac\uc6a9\uc790", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
+                    }
+                    else -> null
+                }
+
+                Column {
+                    ContactRegistrationListItem(
+                        name = contact.name.ifBlank { fallbackName },
+                        phoneNumber = contact.phoneNumber,
+                        buttonText = buttonText,
+                        isEnabled = isButtonEnabled,
+                        onButtonClick = {
+                            when (isExists) {
+                                true -> { /* disabled */ }
+                                false -> { /* TODO: \ucd08\ub300 \ub85c\uc9c1 (SMS/\ub515\ub9c1\ud06c) */ }
+                                null -> {
+                                    coroutineScope.launch {
+                                        viewModel.checkUserExists(contact.phoneNumber) { exists ->
+                                            checkedContacts = checkedContacts + (contact.phoneNumber to exists)
+                                        }
+                                    }
                                 }
                             }
                         }
+                    )
+                    if (statusLabel != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        statusLabel()
                     }
+                    Divider()
                 }
-            )
+            }
         }
     }
-    }
+}
