@@ -2,8 +2,10 @@
 package com.selfbell.app
 
 import android.app.Application
+import android.util.Log
 import com.naver.maps.map.NaverMapSdk
-import dagger.hilt.android.HiltAndroidApp // HiltAndroidApp 어노테이션 임포트
+import com.google.firebase.messaging.FirebaseMessaging
+import dagger.hilt.android.HiltAndroidApp
 
 /**
  * SelfBell 애플리케이션의 Hilt 진입점.
@@ -12,10 +14,34 @@ import dagger.hilt.android.HiltAndroidApp // HiltAndroidApp 어노테이션 임�
  */
 @HiltAndroidApp
 class SelfBellApplication : Application() {
+    
+    companion object {
+        private const val TAG = "SelfBellApplication"
+    }
+    
     override fun onCreate() {
         super.onCreate()
-        val clientId = getString(R.string.naver_maps_client_id_from_gradle) // 생성한 리소스 ID 사용
-        NaverMapSdk.getInstance(this).client =
-            NaverMapSdk.NcpKeyClient(clientId)
+        
+        // Naver Maps SDK 초기화
+        val clientId = getString(R.string.naver_maps_client_id_from_gradle)
+        NaverMapSdk.getInstance(this).client = NaverMapSdk.NcpKeyClient(clientId)
+        
+        // ✅ FCM 토큰 초기화
+        initializeFCMToken()
+    }
+    
+    /**
+     * FCM 토큰을 초기화하고 로깅합니다.
+     */
+    private fun initializeFCMToken() {
+        FirebaseMessaging.getInstance().token
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val token = task.result
+                    Log.d(TAG, "FCM 토큰 초기화 성공: $token")
+                } else {
+                    Log.e(TAG, "FCM 토큰 초기화 실패", task.exception)
+                }
+        }
     }
 }

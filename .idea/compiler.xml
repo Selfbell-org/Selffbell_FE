@@ -2,7 +2,7 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="11">
-      <module name="SelfBell.home" target="21" />
+      <module name="SelfBell.feature.history" target="21" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

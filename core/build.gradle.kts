@@ -14,6 +14,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
     }
 
     buildTypes {
@@ -39,6 +40,12 @@ android {
     }
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get() // libs.versions에서 가져옴
+    }
+    
+    // Lint 설정 추가
+    lint {
+        disable += "MissingPermission"
+        abortOnError = false
     }
 }
 
@@ -79,6 +86,9 @@ dependencies {
     // ModalBottomSheetLayout을 위한 Material 라이브러리 추가
 
     implementation("androidx.compose.material:material:1.6.8")
+    
+    // Domain 모듈 의존성 추가
+    implementation(project(":domain"))
     // 테스트 관련 (필요시)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

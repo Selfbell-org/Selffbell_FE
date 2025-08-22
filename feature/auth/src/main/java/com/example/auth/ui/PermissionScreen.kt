@@ -124,11 +124,11 @@ fun PermissionScreen(navController: NavController,modifier: Modifier = Modifier)
     }
 
     // 모든 권한이 허용되면 다음 화면으로 이동
-    LaunchedEffect(locationPermissionGranted, backgroundLocationPermissionGranted, pushNotificationPermissionGranted, contactsPermissionGranted) {
-        if (locationPermissionGranted && backgroundLocationPermissionGranted && pushNotificationPermissionGranted && contactsPermissionGranted) {
-            navController.navigate(AppRoute.ADDRESS_REGISTER_ROUTE)
-        }
-    }
+//    LaunchedEffect(locationPermissionGranted, backgroundLocationPermissionGranted, pushNotificationPermissionGranted, contactsPermissionGranted) {
+//        if (locationPermissionGranted && backgroundLocationPermissionGranted && pushNotificationPermissionGranted && contactsPermissionGranted) {
+//            navController.navigate(AppRoute.ADDRESS_REGISTER_ROUTE)
+//        }
+//    }
 
     // `shouldShowRequestPermissionRationale()` 함수로 권한 요청 로직을 분기하는 헬퍼 함수
     fun requestPermissionOrOpenSettings(permission: String, launcher: ActivityResultLauncher<String>, granted: Boolean) {
@@ -148,13 +148,17 @@ fun PermissionScreen(navController: NavController,modifier: Modifier = Modifier)
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ){
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // 온보딩 프로그레스바 배치
-            Spacer(modifier = Modifier.height(20.dp))
+            .padding(horizontal = 16.dp)
+            .imePadding(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // --- 1. Top Fixed Area (Onboarding Bar) ---
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+        ) {
             OnboardingProgressBar(currentStep = 2, totalSteps = 4) // 총 5단계 중 1단계
             Spacer(modifier = Modifier.height(20.dp))
             Text(text = "권한을 확인해주세요", style = MaterialTheme.typography.headlineSmall)

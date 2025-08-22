@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.selfbell.data">
+
+    <application>
+        <meta-data
+            android:name="com.selfbell.data.NAVER_MAPS_CLIENT_ID"
+            android:value="${NAVER_MAPS_CLIENT_ID}" />
+        <meta-data
+            android:name="com.selfbell.data.NAVER_MAPS_CLIENT_SECRET"
+            android:value="${NAVER_MAPS_CLIENT_SECRET}" />
+
+    </application>
 
 </manifest>

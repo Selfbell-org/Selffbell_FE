@@ -54,15 +54,15 @@ fun SelfBellBottomNavigation(
     val items = listOf(
         // 홈 아이콘을 core/drawable 리소스로 변경
         BottomNavItem(AppRoute.HOME_ROUTE, R.drawable.nav_home_icon, "홈"), // 예시: nav_home_icon.xml
-        BottomNavItem(AppRoute.ALERTS_ROUTE, R.drawable.nav_location_icon, "알림" ),
-        BottomNavItem(AppRoute.ESCORT_ROUTE, R.drawable.nav_map_icon, "동행"),
-        BottomNavItem(AppRoute.SETTINGS_ROUTE, R.drawable.nav_setting_icon, "설정")
+        BottomNavItem(AppRoute.ESCORT_ROUTE, R.drawable.nav_location_icon, "동행" ),
+        BottomNavItem(AppRoute.HISTORY_ROUTE, R.drawable.nav_history_icon, "히스토리"),
+        BottomNavItem(AppRoute.SETTINGS_ROUTE, R.drawable.nav_user_info_icon, "내 정보")
     )
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     NavigationBar(
-        modifier = modifier.height(80.dp),
+        modifier = modifier.height(70.dp),
         containerColor = Color.Transparent,
         contentColor = Black,
         tonalElevation = 0.dp

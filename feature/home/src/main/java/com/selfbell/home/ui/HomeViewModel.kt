@@ -1,159 +1,253 @@
 package com.selfbell.home.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
-import com.selfbell.feature.home.R
+import com.selfbell.domain.model.AddressModel
+import com.selfbell.domain.repository.AddressRepository
+import com.selfbell.domain.model.Criminal
+import com.selfbell.domain.model.EmergencyBell
+import com.selfbell.domain.model.EmergencyBellDetail
+import com.selfbell.domain.repository.CriminalRepository
+import com.selfbell.domain.repository.EmergencyBellRepository
+import com.selfbell.data.repository.impl.TokenManager
 import com.selfbell.home.model.MapMarkerData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.selfbell.core.location.LocationTracker
+import kotlin.text.ifEmpty
+import kotlin.text.toDoubleOrNull
 
-// 임시 기본 위치 (예: 서울 시청)
+// ✅ 지도의 마커 표시 모드를 위한 enum 클래스 (HomeViewModel이 접근 가능하도록 이 파일에 추가)
+enum class MapMarkerMode {
+    SAFETY_BELL_ONLY,
+    SAFETY_BELL_AND_CRIMINALS
+}
+
+sealed interface HomeUiState {
+    object Loading : HomeUiState
+    data class Success(
+        val userLatLng: LatLng,
+        val emergencyBells: List<EmergencyBell>,
+        val criminals: List<Criminal>,
+        val selectedEmergencyBellDetail: EmergencyBellDetail? = null
+    ) : HomeUiState
+    data class Error(val message: String) : HomeUiState
+}
+
 val DEFAULT_LAT_LNG = LatLng(37.5665, 126.9780)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    // 필요한 Repository 또는 UseCase 주입
-    // private val locationRepository: LocationRepository,
-    // private val addressRepository: AddressRepository,
-    // private val markerRepository: MarkerRepository
+    private val addressRepository: AddressRepository,
+    private val emergencyBellRepository: EmergencyBellRepository,
+    private val criminalRepository: CriminalRepository,
+    private val locationTracker: LocationTracker,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
-    private val _userLatLng = MutableStateFlow(DEFAULT_LAT_LNG)
-    val userLatLng: StateFlow<LatLng> = _userLatLng.asStateFlow()
+    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val _userAddress = MutableStateFlow("현재 위치 로딩 중...")
-    val userAddress: StateFlow<String> = _userAddress.asStateFlow()
+    private val _cameraTargetLatLng = MutableStateFlow<LatLng?>(null)
+    val cameraTargetLatLng: StateFlow<LatLng?> = _cameraTargetLatLng.asStateFlow()
 
-    private val _userProfileImg = MutableStateFlow(R.drawable.usre_profileimg_icon)
-    val userProfileImg: StateFlow<Int> = _userProfileImg.asStateFlow()
-
-    private val _userProfileName = MutableStateFlow("잠자는 고양이")
-    val userProfileName: StateFlow<String> = _userProfileName.asStateFlow()
-
-    private val _criminalMarkers = MutableStateFlow<List<MapMarkerData>>(emptyList())
-    val criminalMarkers: StateFlow<List<MapMarkerData>> = _criminalMarkers.asStateFlow()
-
-    private val _safetyBellMarkers = MutableStateFlow<List<MapMarkerData>>(emptyList())
-    val safetyBellMarkers: StateFlow<List<MapMarkerData>> = _safetyBellMarkers.asStateFlow()
-
-    private val _searchedLatLng = MutableStateFlow<LatLng?>(null)
-    val searchedLatLng: StateFlow<LatLng?> = _searchedLatLng.asStateFlow()
-
-    // --- 새로운 상태 및 콜백을 위한 멤버 추가 ---
     private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText.asStateFlow()
 
+    private val _searchResultMessage = MutableStateFlow<String?>(null)
+    val searchResultMessage: StateFlow<String?> = _searchResultMessage.asStateFlow()
+
+    // ✅ 지도의 마커 모드를 관리하는 상태 (StateFlow)
+    private val _mapMarkerMode = MutableStateFlow(MapMarkerMode.SAFETY_BELL_ONLY)
+    val mapMarkerMode: StateFlow<MapMarkerMode> = _mapMarkerMode.asStateFlow()
+
+    // ✅ 범죄자 정보를 미리 로드하여 저장할 별도의 StateFlow
+    private val _preloadedCriminals = MutableStateFlow<List<Criminal>>(emptyList())
+    // UI에서 접근할 수 있도록 공개된 StateFlow 추가
+    val criminals: StateFlow<List<Criminal>> = _preloadedCriminals.asStateFlow()
+
+    // ✅ 범죄자 데이터 로딩 상태를 위한 StateFlow 추가
+    private val _isCriminalsLoading = MutableStateFlow(false)
+    val isCriminalsLoading: StateFlow<Boolean> = _isCriminalsLoading.asStateFlow()
+
     init {
-        loadInitialData()
+        startHomeLocationStream()
+        // ✅ 추가: _preloadedCriminals의 변경을 감지하여 UIState를 업데이트합니다.
+        viewModelScope.launch {
+            _preloadedCriminals.collectLatest { criminalsList ->
+                val current = _uiState.value
+                if (current is HomeUiState.Success) {
+                    // 범죄자 리스트가 업데이트되면 기존 UIState의 criminals를 새 데이터로 교체
+                    _uiState.value = current.copy(criminals = criminalsList)
+                }
+            }
+        }
     }
 
-    private fun loadInitialData() {
-        // ... (기존 loadInitialData 내용 유지) ...
-        _userLatLng.value = LatLng(37.5645, 126.9780)
-        _userAddress.value = "서울특별시 중구 세종대로 110"
-        loadDummyMarkers()
+    private fun startHomeLocationStream() {
+        viewModelScope.launch {
+            try {
+                locationTracker.getLocationUpdates().collectLatest { location ->
+                    val userLatLng = LatLng(location.latitude, location.longitude)
+
+                    // 안전벨 정보만 가져오기
+                    val emergencyBells = emergencyBellRepository.getNearbyEmergencyBells(
+                        lat = userLatLng.latitude,
+                        lon = userLatLng.longitude,
+                        radius = 500
+                    ).sortedBy { it.distance ?: Double.MAX_VALUE }
+
+                    val current = _uiState.value
+                    if (current !is HomeUiState.Success) {
+                        // 초기 로딩 시에만 범죄자 정보 미리 로드 시작
+                        fetchCriminals(userLatLng)
+                    }
+
+                    // UI 상태 업데이트
+                    // ✅ 수정: _uiState를 초기화할 때, _preloadedCriminals.value를 사용하되,
+                    // 이는 초기에는 빈 리스트일 수 있다는 것을 감안합니다.
+                    _uiState.value = HomeUiState.Success(
+                        userLatLng = userLatLng,
+                        emergencyBells = emergencyBells,
+                        criminals = _preloadedCriminals.value
+                    )
+
+                    if (_cameraTargetLatLng.value == null) {
+                        _cameraTargetLatLng.value = userLatLng
+                    }
+
+                    Log.d("HomeViewModel", "안전벨 ${emergencyBells.size}개 로드 완료")
+                    emergencyBells.take(3).forEach { bell ->
+                        Log.d("HomeViewModel", "안전벨: ${bell.detail}, 거리: ${bell.distance?.let { "${it.toInt()}m" } ?: "알 수 없음"}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "위치 스트림 처리 실패", e)
+                _uiState.value = HomeUiState.Error(e.message ?: "데이터 로딩 실패")
+            }
+        }
     }
 
-    private fun loadDummyMarkers() {
-        _criminalMarkers.value = listOf(
-            MapMarkerData(LatLng(37.5650, 126.9760), "범죄 발생 지역 A", MapMarkerData.MarkerType.CRIMINAL, "250m"),
-            MapMarkerData(LatLng(37.5680, 126.9790), "범죄 발생 지역 B", MapMarkerData.MarkerType.CRIMINAL, "350m")
-        )
-        _safetyBellMarkers.value = listOf(
-            MapMarkerData(LatLng(37.5655, 126.9770), "안심벨 1", MapMarkerData.MarkerType.SAFETY_BELL, "150m"),
-            MapMarkerData(LatLng(37.5675, 126.9785), "안심벨 2", MapMarkerData.MarkerType.SAFETY_BELL, "50m")
-        )
+    /**
+     * ✅ 백그라운드에서 범죄자 정보를 미리 가져오는 함수
+     * 이 함수는 UI 로딩을 방해하지 않습니다.
+     */
+    private fun fetchCriminals(userLatLng: LatLng) {
+        viewModelScope.launch {
+            try {
+                _isCriminalsLoading.value = true // 로딩 시작
+                if (tokenManager.hasValidToken()) {
+                    val criminals = criminalRepository.getNearbyCriminals(
+                        lat = userLatLng.latitude,
+                        lon = userLatLng.longitude,
+                        radius = 1000 // API 명세에 따라 500m~1000m 사이의 값으로 조정 가능
+                    )
+                    _preloadedCriminals.value = criminals
+                    Log.d("HomeViewModel", "범죄자 ${criminals.size}개 사전 로드 완료")
+                } else {
+                    Log.d("HomeViewModel", "토큰이 없어 범죄자 정보를 미리 로드하지 않습니다")
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "범죄자 정보 사전 로드 실패: ${e.message}", e)
+                _preloadedCriminals.value = emptyList() // 실패 시 빈 리스트로 초기화
+            } finally {
+                _isCriminalsLoading.value = false // 로딩 종료
+            }
+        }
     }
 
-    fun updateUserLocation(latLng: LatLng, address: String) {
-        _userLatLng.value = latLng
-        _userAddress.value = address
-        // loadMarkersNearby(latLng)
+    /**
+     * ✅ 지도의 마커 모드를 전환하는 함수
+     * 이 함수는 즉시 상태를 전환하며, 네트워크 요청을 하지 않습니다.
+     */
+    fun toggleMapMarkerMode() {
+        _mapMarkerMode.value = if (_mapMarkerMode.value == MapMarkerMode.SAFETY_BELL_ONLY) {
+            MapMarkerMode.SAFETY_BELL_AND_CRIMINALS
+        } else {
+            MapMarkerMode.SAFETY_BELL_ONLY
+        }
+        Log.d("HomeViewModel", "마커 모드 전환: ${_mapMarkerMode.value}")
     }
 
-    // --- 검색 관련 함수들 ---
+    fun setSelectedEmergencyBellDetail(detail: EmergencyBellDetail?) {
+        val currentState = _uiState.value
+        if (currentState is HomeUiState.Success) {
+            _uiState.value = currentState.copy(selectedEmergencyBellDetail = detail)
+        }
+    }
+
+    fun getEmergencyBellDetail(objtId: Int) {
+        viewModelScope.launch {
+            try {
+                val detail = emergencyBellRepository.getEmergencyBellDetail(objtId)
+
+                val currentState = _uiState.value
+                val distanceFromNearbyList = if (currentState is HomeUiState.Success) {
+                    currentState.emergencyBells.find { it.id == objtId }?.distance
+                } else null
+
+                val detailWithDistance = detail.copy(distance = distanceFromNearbyList)
+
+                Log.d("HomeViewModel", "안전벨 상세 정보: ${detail.detail}, 거리: ${distanceFromNearbyList?.let { "${it.toInt()}m" } ?: "알 수 없음"}")
+                setSelectedEmergencyBellDetail(detailWithDistance)
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "안전벨 상세 정보 가져오기 실패", e)
+                setSelectedEmergencyBellDetail(null)
+            }
+        }
+    }
+
     fun onSearchTextChanged(newText: String) {
         _searchText.value = newText
-        // 필요에 따라, 텍스트 변경 시 실시간 검색 결과 로드 로직 추가
-        // 예: if (newText.length > 2) { searchAddressRealtime(newText) }
     }
 
     fun onSearchConfirmed() {
         val query = _searchText.value.trim()
         if (query.isNotBlank()) {
-            // 기존 주소 검색 로직 호출
             searchAddress(query)
         } else {
-            // 검색어가 비어있을 경우의 처리 (예: 알림 표시 또는 _searchedLatLng 초기화)
-            // _searchedLatLng.value = null // 검색창이 비었을 때 지도 포커스를 현재 위치로 돌리고 싶다면
+            _searchResultMessage.value = "검색어를 입력해주세요."
+            _cameraTargetLatLng.value = null
         }
     }
 
-    // 기존 onAddressSearch를 내부 검색 로직 함수로 변경 (이름 변경 또는 private으로)
     private fun searchAddress(query: String) {
         viewModelScope.launch {
-            // 실제 주소 검색 로직 (예: Geocoding API 호출)
-            // try {
-            //     val resultLatLng = addressRepository.getLatLngFromAddress(query)
-            //     _searchedLatLng.value = resultLatLng
-            //     if (resultLatLng == null) {
-            //         // 검색 결과 없음 처리 (예: 사용자에게 알림)
-            //     }
-            // } catch (e: Exception) {
-            //     // 오류 처리
-            //     _searchedLatLng.value = null // 오류 발생 시
-            // }
+            try {
+                val addresses: List<AddressModel> = addressRepository.searchAddress(query)
 
-            println("ViewModel: Address search triggered for query: $query")
-            // --- 임시 로직 시작 ---
-            // 실제 구현에서는 API 호출 결과를 사용해야 합니다.
-            // 여기서는 임의로 더미 마커 중 하나의 위치로 이동하거나, 사용자 현재 위치로 설정합니다.
-            val foundMarker = (_criminalMarkers.value + _safetyBellMarkers.value)
-                .find { it.address.contains(query, ignoreCase = true) }
-
-            if (foundMarker != null) {
-                _searchedLatLng.value = foundMarker.latLng
-            } else {
-                _searchedLatLng.value = _userLatLng.value // 검색 결과 없으면 사용자 위치로 (임시)
-                // 또는 _searchedLatLng.value = null; 사용자에게 알림
+                if (addresses.isNotEmpty()) {
+                    val firstAddress = addresses[0]
+                    val lat = firstAddress.y.toDoubleOrNull()
+                    val lng = firstAddress.x.toDoubleOrNull()
+                    if (lat != null && lng != null) {
+                        _cameraTargetLatLng.value = LatLng(lat, lng)
+                        _searchResultMessage.value = "검색 결과: ${firstAddress.roadAddress.ifEmpty { firstAddress.jibunAddress }}"
+                    } else {
+                        _searchResultMessage.value = "주소의 좌표 정보를 가져올 수 없습니다."
+                        _cameraTargetLatLng.value = null
+                    }
+                } else {
+                    _searchResultMessage.value = "검색 결과가 없습니다. 다른 검색어를 시도해보세요."
+                    _cameraTargetLatLng.value = null
+                }
+            } catch (e: Exception) {
+                _searchResultMessage.value = "주소 검색 중 오류가 발생했습니다: ${e.message}"
+                _cameraTargetLatLng.value = null
             }
-            // --- 임시 로직 끝 ---
-
-            // 검색 후 _searchText를 비울 필요는 없음. 사용자가 검색어를 유지하고 싶어할 수 있음.
-            // 검색 후 _searchedLatLng를 null로 바로 바꾸면 카메라 이동이 일어나지 않을 수 있음.
-            // 카메라 이동 애니메이션이 완료된 후 HomeScreen에서 콜백을 통해 null로 설정하거나,
-            // 일정 시간 뒤에 null로 설정하는 방식을 고려할 수 있습니다.
-            // 혹은, searchedLatLng의 변경을 1회성 이벤트로 처리하는 Event Wrapper 클래스 사용도 고려.
         }
     }
 
-    // --- 모달 아이템 클릭 관련 함수 ---
     fun onMapMarkerClicked(markerData: MapMarkerData) {
-        // 클릭된 마커의 위치로 지도를 이동시키기 위해 _searchedLatLng 업데이트
-        _searchedLatLng.value = markerData.latLng
-        // 검색창 텍스트를 클릭된 마커의 주소로 업데이트 할 수도 있음 (선택 사항)
-        // _searchText.value = markerData.address
-        println("ViewModel: Modal marker item clicked - Address: ${markerData.address}, LatLng: ${markerData.latLng}")
-        // 필요하다면 다른 로직 추가 (예: 상세 정보 화면으로 이동 준비)
+        _cameraTargetLatLng.value = markerData.latLng
+        _searchText.value = markerData.address
+        _searchResultMessage.value = null
     }
-
-    // --- 메시지 신고 버튼 클릭 관련 함수 ---
-    fun onReportMessageClicked() {
-        println("ViewModel: Message report button clicked.")
-        // TODO: 실제 메시지 신고 관련 로직 구현
-        // 예: 다이얼로그 표시, 서버에 신고 데이터 전송 등
-    }
-
-    // ViewModel이 소멸될 때 _searchedLatLng를 null로 초기화하여
-    // 앱을 다시 시작했을 때 이전 검색 위치로 카메라가 이동하는 것을 방지할 수 있습니다. (선택적)
-    // override fun onCleared() {
-    //     super.onCleared()
-    //     _searchedLatLng.value = null
-    // }
 }
-

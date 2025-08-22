@@ -1,7 +1,16 @@
+import java.util.Properties // Properties 클래스를 사용하기 위해 import 추가
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
+}
+
+// local.properties 파일 로드
+val properties = Properties() // 'new' 키워드 없이 사용
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    properties.load(localPropertiesFile.inputStream()) // newDataInputStream() 대신 inputStream() 사용
 }
 
 android {
@@ -13,6 +22,15 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
+        // Manifest Placeholders 추가
+        manifestPlaceholders["NAVER_MAPS_CLIENT_ID"] = properties.getProperty("NAVER_MAPS_CLIENT_ID", "YOUR_DEFAULT_ID")
+        manifestPlaceholders["NAVER_MAPS_CLIENT_SECRET"] = properties.getProperty("NAVER_MAPS_CLIENT_SECRET", "YOUR_DEFAULT_SECRET")
+
+        // Hilt에 주입하기 위해 BuildConfig 필드 추가
+
+        buildConfigField("String", "NAVER_API_CLIENT_ID", "\"${properties.getProperty("NAVER_API_CLIENT_ID", "")}\"")
+        buildConfigField("String", "NAVER_API_CLIENT_SECRET", "\"${properties.getProperty("NAVER_API_CLIENT_SECRET", "")}\"")
     }
 
     buildTypes {
@@ -31,8 +49,10 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        buildConfig = true
+    }
 }
-
 dependencies {
     // domain 모듈 의존성 (필수)!
     implementation(project(":domain"))
@@ -59,9 +79,23 @@ dependencies {
 
     // Local Database (Room)
     implementation(libs.room.runtime)
+    implementation(libs.play.services.maps)
     kapt(libs.room.compiler)
     implementation(libs.room.ktx) // 코루틴 지원
     implementation(libs.androidx.datastore.preferences)
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
+
+    //Stomp 프로토콜
+    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
+
+    // Stomp 라이브러리가 사용하는 RxJava 종속성 추가
+    implementation("io.reactivex.rxjava2:rxjava:2.2.21")
+    implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
+
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)

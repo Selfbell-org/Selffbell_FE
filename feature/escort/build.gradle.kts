@@ -37,6 +37,15 @@ android {
 dependencies {
     // domain 모듈 의존성 (필수) !!
     implementation(project(":domain"))
+    implementation(project(":core"))
+    implementation(project(":data"))
+    implementation(project(":feature:settings"))
+
+    //네이버
+    implementation("com.naver.maps:map-sdk:3.22.1")
+
+    // Google Play Services Location
+    implementation("com.google.android.gms:play-services-location:21.2.0")
 
     // Compose UI
     implementation(platform(libs.androidx.compose.bom)) // Compose BOM
@@ -70,6 +79,7 @@ dependencies {
     // Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // 테스트 관련 (필요시)
     testImplementation(libs.junit)

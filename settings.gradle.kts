@@ -17,6 +17,8 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven("https://repository.map.naver.com/archive/maven")
+        // Stomp 라이브러리를 위한 JitPack 저장소 추가
+        maven { url = uri("https://jitpack.io") }
     }
 }
 

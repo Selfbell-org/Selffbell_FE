@@ -12,6 +12,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.kapt) // Hilt 사용을 위해 kapt 플러그인 추가
     alias(libs.plugins.hilt.android) // Hilt Gradle 플러그인 추가
+    id("com.google.gms.google-services") // 플러그인 적용
+
 }
 // app/build.gradle.kts
 kapt {
@@ -95,13 +97,33 @@ dependencies {
     // Compose Navigation (최상위 내비게이션)
     implementation(libs.androidx.navigation.compose)
 
+    //안드로이드 m3테마
+//    implementation(libs.androidx.material3)
+//    implementation("com.google.android.material:material:1.12.0") // Or a similar version
+
+// Firebase (BOM 사용)
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    // Firebase Cloud Messaging (FCM)
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    // Firebase Analytics (선택사항이지만 일반적으로 함께 사용)
+    implementation("com.google.firebase:firebase-analytics-ktx")
+
     // Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // DataStore for secure token storage
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
     //Naver Maps api
     implementation("com.naver.maps:map-sdk:3.22.1")
+
+    //안드로이드 기본 스플래시 지우기
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
+    //Stomp 프로토콜
+    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
 
     // 테스트 관련
     testImplementation(libs.junit)

@@ -24,8 +24,10 @@ fun ContactListItem(
     name: String,
     phoneNumber: String,
     isSelected: Boolean,
+    isEnabled: Boolean = true,
     onButtonClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    forceInvite: Boolean = false
 ) {
     Row(
         modifier = modifier
@@ -56,15 +58,36 @@ fun ContactListItem(
                     style = Typography.bodyMedium,
                     color = Color.Gray
                 )
+                // ✅ 서버 등록 여부 표시
+                if (!isEnabled) {
+                    Text(
+                        text = "서버에 등록되지 않은 사용자",
+                        style = Typography.labelSmall,
+                        color = Color.Red
+                    )
+                }
             }
         }
 
+        val btnText = when {
+            forceInvite -> "초대"
+            isSelected -> "해제"
+            else -> "선택"
+        }
+        val btnType = when {
+            forceInvite -> SelfBellButtonType.PRIMARY_FILLED
+            isSelected -> SelfBellButtonType.PRIMARY_FILLED
+            else -> SelfBellButtonType.OUTLINED
+        }
+        val btnEnabled = if (forceInvite) true else isEnabled
+
         SelfBellButton(
-            text = if (isSelected) "해제" else "선택",
+            text = btnText,
             onClick = onButtonClick,
             modifier = Modifier.width(72.dp),
-            buttonType = if (isSelected) SelfBellButtonType.PRIMARY_FILLED else SelfBellButtonType.OUTLINED,
-            isSmall = true
+            buttonType = btnType,
+            isSmall = true,
+            enabled = btnEnabled
         )
     }
 }
@@ -84,6 +107,14 @@ fun ContactListItemPreview() {
                 name = "김민석",
                 phoneNumber = "010-1111-1111",
                 isSelected = false,
+                onButtonClick = {}
+            )
+            ContactListItem(
+                name = "미가입자",
+                phoneNumber = "010-2222-3333",
+                isSelected = false,
+                isEnabled = false,
+                forceInvite = true,
                 onButtonClick = {}
             )
         }

@@ -37,6 +37,8 @@ android {
 dependencies {
     // domain 모듈 의존성 (필수)
     implementation(project(":domain"))
+    implementation(project(":core"))
+    implementation(project(":feature:auth"))
 
     // Compose UI
     implementation(platform(libs.androidx.compose.bom)) // Compose BOM
@@ -70,6 +72,7 @@ dependencies {
     // Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // 테스트 관련 (필요시)
     testImplementation(libs.junit)

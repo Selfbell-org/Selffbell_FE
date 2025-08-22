@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt.android) // Hilt Gradle 플러그인 추가
+
 }
 
 android {
@@ -38,8 +40,11 @@ dependencies {
     // domain 모듈 의존성 (필수)
     implementation(project(":domain"))
     implementation(project(":core"))
+    implementation(project(":data"))
+    implementation(project(":feature:alerts"))
     //Naver Maps api
     implementation("com.naver.maps:map-sdk:3.22.1")
+
 
     //permission
     implementation("com.google.accompanist:accompanist-permissions:0.30.1") // 예시 버전, 최신 확인
@@ -81,6 +86,7 @@ dependencies {
     // Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
 
     // 테스트 관련 (필요시) !!
     testImplementation(libs.junit)

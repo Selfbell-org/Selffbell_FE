@@ -42,6 +42,7 @@ dependencies {
     implementation(project(":data"))
 
 
+
     // Compose UI
     implementation(platform(libs.androidx.compose.bom)) // Compose BOM
     implementation(libs.androidx.ui)
@@ -81,7 +82,7 @@ dependencies {
     implementation("com.naver.maps:map-sdk:3.22.1")
 
     //permission
-    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.30.1")
 
 
     // Hilt
