@@ -39,6 +39,25 @@ private fun displayNameFromPhone(phone: String, prefix: String): String {
     return "$prefix · ****$last4"
 }
 
+// ✅ 컴포넌트의 UI 데이터를 정의하는 data class
+data class ContactItemUi(
+    val buttonState: ButtonState,
+    val buttonText: String,
+    val isButtonEnabled: Boolean,
+    val statusLabel: (@Composable () -> Unit)?
+)
+
+// ✅ ButtonState enum 클래스 재정의: 상태를 더 명확하게 구분합니다.
+enum class ButtonState {
+    REQUESTABLE, // 요청 가능 상태 (서버에 등록된 사용자)
+    INVITABLE,   // 초대 가능 상태 (서버에 등록되지 않은 사용자)
+    CHECKABLE,   // 확인이 필요한 초기 상태
+    ACCEPTED,    // 이미 친구인 상태
+    REMOVED,     // 제거된 상태
+    DEFAULT      // 기본 상태 (수락 등)
+}
+
+
 @Composable
 fun ContactListScreen(
     navController: NavController,
@@ -127,25 +146,24 @@ fun PendingRequestsList(
                 phoneNumber = phone,
                 buttonText = "수락",
                 isEnabled = true,
-                // ✅ buttonState를 명시적으로 전달
                 buttonState = ButtonState.DEFAULT, // "수락" 버튼은 기본 상태로 설정
                 onButtonClick = { onAcceptClick(request.id.toLongOrNull() ?: return@ContactRegistrationListItem) }
             )
             Divider()
+            Spacer(modifier = Modifier.height(90.dp)) // ✅ 바텀바 높이만큼의 공간 확보
         }
     }
 }
+
 @Composable
 fun InviteFriendsList(
     deviceContacts: List<ContactUser>,
     onSendRequest: (String) -> Unit
 ) {
-    // 📌 서버 가입 여부 상태를 저장하는 맵
     var checkedContacts by remember { mutableStateOf(mapOf<String, Boolean>()) }
     val coroutineScope = rememberCoroutineScope()
     val viewModel: ContactsViewModel = hiltViewModel()
 
-    // Search state
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredContacts = remember(searchQuery, deviceContacts) {
@@ -155,14 +173,6 @@ fun InviteFriendsList(
                     c.phoneNumber.contains(searchQuery)
         }
     }
-
-    // ✅ 컴포넌트의 UI 데이터를 정의하는 data class
-    data class ContactItemUi(
-        val buttonState: ButtonState,
-        val buttonText: String,
-        val isButtonEnabled: Boolean,
-        val statusLabel: (@Composable () -> Unit)?
-    )
 
     Column(modifier = Modifier.padding(16.dp)) {
         OutlinedTextField(
@@ -175,7 +185,7 @@ fun InviteFriendsList(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyColumn {
+        LazyColumn(modifier = Modifier.weight(1f)) { // ✅ weight(1f) 추가
             items(filteredContacts) { contact ->
                 val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "연락처")
                 val isExists = checkedContacts[contact.phoneNumber]
@@ -237,5 +247,7 @@ fun InviteFriendsList(
                 }
             }
         }
+        Spacer(modifier = Modifier.height(90.dp)) // ✅ 바텀바 높이만큼의 공간 확보
+
     }
 }
