@@ -12,10 +12,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.*
+import com.naver.maps.geometry.LatLng
+//import com.naver.maps.map.compose.*
+import com.naver.maps.map.overlay.Marker
+import com.naver.maps.map.overlay.PathOverlay
 import com.selfbell.core.ui.composables.ReportScreenHeader
+import com.selfbell.core.ui.composables.ReusableNaverMap // ✅ ReusableNaverMap import
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkDetail
 import com.selfbell.domain.model.SafeWalkStatus
@@ -38,7 +40,6 @@ fun HistoryDetailScreen(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // 상단 헤더 (뒤로가기 버튼)
         ReportScreenHeader(
             title = "히스토리 - 상세 내역",
             showCloseButton = false,
@@ -60,33 +61,36 @@ fun HistoryDetailScreen(
             }
             is HistoryDetailUiState.Success -> {
                 val detail = state.detail
+                val startLatLng = LatLng(detail.origin.lat, detail.origin.lon)
+                val endLatLng = LatLng(detail.destination.lat, detail.destination.lon)
+
                 Box(modifier = Modifier.fillMaxSize()) {
-                    GoogleMap(
+                    // ✅ ReusableNaverMap 사용
+                    ReusableNaverMap(
                         modifier = Modifier.fillMaxSize(),
-                        cameraPositionState = rememberCameraPositionState {
-                            val start = LatLng(detail.origin.lat, detail.origin.lon)
-                            position = CameraPosition.fromLatLngZoom(start, 15f)
+                        cameraPosition = startLatLng,
+                        onMapReady = { naverMap ->
+                            // 시작점 마커
+                            Marker().apply {
+                                position = startLatLng
+                                captionText = "출발"
+                                map = naverMap
+                            }
+                            // 도착점 마커
+                            Marker().apply {
+                                position = endLatLng
+                                captionText = "도착"
+                                map = naverMap
+                            }
+                            // 경로
+                            PathOverlay().apply {
+                                coords = listOf(startLatLng, endLatLng)
+                                color = Color.Blue.hashCode()
+                                width = 10
+                                map = naverMap
+                            }
                         }
-                    ) {
-                        Marker(
-                            state = rememberMarkerState(position = LatLng(detail.origin.lat, detail.origin.lon)),
-                            title = "출발",
-                            snippet = detail.origin.addressText
-                        )
-                        Marker(
-                            state = rememberMarkerState(position = LatLng(detail.destination.lat, detail.destination.lon)),
-                            title = "도착",
-                            snippet = detail.destination.addressText
-                        )
-                        Polyline(
-                            points = listOf(
-                                LatLng(detail.origin.lat, detail.origin.lon),
-                                LatLng(detail.destination.lat, detail.destination.lon)
-                            ),
-                            color = MaterialTheme.colorScheme.primary,
-                            width = 8f
-                        )
-                    }
+                    )
 
                     HistoryDetailCard(
                         detail = detail,
@@ -101,6 +105,8 @@ fun HistoryDetailScreen(
         }
     }
 }
+
+// ... HistoryDetailCard와 DetailItem Composable은 이전과 동일하게 유지 ...
 @Composable
 fun HistoryDetailCard(
     detail: SafeWalkDetail,
@@ -132,9 +138,9 @@ fun HistoryDetailCard(
             Spacer(modifier = Modifier.height(24.dp))
             DetailItem(
                 label = "상대가 설정한 시간",
-                value = detail.expectedArrival?.let { expected -> // ✅ 'let'으로 안전하게 접근
+                value = detail.expectedArrival?.let { expected ->
                     "${detail.startedAt.format(DateTimeFormatter.ofPattern("HH:mm"))} ~ ${expected.format(DateTimeFormatter.ofPattern("HH:mm"))}"
-                } ?: "설정되지 않음" // ✅ null인 경우 처리
+                } ?: "설정되지 않음"
             )
             Spacer(modifier = Modifier.height(8.dp))
             DetailItem(
@@ -151,7 +157,6 @@ fun HistoryDetailCard(
     }
 }
 
-// ✅ DetailItem 컴포저블은 수정할 필요 없습니다.
 @Composable
 fun DetailItem(label: String, value: String) {
     Column {

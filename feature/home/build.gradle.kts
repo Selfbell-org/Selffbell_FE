@@ -44,10 +44,7 @@ dependencies {
     //Naver Maps api
     implementation("com.naver.maps:map-sdk:3.22.1")
 
-    // ✅ Google Maps SDK
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
-    // ✅ Compose용 Google Maps 라이브러리
-    implementation("com.google.maps.android:maps-compose:4.3.2")
+
     //permission
     implementation("com.google.accompanist:accompanist-permissions:0.30.1") // 예시 버전, 최신 확인
 
