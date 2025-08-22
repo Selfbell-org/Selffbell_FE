@@ -1,7 +1,6 @@
 // feature/settings/ui/ContactListScreen.kt
 package com.selfbell.settings.ui
 
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,7 +15,6 @@ import com.example.auth.ui.ContactUiState
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.composables.ContactRegistrationListItem // ✅ 재사용할 컴포넌트
 import com.selfbell.core.ui.composables.SelfBellButton
-import com.selfbell.core.ui.composables.SelfBellButtonType
 import com.selfbell.core.ui.composables.AcceptedFriendsList
 import com.selfbell.core.ui.composables.UnregisteredContactItem
 import com.selfbell.domain.model.ContactRelationship
@@ -24,6 +22,8 @@ import com.selfbell.domain.model.ContactUser
 import com.selfbell.settings.ui.ContactsUiState
 import com.selfbell.settings.ui.ContactsViewModel
 import kotlinx.coroutines.launch
+import com.selfbell.core.ui.composables.SelfBellButtonType
+import com.selfbell.core.ui.composables.ButtonState // ✅ ButtonState enum import
 
 // 탭 상태를 위한 enum
 enum class ContactsTab {
@@ -38,6 +38,25 @@ private fun displayNameFromPhone(phone: String, prefix: String): String {
     val last4 = trimmed.takeLast(4)
     return "$prefix · ****$last4"
 }
+
+// ✅ 컴포넌트의 UI 데이터를 정의하는 data class
+data class ContactItemUi(
+    val buttonState: ButtonState,
+    val buttonText: String,
+    val isButtonEnabled: Boolean,
+    val statusLabel: (@Composable () -> Unit)?
+)
+
+// ✅ ButtonState enum 클래스 재정의: 상태를 더 명확하게 구분합니다.
+enum class ButtonState {
+    REQUESTABLE, // 요청 가능 상태 (서버에 등록된 사용자)
+    INVITABLE,   // 초대 가능 상태 (서버에 등록되지 않은 사용자)
+    CHECKABLE,   // 확인이 필요한 초기 상태
+    ACCEPTED,    // 이미 친구인 상태
+    REMOVED,     // 제거된 상태
+    DEFAULT      // 기본 상태 (수락 등)
+}
+
 
 @Composable
 fun ContactListScreen(
@@ -127,11 +146,14 @@ fun PendingRequestsList(
                 phoneNumber = phone,
                 buttonText = "수락",
                 isEnabled = true,
+                buttonState = ButtonState.DEFAULT, // "수락" 버튼은 기본 상태로 설정
                 onButtonClick = { onAcceptClick(request.id.toLongOrNull() ?: return@ContactRegistrationListItem) }
             )
             Divider()
+
         }
     }
+    Spacer(modifier = Modifier.height(90.dp)) // ✅ 바텀바 높이만큼의 공간 확보
 }
 
 @Composable
@@ -139,19 +161,17 @@ fun InviteFriendsList(
     deviceContacts: List<ContactUser>,
     onSendRequest: (String) -> Unit
 ) {
-    // 📌 서버 가입 여부 상태를 저장하는 맵
     var checkedContacts by remember { mutableStateOf(mapOf<String, Boolean>()) }
     val coroutineScope = rememberCoroutineScope()
     val viewModel: ContactsViewModel = hiltViewModel()
 
-    // Search state
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredContacts = remember(searchQuery, deviceContacts) {
         if (searchQuery.isBlank()) deviceContacts
         else deviceContacts.filter { c ->
             c.name.contains(searchQuery, ignoreCase = true) ||
-            c.phoneNumber.contains(searchQuery)
+                    c.phoneNumber.contains(searchQuery)
         }
     }
 
@@ -159,54 +179,59 @@ fun InviteFriendsList(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("\uc5f0\ub77d\ucc98 \uac80\uc0c9") },
+            placeholder = { Text("연락처 검색") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyColumn {
-            // \u2705 \ubaa8\ub4e0 \ub514\ubc14\uc774\uc2a4 \uc5f0\ub77d\ucc98\ub97c \ub178\ucd9c (\uac80\uc0c9 \uc801\uc6a9)
+        LazyColumn(modifier = Modifier.weight(1f)) { // ✅ weight(1f) 추가
             items(filteredContacts) { contact ->
-                val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "\uc5f0\ub77d\ucc98")
+                val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "연락처")
                 val isExists = checkedContacts[contact.phoneNumber]
 
-                // \u2705 \uc0c1\ud0dc\uc5d0 \ub530\ub77c \ubc84\ud2bc \ud14d\uc2a4\ud2b8/\ud65c\uc131\ud654 \uacb0\uc815
-                val buttonText = when (isExists) {
-                    true -> "\uc694\uccad"
-                    false -> "\ucd08\ub300"
-                    else -> "\ud655\uc778"
-                }
-                val isButtonEnabled = when (isExists) {
-                    true -> false // already registered -> disable
-                    false -> true // unregistered -> allow invite
-                    null -> true // unknown -> allow check
-                }
-
-                // Derive status label inline without touching shared composable
-                val statusLabel: (@Composable () -> Unit)? = when (isExists) {
-                    true -> {
-                        { Text(text = "\uc774\ubbf8 \ub4f1\ub85d\ub41c \uac00\uc785\uc790\uc785\ub2c8\ub2e4", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
+                // ✅ isExists 상태에 따라 UI 데이터 생성
+                val uiData = remember(isExists) {
+                    when (isExists) {
+                        true -> ContactItemUi(
+                            ButtonState.INVITED,
+                            "요청",
+                            true,
+                            @Composable { Text(text = "이미 등록된 가입자입니다", style = Typography.labelSmall, color = MaterialTheme.colorScheme.primary) }
+                        )
+                        false -> ContactItemUi(
+                            ButtonState.DEFAULT,
+                            "초대",
+                            true,
+                            @Composable { Text(text = "서버에 등록되지 않은 사용자", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
+                        )
+                        else -> ContactItemUi(
+                            ButtonState.DEFAULT,
+                            "확인",
+                            true,
+                            null
+                        )
                     }
-                    false -> {
-                        { Text(text = "\uc11c\ubc84\uc5d0 \ub4f1\ub85d\ub418\uc9c0 \uc54a\uc740 \uc0ac\uc6a9\uc790", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
-                    }
-                    else -> null
                 }
 
                 Column {
                     ContactRegistrationListItem(
                         name = contact.name.ifBlank { fallbackName },
                         phoneNumber = contact.phoneNumber,
-                        buttonText = buttonText,
-                        isEnabled = isButtonEnabled,
+                        buttonText = uiData.buttonText,
+                        isEnabled = uiData.isButtonEnabled,
+                        buttonState = uiData.buttonState,
                         onButtonClick = {
-                            when (isExists) {
-                                true -> { /* disabled */ }
-                                false -> { /* TODO: \ucd08\ub300 \ub85c\uc9c1 (SMS/\ub515\ub9c1\ud06c) */ }
-                                null -> {
-                                    coroutineScope.launch {
+                            coroutineScope.launch {
+                                when (isExists) {
+                                    true -> {
+                                        viewModel.sendContactRequest(contact.phoneNumber)
+                                    }
+                                    false -> {
+                                        onSendRequest(contact.phoneNumber)
+                                    }
+                                    null -> {
                                         viewModel.checkUserExists(contact.phoneNumber) { exists ->
                                             checkedContacts = checkedContacts + (contact.phoneNumber to exists)
                                         }
@@ -215,13 +240,15 @@ fun InviteFriendsList(
                             }
                         }
                     )
-                    if (statusLabel != null) {
+                    if (uiData.statusLabel != null) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        statusLabel()
+                        uiData.statusLabel.invoke()
                     }
                     Divider()
                 }
             }
         }
+        Spacer(modifier = Modifier.height(90.dp)) // ✅ 바텀바 높이만큼의 공간 확보
+
     }
 }
