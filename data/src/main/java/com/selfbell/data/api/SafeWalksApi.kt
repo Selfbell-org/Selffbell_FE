@@ -15,7 +15,7 @@ interface SafeWalksApi {
         @Body request: TrackRequest
     ): TrackResponse
 
-    @POST("api/v1/safe-walks/{sessionId}/end")
+    @PUT("api/v1/safe-walks/{sessionId}/end")
     suspend fun endSafeWalkSession(
         @Path("sessionId") sessionId: Long,
         @Body request: EndRequest

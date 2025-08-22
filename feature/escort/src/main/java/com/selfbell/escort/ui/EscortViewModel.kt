@@ -206,24 +206,10 @@ class EscortViewModel @Inject constructor(
                 val currentSession = safeWalkRepository.getCurrentSafeWalk()
                 if (currentSession != null) {
                     Log.d("EscortViewModel", "서버에서 진행 중인 세션 발견: ${currentSession.sessionId}")
-
-                    // 3. 세션이 있지만 로컬 상태가 초기화된 경우 (앱 데이터 삭제 후 재시작)
-                    // 세션을 강제로 종료하고 SETUP 상태로 시작
-                    try {
-                        Log.d("EscortViewModel", "앱 데이터 삭제 후 재시작으로 인식. 기존 세션 종료 시도")
-                        safeWalkRepository.endSafeWalkSession(
-                            currentSession.sessionId,
-                            SessionEndReason.MANUAL
-                        )
-                        Log.d("EscortViewModel", "기존 세션 종료 완료")
-                    } catch (e: Exception) {
-                        Log.w("EscortViewModel", "기존 세션 종료 실패 (무시하고 진행)", e)
-                    }
-
-                    // SETUP 상태로 초기화
-                    _sessionId.value = null
-                    _isSessionActive.value = false
-                    _escortFlowState.value = EscortFlowState.SETUP
+                    // 진행 중인 세션을 그대로 이어서 IN_PROGRESS 화면으로 전환
+                    _sessionId.value = currentSession.sessionId
+                    _isSessionActive.value = true
+                    _escortFlowState.value = EscortFlowState.IN_PROGRESS
                 } else {
                     Log.d("EscortViewModel", "서버에 진행 중인 세션이 없습니다. SETUP 상태로 초기화")
                     _sessionId.value = null
