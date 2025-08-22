@@ -150,9 +150,10 @@ fun PendingRequestsList(
                 onButtonClick = { onAcceptClick(request.id.toLongOrNull() ?: return@ContactRegistrationListItem) }
             )
             Divider()
-            Spacer(modifier = Modifier.height(90.dp)) // ✅ 바텀바 높이만큼의 공간 확보
+
         }
     }
+    Spacer(modifier = Modifier.height(90.dp)) // ✅ 바텀바 높이만큼의 공간 확보
 }
 
 @Composable
