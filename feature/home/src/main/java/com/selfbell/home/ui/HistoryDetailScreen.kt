@@ -164,9 +164,11 @@ fun HistoryDetailCard(
             Spacer(modifier = Modifier.height(16.dp))
             
             // 상대가 설정한 시간
-            val expectedArrival = detail.expectedArrival
-            if (expectedArrival != null) {
-                val durationMinutes = java.time.Duration.between(detail.startedAt, expectedArrival).toMinutes()
+            val expectedStartTime = detail.expectedStartTime
+            val expectedEndTime = detail.expectedEndTime
+            val estimatedDuration = detail.estimatedDurationMinutes
+            
+            if (expectedStartTime != null && expectedEndTime != null) {
                 Row {
                     Text(
                         text = "상대가 설정한 시간 ",
@@ -174,13 +176,13 @@ fun HistoryDetailCard(
                         color = GrayInactive
                     )
                     Text(
-                        text = "${detail.startedAt.format(DateTimeFormatter.ofPattern("HH:mm"))} ~ ${expectedArrival.format(DateTimeFormatter.ofPattern("HH:mm"))}",
+                        text = "${expectedStartTime.format(DateTimeFormatter.ofPattern("HH:mm"))} ~ ${expectedEndTime.format(DateTimeFormatter.ofPattern("HH:mm"))}",
                         style = Typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
                     Text(
-                        text = " (${durationMinutes}분)",
+                        text = " (${estimatedDuration ?: java.time.Duration.between(expectedStartTime, expectedEndTime).toMinutes()}분)",
                         style = Typography.bodyMedium,
                         color = GrayInactive
                     )
@@ -196,20 +198,7 @@ fun HistoryDetailCard(
             }
             
             val endedAt = detail.endedAt
-            
-            val expectedTimeText = if (expectedArrival != null && endedAt != null) {
-                val diffMinutes = java.time.Duration.between(expectedArrival, endedAt).toMinutes()
-                val timeText = if (diffMinutes > 0) {
-                    "예상 도착 시간 ${diffMinutes}분 후"
-                } else if (diffMinutes < 0) {
-                    "예상 도착 시간 ${-diffMinutes}분 전"
-                } else {
-                    "예상 도착 시간과 동일"
-                }
-                "도착시간 $arrivalTime ($timeText)"
-            } else {
-                "도착시간 $arrivalTime"
-            }
+            val timeDifference = detail.timeDifferenceMinutes
             
             Row {
                 Text(
@@ -223,14 +212,11 @@ fun HistoryDetailCard(
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
-                if (expectedArrival != null && endedAt != null) {
-                    val diffMinutes = java.time.Duration.between(expectedArrival, endedAt).toMinutes()
-                    val timeText = if (diffMinutes > 0) {
-                        " (예상 도착 시간 ${diffMinutes}분 후)"
-                    } else if (diffMinutes < 0) {
-                        " (예상 도착 시간 ${-diffMinutes}분 전)"
-                    } else {
-                        " (예상 도착 시간과 동일)"
+                if (timeDifference != null && endedAt != null) {
+                    val timeText = when {
+                        timeDifference > 0 -> " (예상 도착 시간 ${timeDifference}분 후)"
+                        timeDifference < 0 -> " (예상 도착 시간 ${-timeDifference}분 전)"
+                        else -> " (예상 도착 시간과 동일)"
                     }
                     Text(
                         text = timeText,
