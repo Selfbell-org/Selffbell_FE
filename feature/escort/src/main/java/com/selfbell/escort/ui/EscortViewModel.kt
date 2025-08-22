@@ -324,8 +324,10 @@ class EscortViewModel @Inject constructor(
                 // 보호자 선택 초기화
                 _selectedGuardians.value = emptySet()
 
-                // ✅ WebSocket 연결
-                stompManager.connect("USER_TOKEN", session.sessionId)
+                // ✅ WebSocket 연결 - 실제 액세스 토큰 사용
+                tokenManager.getAccessToken()?.let { token ->
+                    stompManager.connect(token, session.sessionId)
+                }
 
                 // 위치 추적 시작
                 startLocationTracking()
