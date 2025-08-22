@@ -1,5 +1,6 @@
 package com.example.auth.ui
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -42,6 +43,10 @@ fun ProfileRegisterScreen(
     isFromSettings: Boolean,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(Unit) {
+        // ✅ isFromSettings 값 로그로 확인
+        Log.d("NavCheck", "ProfileRegisterScreen 진입: isFromSettings = $isFromSettings")
+    }
     var nickname by remember { mutableStateOf("") }
     val currentOnboardingStep = 1
     val totalOnboardingSteps = 4
