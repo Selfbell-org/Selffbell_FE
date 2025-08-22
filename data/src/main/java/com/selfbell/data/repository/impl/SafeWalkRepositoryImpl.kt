@@ -43,7 +43,6 @@ class SafeWalkRepositoryImpl @Inject constructor(
         
         return try {
             val response = api.createSafeWalkSession(requestBody)
-            Log.d("SafeWalkRepository", "SafeWalk 세션 생성 성공: ${response.sessionId}")
             response.toDomainModel()
         } catch (e: Exception) {
             Log.e("SafeWalkRepository", "SafeWalk 세션 생성 실패", e)

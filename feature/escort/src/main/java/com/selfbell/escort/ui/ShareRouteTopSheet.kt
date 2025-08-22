@@ -169,8 +169,8 @@ fun FriendContactItem(contact: Contact, isSelected: Boolean, onToggle: () -> Uni
 fun ShareRouteTopSheetPreview() {
     SelfBellTheme {
         val sampleContacts = listOf(
-            Contact(1, "나는돌맹이", "010-1234-5678"),
-            Contact(2, "고앵이", "010-9876-5432")
+            Contact(1, 1, "나는돌맹이", "010-1234-5678"),
+            Contact(2, 2 ,"고앵이", "010-9876-5432")
         )
         var searchQuery by remember { mutableStateOf("") }
         val filtered = remember(searchQuery) {

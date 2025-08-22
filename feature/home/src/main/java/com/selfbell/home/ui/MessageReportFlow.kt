@@ -29,9 +29,9 @@ fun MessageReportFlow(
 
     val dummyGuardians = remember {
         listOf(
-            Contact(1, "김민석", "010-1111-1111"),
-            Contact(2, "김민준", "010-2222-2222"),
-            Contact(3, "김민서", "010-3333-3333")
+            Contact(1, 1,"김민석", "010-1111-1111"),
+            Contact(2, 2, "김민준", "010-2222-2222"),
+            Contact(3, 3, "김민서", "010-3333-3333")
         )
     }
     val dummyMessageTemplates = remember {

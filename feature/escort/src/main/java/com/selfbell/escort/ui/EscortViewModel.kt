@@ -295,8 +295,12 @@ class EscortViewModel @Inject constructor(
                 val currentToken = tokenManager.getAccessToken()
                 Log.d("EscortViewModel", "현재 토큰: $currentToken")
 
-                // ✅ 보호자 ID 없이 세션을 시작 (빈 리스트 전달)
-                val guardianIds = _selectedGuardians.value.map { it.id } // TODO: 보호자 ID 리스트로 대체
+                // ✅ 선택된 연락처의 전화번호를 친구 목록과 매칭하여 userId 추출
+                val friends = _acceptedFriends.value
+                val guardianIds = _selectedGuardians.value.mapNotNull { it.userId }
+
+                Log.d("EscortViewModel", "Guardian IDs: $guardianIds") // 이제 여기에 ID가 표시됩니다.
+
 
                 // 예상 도착 시간 계산
                 val expectedArrival: LocalDateTime? = when (_arrivalMode.value) {
@@ -486,9 +490,10 @@ class EscortViewModel @Inject constructor(
                         if (name.isNotEmpty() && number.isNotEmpty()) {
                             contactsList.add(
                                 Contact(
-                                    contactId,
-                                    name,
-                                    number.replace("-", "").trim()
+                                    id = contactId,
+                                    userId = null, // 👈 기기 연락처에는 userId가 없으므로 null
+                                    name = name,
+                                    phoneNumber = number.replace("-", "").trim()
                                 )
                             )
                         }

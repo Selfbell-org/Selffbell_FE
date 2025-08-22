@@ -13,9 +13,10 @@ fun ContactResponseDto.toDomain(): ContactRelationship {
     }
     return ContactRelationship(
         id = contactId.toString(),
-        fromUserId = "", // not provided by API
-        toUserId = "",   // not provided by API
-        fromPhoneNumber = me.phoneNumber,
+        name = other.name,
+        fromUserId = (me?.userId ?: 0L).toString(),
+        toUserId = (other.userId ?: 0L).toString(),
+        fromPhoneNumber = me?.phoneNumber ?: "",
         toPhoneNumber = other.phoneNumber,
         status = statusEnum,
         createdAt = "",
