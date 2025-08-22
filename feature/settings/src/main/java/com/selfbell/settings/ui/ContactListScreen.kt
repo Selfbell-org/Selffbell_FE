@@ -1,7 +1,6 @@
 // feature/settings/ui/ContactListScreen.kt
 package com.selfbell.settings.ui
 
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,7 +15,6 @@ import com.example.auth.ui.ContactUiState
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.composables.ContactRegistrationListItem // ✅ 재사용할 컴포넌트
 import com.selfbell.core.ui.composables.SelfBellButton
-import com.selfbell.core.ui.composables.SelfBellButtonType
 import com.selfbell.core.ui.composables.AcceptedFriendsList
 import com.selfbell.core.ui.composables.UnregisteredContactItem
 import com.selfbell.domain.model.ContactRelationship
@@ -24,6 +22,8 @@ import com.selfbell.domain.model.ContactUser
 import com.selfbell.settings.ui.ContactsUiState
 import com.selfbell.settings.ui.ContactsViewModel
 import kotlinx.coroutines.launch
+import com.selfbell.core.ui.composables.SelfBellButtonType
+import com.selfbell.core.ui.composables.ButtonState // ✅ ButtonState enum import
 
 // 탭 상태를 위한 enum
 enum class ContactsTab {
@@ -127,6 +127,8 @@ fun PendingRequestsList(
                 phoneNumber = phone,
                 buttonText = "수락",
                 isEnabled = true,
+                // ✅ buttonState를 명시적으로 전달
+                buttonState = ButtonState.DEFAULT, // "수락" 버튼은 기본 상태로 설정
                 onButtonClick = { onAcceptClick(request.id.toLongOrNull() ?: return@ContactRegistrationListItem) }
             )
             Divider()
@@ -151,7 +153,7 @@ fun InviteFriendsList(
         if (searchQuery.isBlank()) deviceContacts
         else deviceContacts.filter { c ->
             c.name.contains(searchQuery, ignoreCase = true) ||
-            c.phoneNumber.contains(searchQuery)
+                    c.phoneNumber.contains(searchQuery)
         }
     }
 
@@ -159,7 +161,7 @@ fun InviteFriendsList(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("\uc5f0\ub77d\ucc98 \uac80\uc0c9") },
+            placeholder = { Text("연락처 검색") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -167,30 +169,37 @@ fun InviteFriendsList(
         Spacer(modifier = Modifier.height(12.dp))
 
         LazyColumn {
-            // \u2705 \ubaa8\ub4e0 \ub514\ubc14\uc774\uc2a4 \uc5f0\ub77d\ucc98\ub97c \ub178\ucd9c (\uac80\uc0c9 \uc801\uc6a9)
+            // ✅ 모든 디바이스 연락처를 노출 (검색 적용)
             items(filteredContacts) { contact ->
-                val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "\uc5f0\ub77d\ucc98")
+                val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "연락처")
                 val isExists = checkedContacts[contact.phoneNumber]
 
-                // \u2705 \uc0c1\ud0dc\uc5d0 \ub530\ub77c \ubc84\ud2bc \ud14d\uc2a4\ud2b8/\ud65c\uc131\ud654 \uacb0\uc815
-                val buttonText = when (isExists) {
-                    true -> "\uc694\uccad"
-                    false -> "\ucd08\ub300"
-                    else -> "\ud655\uc778"
+                // ✅ 상태에 따라 버튼 텍스트, 활성화 여부, 그리고 buttonState 결정
+                val buttonState = when (isExists) {
+                    true -> ButtonState.INVITED // 서버에 가입된 사용자 -> "요청" 버튼
+                    false -> ButtonState.DEFAULT // 미가입 사용자 -> "초대" 버튼
+                    null -> ButtonState.DEFAULT // 확인 전 -> "확인" 버튼
                 }
+
+                val buttonText = when (isExists) {
+                    true -> "요청"
+                    false -> "초대"
+                    null -> "확인"
+                }
+
                 val isButtonEnabled = when (isExists) {
-                    true -> false // already registered -> disable
-                    false -> true // unregistered -> allow invite
-                    null -> true // unknown -> allow check
+                    true -> true // 요청은 가능해야 함
+                    false -> true // 초대는 가능해야 함
+                    null -> true // 확인은 가능해야 함
                 }
 
                 // Derive status label inline without touching shared composable
                 val statusLabel: (@Composable () -> Unit)? = when (isExists) {
                     true -> {
-                        { Text(text = "\uc774\ubbf8 \ub4f1\ub85d\ub41c \uac00\uc785\uc790\uc785\ub2c8\ub2e4", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
+                        { Text(text = "이미 등록된 가입자입니다", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
                     }
                     false -> {
-                        { Text(text = "\uc11c\ubc84\uc5d0 \ub4f1\ub85d\ub418\uc9c0 \uc54a\uc740 \uc0ac\uc6a9\uc790", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
+                        { Text(text = "서버에 등록되지 않은 사용자", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
                     }
                     else -> null
                 }
@@ -201,12 +210,20 @@ fun InviteFriendsList(
                         phoneNumber = contact.phoneNumber,
                         buttonText = buttonText,
                         isEnabled = isButtonEnabled,
+                        // ✅ buttonState 파라미터 전달
+                        buttonState = buttonState,
                         onButtonClick = {
-                            when (isExists) {
-                                true -> { /* disabled */ }
-                                false -> { /* TODO: \ucd08\ub300 \ub85c\uc9c1 (SMS/\ub515\ub9c1\ud06c) */ }
-                                null -> {
-                                    coroutineScope.launch {
+                            coroutineScope.launch {
+                                when (isExists) {
+                                    true -> {
+                                        viewModel.sendContactRequest(contact.phoneNumber)
+                                        // 요청 보낸 후 UI 업데이트 (예: isExists 상태 변경)
+                                    }
+                                    false -> {
+                                        // TODO: 초대 로직 (SMS/딥링크)
+                                        onSendRequest(contact.phoneNumber)
+                                    }
+                                    null -> {
                                         viewModel.checkUserExists(contact.phoneNumber) { exists ->
                                             checkedContacts = checkedContacts + (contact.phoneNumber to exists)
                                         }

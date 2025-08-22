@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.R
 import com.selfbell.core.ui.theme.SelfBellTheme
+import com.selfbell.core.ui.composables.ButtonState // ✅ ButtonState import
+
 
 @Composable
 fun ContactRegistrationListItem(
@@ -24,6 +26,7 @@ fun ContactRegistrationListItem(
     buttonText: String,
     isEnabled: Boolean,
     onButtonClick: () -> Unit,
+    buttonState: ButtonState,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -55,7 +58,8 @@ fun ContactRegistrationListItem(
                     style = Typography.bodyMedium,
                     color = Color.Gray
                 )
-                if (!isEnabled) {
+                // 서버에 등록되지 않은 사용자에게 빨간색 문구 띄우기
+                if (buttonState == ButtonState.INVITED) { // ✅ 상태에 따라 문구 표시
                     Text(
                         text = "서버에 등록되지 않은 사용자",
                         style = Typography.labelSmall,
@@ -65,11 +69,19 @@ fun ContactRegistrationListItem(
             }
         }
 
+        // ✅ buttonState에 따라 buttonType을 결정하는 when 문
+        val buttonType = when (buttonState) {
+            ButtonState.SELECTED -> SelfBellButtonType.OUTLINED  // 선택 시: 빨간색 "해제"
+            ButtonState.INVITED -> SelfBellButtonType.PRIMARY_FILLED // ✅ 초대 시: 주 색상 "초대"
+            ButtonState.DEFAULT -> SelfBellButtonType.PRIMARY_FILLED  // 기본 상태: 주 색상 "선택"
+        }
+
         SelfBellButton(
             text = buttonText,
             onClick = onButtonClick,
             modifier = Modifier.width(72.dp),
-            buttonType = if (isEnabled) SelfBellButtonType.PRIMARY_FILLED else SelfBellButtonType.OUTLINED,
+            // ✅ 결정된 buttonType을 적용
+            buttonType = buttonType,
             isSmall = true,
             enabled = isEnabled
         )

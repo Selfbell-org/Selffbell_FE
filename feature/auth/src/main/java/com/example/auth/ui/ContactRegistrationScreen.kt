@@ -29,6 +29,14 @@ import kotlinx.coroutines.launch
 import com.selfbell.domain.model.ContactUser
 import com.selfbell.domain.model.ContactRelationshipStatus
 import com.selfbell.core.ui.composables.SelfBellButtonType // SelfBellButtonType import 추가
+import com.selfbell.core.ui.composables.ButtonState // ✅ ButtonState enum import 추가
+
+// ✅ ButtonState enum 클래스 정의 (ContactRegistrationListItem에서도 사용)
+enum class ButtonState {
+    SELECTED, // 해제 (빨간색)
+    INVITED,  // 초대 (초록색)
+    DEFAULT   // 선택 (기본색)
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -95,7 +103,7 @@ fun ContactRegistrationScreen(
             ) {
                 OnboardingProgressBar(
                     currentStep = 4,
-                    totalSteps = 5,
+                    totalSteps = 4,
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
@@ -152,18 +160,28 @@ fun ContactRegistrationScreen(
                                     val isInvited = inviteContacts.contains(contact.phoneNumber)
                                     val isSelected = selectedContacts.contains(contact.phoneNumber)
 
-                                    val buttonText = when {
-                                        isSelected -> "해제"
-                                        isInvited -> "초대"
-                                        else -> "선택"
+                                    // ✅ 버튼 상태를 enum으로 계산
+                                    val buttonState = when {
+                                        isSelected -> ButtonState.SELECTED
+                                        isInvited -> ButtonState.INVITED
+                                        else -> ButtonState.DEFAULT
                                     }
-                                    val isButtonEnabled = if(isSelected) true else !isInvited
+
+                                    val buttonText = when (buttonState) {
+                                        ButtonState.SELECTED -> "해제"
+                                        ButtonState.INVITED -> "초대"
+                                        ButtonState.DEFAULT -> "선택"
+                                    }
+
+                                    val isButtonEnabled = true
 
                                     ContactRegistrationListItem(
                                         name = contact.name,
                                         phoneNumber = contact.phoneNumber,
                                         buttonText = buttonText,
                                         isEnabled = isButtonEnabled,
+                                        // ✅ ContactRegistrationListItem에 buttonState 전달
+                                        buttonState = buttonState,
                                         onButtonClick = {
                                             if (isSelected) {
                                                 selectedContacts = selectedContacts - contact.phoneNumber

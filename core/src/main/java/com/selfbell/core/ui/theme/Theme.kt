@@ -28,7 +28,8 @@ private val DarkColorScheme = darkColorScheme(
     onSecondary = Color.White,
     onTertiary = Color.White,
     onBackground = Color.White,
-    onSurface = Color.White
+    onSurface = Color.White,
+    error = Danger// ✅ error 색상 추가
 )
 
 // Light Color Scheme 정의 (Primary, Secondary, BackgroundLight 등 Color.kt에 정의된 색상 사용)
@@ -42,7 +43,8 @@ private val LightColorScheme = lightColorScheme(
     onSecondary = Color.White,
     onTertiary = Color.Black,
     onBackground = Color.Black,
-    onSurface = Color.Black
+    onSurface = Color.Black,
+    error = Danger, // ✅ error 색상 추가
 )
 
 @Composable

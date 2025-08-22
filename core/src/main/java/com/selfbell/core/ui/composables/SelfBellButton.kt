@@ -24,13 +24,17 @@ import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.ui.theme.Primary
 import com.selfbell.core.ui.theme.Black
 import com.selfbell.core.ui.theme.GrayInactive
+import com.selfbell.core.ui.theme.Success // ✅ Success 색상 import
+import com.selfbell.core.ui.theme.Danger // ✅ Danger 색상 import
 
-// SelfBellButtonType enum (동일)
+// ✅ SelfBellButtonType enum에 새로운 타입 추가
 enum class SelfBellButtonType {
     PRIMARY_FILLED,
     OUTLINED,
     TEXT_ONLY,
-    FAB
+    FAB,
+    SUCCESS_FILLED, // ✅ 성공 상태를 위한 버튼 (초록색)
+    DANGER_FILLED   // ✅ 위험 상태를 위한 버튼 (빨간색)
 }
 
 @Composable
@@ -46,7 +50,7 @@ fun SelfBellButton(
     val backgroundColor: Color
     val contentColor: Color
     val borderColor: Color?
-    val cornerRadius: Int = 8 // Figma Corner radius [cite: image_36da4b.png]
+    val cornerRadius: Int = 8 // Figma Corner radius
 
     // Set content padding based on size
     val contentPadding = if (isSmall) {
@@ -55,6 +59,7 @@ fun SelfBellButton(
         PaddingValues(horizontal = 16.dp, vertical = 12.dp) // Standard padding
     }
 
+    // ✅ when 구문에 새로운 타입 추가
     when (buttonType) {
         SelfBellButtonType.PRIMARY_FILLED -> {
             backgroundColor = Primary
@@ -73,6 +78,16 @@ fun SelfBellButton(
         }
         SelfBellButtonType.FAB -> {
             backgroundColor = Primary
+            contentColor = Color.White
+            borderColor = null
+        }
+        SelfBellButtonType.SUCCESS_FILLED -> { // ✅ 성공 상태 버튼 (초록색)
+            backgroundColor = Success
+            contentColor = Color.White
+            borderColor = null
+        }
+        SelfBellButtonType.DANGER_FILLED -> { // ✅ 위험 상태 버튼 (빨간색)
+            backgroundColor = Danger
             contentColor = Color.White
             borderColor = null
         }
