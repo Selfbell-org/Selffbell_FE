@@ -1,6 +1,7 @@
 package com.selfbell.data.api
 
 import com.selfbell.data.api.response.*
+import retrofit2.Response
 import retrofit2.http.*
 
 interface SafeWalksApi {
@@ -36,4 +37,13 @@ interface SafeWalksApi {
         @Query("size") size: Int?,
         @Query("order") order: String?
     ): TracksResponse
+
+    // ✅ 히스토리 조회 API 추가
+    @GET("/api/v1/safe-walks/history")
+    suspend fun getSafeWalkHistory(
+        @Query("userType") userType: String,
+        @Query("dateRange") dateRange: String,
+        @Query("sortOrder") sortOrder: String
+    ): Response<SafeWalkHistoryResponse>
 }
+

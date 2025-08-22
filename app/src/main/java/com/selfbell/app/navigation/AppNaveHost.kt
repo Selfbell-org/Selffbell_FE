@@ -61,6 +61,9 @@ import com.selfbell.app.ui.SplashScreen
 import com.selfbell.escort.ui.AddressSearchScreen
 import com.selfbell.settings.ui.ContactListScreen // ✅ New screen import
 import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
+import com.selfbell.home.navigation.homeGraph // ✅ home 모듈 내비게이션 그래프 import
+import com.selfbell.home.ui.HistoryDetailScreen
+import com.selfbell.home.ui.HistoryScreen
 
 
 @Composable
@@ -82,13 +85,15 @@ fun AppNavHost(
             AppRoute.ONBOARDING_COMPLETE_ROUTE,
             AppRoute.PHONE_NUMBER_ROUTE,
             AppRoute.PASSWORD_ROUTE_WITH_ARGS,
-            AppRoute.MAIN_ADDRESS_SETUP_ROUTE_WITH_ARGS
+            AppRoute.MAIN_ADDRESS_SETUP_ROUTE_WITH_ARGS,
+            AppRoute.HISTORY_DETAIL_ROUTE
+
         )
     }
     val shouldShowBottomBar = currentRoute !in routesWithoutBottomBar
     var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
     var currentMapMarker by remember { mutableStateOf<Marker?>(null) }
-    
+
     // 바텀바 높이 계산 (70dp + 패딩 24dp = 104dp)
     val bottomBarHeight = remember { 104.dp }
 
@@ -116,8 +121,29 @@ fun AppNavHost(
                         }
 
                         composable(AppRoute.ALERTS_ROUTE) { AlertsScreen() }
-                        composable(AppRoute.ESCORT_ROUTE) { EscortScreen(navController) }
 
+
+
+                        homeGraph(navController)
+
+                        composable(AppRoute.HISTORY_ROUTE) {
+                            HistoryScreen(
+                                onNavigateToDetail = { sessionId ->
+                                    navController.navigate(AppRoute.historyDetailRoute(sessionId))
+                                }
+                            )
+                        }
+
+                        composable(
+                            route = AppRoute.HISTORY_DETAIL_ROUTE,
+                            arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+                        ) { backStackEntry ->
+                            val sessionId = backStackEntry.arguments?.getLong("sessionId")
+                            HistoryDetailScreen(
+                                sessionId = sessionId,
+                                onBackClick = { navController.popBackStack() }
+                            )
+                        }
                         composable(AppRoute.ADDRESS_SEARCH_ROUTE) {
                             AddressSearchScreen(
                                 navController = navController,

@@ -10,6 +10,7 @@ import com.selfbell.domain.repository.SafeWalkRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import com.selfbell.data.mapper.toDomainModel
 
 class SafeWalkRepositoryImpl @Inject constructor(
     private val api: SafeWalksApi
@@ -17,10 +18,10 @@ class SafeWalkRepositoryImpl @Inject constructor(
 
     // ✅ 파라미터로 받은 정보들을 사용해 SafeWalkCreateRequest를 생성
     override suspend fun createSafeWalkSession(
-        originLat: Double, // ✅ double 타입으로 변경
-        originLon: Double, // ✅ double 타입으로 변경
+        originLat: Double,
+        originLon: Double,
         originAddress: String,
-        destinationLat: Double, // ✅ double 타입으로 변경
+        destinationLat: Double,
         destinationLon: Double,
         destinationAddress: String,
         expectedArrival: LocalDateTime?,
@@ -36,11 +37,11 @@ class SafeWalkRepositoryImpl @Inject constructor(
             timerMinutes = timerMinutes,
             guardianIds = guardianIds
         )
-        
+
         // ✅ 디버깅을 위한 로그 추가
         Log.d("SafeWalkRepository", "SafeWalk 세션 생성 요청")
         Log.d("SafeWalkRepository", "Request Body: $requestBody")
-        
+
         return try {
             val response = api.createSafeWalkSession(requestBody)
             Log.d("SafeWalkRepository", "SafeWalk 세션 생성 성공: ${response.sessionId}")
@@ -153,7 +154,31 @@ class SafeWalkRepositoryImpl @Inject constructor(
                     Log.e("SafeWalkRepository", "트랙 조회 HTTP 에러: ${e.code()}")
                     Log.e("SafeWalkRepository", "트랙 조회 에러 응답: ${e.response()?.errorBody()?.string()}")
                 }
+                else -> {
+                    Log.e("SafeWalkRepository", "기타 에러: ${e.message}")
+                    Log.e("SafeWalkRepository", "에러 타입: ${e.javaClass.simpleName}")
+                }
             }
+            throw e
+        }
+    }
+    // ✅ 히스토리 조회 함수 추가
+    override suspend fun getSafeWalkHistory(filter: HistoryFilter): List<SafeWalkHistoryItem> {
+        return try {
+            val response = api.getSafeWalkHistory(
+                userType = filter.userType.name,
+                dateRange = filter.dateRange.name,
+                sortOrder = filter.sortOrder.name
+            )
+
+            if (response.isSuccessful) {
+                val historyResponse = response.body() ?: throw Exception("응답 본문이 비어있습니다.")
+                historyResponse.items.map { it.toDomainModel() }
+            } else {
+                throw Exception("API 호출 실패: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            Log.e("SafeWalkRepository", "히스토리 조회 실패", e)
             throw e
         }
     }
