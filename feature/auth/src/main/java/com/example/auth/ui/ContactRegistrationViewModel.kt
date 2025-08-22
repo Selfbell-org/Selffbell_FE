@@ -1,3 +1,4 @@
+// ContactRegistrationViewModel.kt
 package com.example.auth.ui
 
 import android.util.Log
@@ -39,15 +40,18 @@ class ContactRegistrationViewModel @Inject constructor(
         filterContacts()
     }
 
-    // 로컬 디바이스 연락처만 불러오기 (서버 체크 없이)
+    // ✅ 로컬 디바이스 연락처만 불러오기 (서버 체크 없이)
     fun loadDeviceContactsOnly() {
         _uiState.value = ContactUiState.Loading
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val deviceContacts = contactRepository.loadDeviceContactsWithUserCheck() // TODO: 로컬 전용으로 대체 필요 시 구현
+                // ✅ 로컬 전용 함수 호출 (서버와 통신하지 않음)
+                val deviceContacts = contactRepository.getDeviceContacts()
+                Log.d("ContactRegistrationVM", "Repository에서 받은 연락처 수: ${deviceContacts.size}")
+
                 _contacts.value = deviceContacts
                 _uiState.value = ContactUiState.Success(deviceContacts)
-                Log.d("ContactRegistrationVM", "연락처 로드 완료: ${deviceContacts.size}개")
+                Log.d("ContactRegistrationVM", "최종 UI 상태 업데이트: ${deviceContacts.size}개")
             } catch (e: Exception) {
                 Log.e("ContactRegistrationVM", "연락처 로드 실패", e)
                 _uiState.value = ContactUiState.Error(e.message ?: "연락처를 불러오는데 실패했습니다.")
@@ -91,7 +95,7 @@ class ContactRegistrationViewModel @Inject constructor(
         } else {
             val filteredContacts = _contacts.value.filter { contact ->
                 contact.name.contains(query, ignoreCase = true) ||
-                contact.phoneNumber.contains(query)
+                        contact.phoneNumber.contains(query)
             }
             _uiState.value = ContactUiState.Success(filteredContacts)
         }
