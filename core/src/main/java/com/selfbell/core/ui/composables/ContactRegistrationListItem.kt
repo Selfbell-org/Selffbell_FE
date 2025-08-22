@@ -16,8 +16,21 @@ import androidx.compose.ui.unit.dp
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.core.R
 import com.selfbell.core.ui.theme.SelfBellTheme
-import com.selfbell.core.ui.composables.ButtonState // ✅ ButtonState import
 
+//// SelfBellButtonType에 필요한 상태
+//enum class SelfBellButtonType {
+//    PRIMARY_FILLED,
+//    SUCCESS_FILLED,
+//    DANGER_FILLED,
+//    OUTLINED
+//}
+
+// ButtonState enum은 상위 컴포저블에 정의되어야 합니다.
+// enum class ButtonState {
+//     SELECTED,
+//     INVITED,
+//     DEFAULT
+// }
 
 @Composable
 fun ContactRegistrationListItem(
@@ -58,29 +71,27 @@ fun ContactRegistrationListItem(
                     style = Typography.bodyMedium,
                     color = Color.Gray
                 )
-                // 서버에 등록되지 않은 사용자에게 빨간색 문구 띄우기
-                if (buttonState == ButtonState.INVITED) { // ✅ 상태에 따라 문구 표시
-                    Text(
-                        text = "서버에 등록되지 않은 사용자",
-                        style = Typography.labelSmall,
-                        color = Color.Red
-                    )
-                }
+                // ❌ 충돌하는 문구 로직을 제거
+                // if (buttonState == ButtonState.INVITED) {
+                //     Text(
+                //         text = "서버에 등록되지 않은 사용자",
+                //         style = Typography.labelSmall,
+                //         color = Color.Red
+                //     )
+                // }
             }
         }
 
-        // ✅ buttonState에 따라 buttonType을 결정하는 when 문
         val buttonType = when (buttonState) {
-            ButtonState.SELECTED -> SelfBellButtonType.OUTLINED  // 선택 시: 빨간색 "해제"
-            ButtonState.INVITED -> SelfBellButtonType.PRIMARY_FILLED // ✅ 초대 시: 주 색상 "초대"
-            ButtonState.DEFAULT -> SelfBellButtonType.PRIMARY_FILLED  // 기본 상태: 주 색상 "선택"
+            ButtonState.SELECTED -> SelfBellButtonType.OUTLINED
+            ButtonState.INVITED -> SelfBellButtonType.PRIMARY_FILLED
+            ButtonState.DEFAULT -> SelfBellButtonType.PRIMARY_FILLED
         }
 
         SelfBellButton(
             text = buttonText,
             onClick = onButtonClick,
             modifier = Modifier.width(72.dp),
-            // ✅ 결정된 buttonType을 적용
             buttonType = buttonType,
             isSmall = true,
             enabled = isEnabled

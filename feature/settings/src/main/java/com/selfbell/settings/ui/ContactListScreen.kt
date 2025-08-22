@@ -135,7 +135,6 @@ fun PendingRequestsList(
         }
     }
 }
-
 @Composable
 fun InviteFriendsList(
     deviceContacts: List<ContactUser>,
@@ -157,6 +156,14 @@ fun InviteFriendsList(
         }
     }
 
+    // ✅ 컴포넌트의 UI 데이터를 정의하는 data class
+    data class ContactItemUi(
+        val buttonState: ButtonState,
+        val buttonText: String,
+        val isButtonEnabled: Boolean,
+        val statusLabel: (@Composable () -> Unit)?
+    )
+
     Column(modifier = Modifier.padding(16.dp)) {
         OutlinedTextField(
             value = searchQuery,
@@ -169,58 +176,48 @@ fun InviteFriendsList(
         Spacer(modifier = Modifier.height(12.dp))
 
         LazyColumn {
-            // ✅ 모든 디바이스 연락처를 노출 (검색 적용)
             items(filteredContacts) { contact ->
                 val fallbackName = displayNameFromPhone(contact.phoneNumber, prefix = "연락처")
                 val isExists = checkedContacts[contact.phoneNumber]
 
-                // ✅ 상태에 따라 버튼 텍스트, 활성화 여부, 그리고 buttonState 결정
-                val buttonState = when (isExists) {
-                    true -> ButtonState.INVITED // 서버에 가입된 사용자 -> "요청" 버튼
-                    false -> ButtonState.DEFAULT // 미가입 사용자 -> "초대" 버튼
-                    null -> ButtonState.DEFAULT // 확인 전 -> "확인" 버튼
-                }
-
-                val buttonText = when (isExists) {
-                    true -> "요청"
-                    false -> "초대"
-                    null -> "확인"
-                }
-
-                val isButtonEnabled = when (isExists) {
-                    true -> true // 요청은 가능해야 함
-                    false -> true // 초대는 가능해야 함
-                    null -> true // 확인은 가능해야 함
-                }
-
-                // Derive status label inline without touching shared composable
-                val statusLabel: (@Composable () -> Unit)? = when (isExists) {
-                    true -> {
-                        { Text(text = "이미 등록된 가입자입니다", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
+                // ✅ isExists 상태에 따라 UI 데이터 생성
+                val uiData = remember(isExists) {
+                    when (isExists) {
+                        true -> ContactItemUi(
+                            ButtonState.INVITED,
+                            "요청",
+                            true,
+                            @Composable { Text(text = "이미 등록된 가입자입니다", style = Typography.labelSmall, color = MaterialTheme.colorScheme.primary) }
+                        )
+                        false -> ContactItemUi(
+                            ButtonState.DEFAULT,
+                            "초대",
+                            true,
+                            @Composable { Text(text = "서버에 등록되지 않은 사용자", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
+                        )
+                        else -> ContactItemUi(
+                            ButtonState.DEFAULT,
+                            "확인",
+                            true,
+                            null
+                        )
                     }
-                    false -> {
-                        { Text(text = "서버에 등록되지 않은 사용자", style = Typography.labelSmall, color = MaterialTheme.colorScheme.error) }
-                    }
-                    else -> null
                 }
 
                 Column {
                     ContactRegistrationListItem(
                         name = contact.name.ifBlank { fallbackName },
                         phoneNumber = contact.phoneNumber,
-                        buttonText = buttonText,
-                        isEnabled = isButtonEnabled,
-                        // ✅ buttonState 파라미터 전달
-                        buttonState = buttonState,
+                        buttonText = uiData.buttonText,
+                        isEnabled = uiData.isButtonEnabled,
+                        buttonState = uiData.buttonState,
                         onButtonClick = {
                             coroutineScope.launch {
                                 when (isExists) {
                                     true -> {
                                         viewModel.sendContactRequest(contact.phoneNumber)
-                                        // 요청 보낸 후 UI 업데이트 (예: isExists 상태 변경)
                                     }
                                     false -> {
-                                        // TODO: 초대 로직 (SMS/딥링크)
                                         onSendRequest(contact.phoneNumber)
                                     }
                                     null -> {
@@ -232,9 +229,9 @@ fun InviteFriendsList(
                             }
                         }
                     )
-                    if (statusLabel != null) {
+                    if (uiData.statusLabel != null) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        statusLabel()
+                        uiData.statusLabel.invoke()
                     }
                     Divider()
                 }
