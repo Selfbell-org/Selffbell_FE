@@ -27,7 +27,8 @@ import com.selfbell.home.model.MapMarkerData
 import androidx.compose.ui.text.style.TextOverflow
 import com.selfbell.core.ui.theme.SelfBellTheme
 import androidx.compose.ui.tooling.preview.Preview
-import com.selfbell.domain.model.EmergencyBellDetail // ✅ import 추가
+import com.selfbell.domain.model.EmergencyBellDetail
+import android.util.Log // ✅ Log 클래스 임포트
 
 // 모달의 상태를 정의하는 Enum
 enum class ModalMode {
@@ -43,9 +44,10 @@ fun AddressSearchModal(
     onSearchClick: () -> Unit,
     mapMarkers: List<MapMarkerData>,
     onMarkerItemClick: (MapMarkerData) -> Unit,
-    selectedEmergencyBellDetail: EmergencyBellDetail?, // ✅ 안심벨 상세정보 파라미터 추가
-    modalMode: ModalMode, // ✅ 모달 모드 파라미터 추가
-    onModalModeChange: (ModalMode) -> Unit = {} // ✅ 모달 모드 변경 콜백 추가
+    selectedEmergencyBellDetail: EmergencyBellDetail?,
+    modalMode: ModalMode,
+    onModalModeChange: (ModalMode) -> Unit = {},
+    mapMarkerMode: MapMarkerMode, // ✅ mapMarkerMode 파라미터 추가
 ) {
     Surface(
         modifier = modifier
@@ -90,24 +92,34 @@ fun AddressSearchModal(
                     Spacer(Modifier.height(18.dp))
 
                     // ==== 마커 리스트 ====
-                    if (mapMarkers.isEmpty() && searchText.isNotBlank()) {
+                    val filteredMarkers = remember(mapMarkers, mapMarkerMode) {
+                        Log.d("AddressSearchModal", "Recomposing marker list. Total items: ${mapMarkers.size}, Mode: $mapMarkerMode") // ✅ 로그 추가
+                        if (mapMarkerMode == MapMarkerMode.SAFETY_BELL_ONLY) {
+                            mapMarkers.filter { it.type == MapMarkerData.MarkerType.SAFETY_BELL }
+                        } else {
+                            mapMarkers // 모든 마커 표시
+                        }
+                    }
+
+                    if (filteredMarkers.isEmpty() && searchText.isNotBlank()) {
                         Text(
                             text = "주변에 해당 정보가 없습니다.",
                             style = Typography.bodyMedium,
                             modifier = Modifier.padding(vertical = 8.dp).align(Alignment.CenterHorizontally)
                         )
-                    } else if (mapMarkers.isNotEmpty()){
+                    } else if (filteredMarkers.isNotEmpty()){
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth().heightIn(max = 160.dp)
                         ) {
-                            items(mapMarkers) { markerData ->
+                            items(filteredMarkers) { markerData ->
+                                Log.d("AddressSearchModal", "Displaying item: ${markerData.address}, Type: ${markerData.type}") // ✅ 로그 추가
                                 Row(
-                                    Modifier.fillMaxWidth().height(40.dp).clickable { 
+                                    Modifier.fillMaxWidth().height(40.dp).clickable {
                                         if (markerData.type == MapMarkerData.MarkerType.SAFETY_BELL && markerData.objtId != null) {
                                             // 안심벨 마커 클릭 시 상세정보 모드로 전환
                                             onModalModeChange(ModalMode.DETAIL)
                                         }
-                                        onMarkerItemClick(markerData) 
+                                        onMarkerItemClick(markerData)
                                     },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {

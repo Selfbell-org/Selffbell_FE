@@ -79,6 +79,16 @@ class HomeViewModel @Inject constructor(
 
     init {
         startHomeLocationStream()
+        // ✅ 추가: _preloadedCriminals의 변경을 감지하여 UIState를 업데이트합니다.
+        viewModelScope.launch {
+            _preloadedCriminals.collectLatest { criminalsList ->
+                val current = _uiState.value
+                if (current is HomeUiState.Success) {
+                    // 범죄자 리스트가 업데이트되면 기존 UIState의 criminals를 새 데이터로 교체
+                    _uiState.value = current.copy(criminals = criminalsList)
+                }
+            }
+        }
     }
 
     private fun startHomeLocationStream() {
@@ -101,10 +111,12 @@ class HomeViewModel @Inject constructor(
                     }
 
                     // UI 상태 업데이트
+                    // ✅ 수정: _uiState를 초기화할 때, _preloadedCriminals.value를 사용하되,
+                    // 이는 초기에는 빈 리스트일 수 있다는 것을 감안합니다.
                     _uiState.value = HomeUiState.Success(
                         userLatLng = userLatLng,
                         emergencyBells = emergencyBells,
-                        criminals = _preloadedCriminals.value // 미리 로드된 데이터 사용
+                        criminals = _preloadedCriminals.value
                     )
 
                     if (_cameraTargetLatLng.value == null) {
@@ -135,7 +147,7 @@ class HomeViewModel @Inject constructor(
                     val criminals = criminalRepository.getNearbyCriminals(
                         lat = userLatLng.latitude,
                         lon = userLatLng.longitude,
-                        radius = 10000 // API 명세에 따라 500m~1000m 사이의 값으로 조정 가능
+                        radius = 1000 // API 명세에 따라 500m~1000m 사이의 값으로 조정 가능
                     )
                     _preloadedCriminals.value = criminals
                     Log.d("HomeViewModel", "범죄자 ${criminals.size}개 사전 로드 완료")

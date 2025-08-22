@@ -295,7 +295,8 @@ fun HomeScreen(
                     onMarkerItemClick = viewModel::onMapMarkerClicked,
                     selectedEmergencyBellDetail = state.selectedEmergencyBellDetail,
                     modalMode = currentModalMode,
-                    onModalModeChange = { newMode -> currentModalMode = newMode }
+                    onModalModeChange = { newMode -> currentModalMode = newMode },
+                    mapMarkerMode = mapMarkerMode // ✅ 추가된 파라미터
                 )
             }
             is HomeUiState.Error -> {
