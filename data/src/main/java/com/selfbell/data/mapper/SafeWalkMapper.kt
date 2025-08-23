@@ -68,3 +68,14 @@ fun LocationDetailResponse.toDomainModel(): LocationDetail {
         addressText = this.addressText
     )
 }
+
+// ✅ [추가] HistorySessionDto를 SafeWalkHistoryItem으로 변환하는 Mapper 함수
+fun HistorySessionDto.toDomainModel(): SafeWalkHistoryItem {
+    return SafeWalkHistoryItem(
+        sessionId = this.session.id,
+        wardName = this.ward.name,
+        destinationName = this.session.destinationName,
+        startedAt = LocalDateTime.parse(this.session.startedAt),
+        status = SafeWalkStatus.fromString(this.session.status)
+    )
+}
