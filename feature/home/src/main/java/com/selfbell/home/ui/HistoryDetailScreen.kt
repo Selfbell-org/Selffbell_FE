@@ -20,6 +20,7 @@ import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkDetail
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
 import com.selfbell.core.ui.theme.GrayInactive
 import com.selfbell.core.ui.theme.Primary
 import java.time.Duration
@@ -31,6 +32,7 @@ fun HistoryDetailScreen(
     viewModel: HistoryDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val floatingBottomPadding = LocalFloatingBottomBarPadding.current
 
     LaunchedEffect(sessionId) {
         if (sessionId != null) {
@@ -85,8 +87,8 @@ fun HistoryDetailScreen(
                         detail = detail,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            // 👇 [수정] 좌우 패딩을 제거하여 꽉 차게 만듭니다.
-                            .padding(bottom = 24.dp, start = 16.dp, end = 16.dp)
+                            .padding(floatingBottomPadding)
+                            .padding(bottom = 24.dp)
                     )
                 }
             }
