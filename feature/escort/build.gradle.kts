@@ -38,6 +38,7 @@ dependencies {
     // domain 모듈 의존성 (필수) !!
     implementation(project(":domain"))
     implementation(project(":core"))
+    implementation(project(":app"))
     implementation(project(":data"))
     implementation(project(":feature:settings"))
 
