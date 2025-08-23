@@ -37,5 +37,10 @@ interface SafeWalksApi {
         @Query("size") size: Int?,
         @Query("order") order: String?
     ): TracksResponse
+
+    @GET("api/v1/safe-walks/history")
+    suspend fun getHistory(
+        @Query("target") target: String // "me" 또는 "ward"
+    ): HistoryListResponse
 }
 

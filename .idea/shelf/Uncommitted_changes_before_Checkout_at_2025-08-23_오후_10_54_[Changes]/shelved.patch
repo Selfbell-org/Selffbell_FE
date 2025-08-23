@@ -1,0 +1,539 @@
+Index: domain/src/main/java/com/selfbell/domain/model/SafeWalks.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.domain.model\r\n\r\nimport java.time.LocalDateTime\r\n\r\n// ✅ 1. 안심 귀가 세션의 기본 정보\r\ndata class SafeWalkSession(\r\n    val sessionId: Long,\r\n    val status: String,\r\n    val startedAt: LocalDateTime,\r\n    val expectedArrival: LocalDateTime?,\r\n    val timerEnd: LocalDateTime?,\r\n    val topic: String\r\n)\r\n\r\n// ✅ 2. 현재 진행 중인 세션 상태\r\ndata class SafeWalkSessionState(\r\n    val sessionId: Long,\r\n    val status: String,\r\n    val topic: String\r\n)\r\n\r\n// ✅ 3. 트랙킹 아이템\r\ndata class TrackItem(\r\n    val lat: Double,\r\n    val lon: Double,\r\n    val accuracy: Double,\r\n    val capturedAt: LocalDateTime\r\n)\r\n\r\n// ✅ 4. 안심 귀가 세션의 상세 정보\r\ndata class SafeWalkDetail(\r\n    val sessionId: Long,\r\n    val ward: Ward,\r\n    val origin: LocationDetail,\r\n    val destination: LocationDetail,\r\n    val status: String,\r\n    val startedAt: LocalDateTime,\r\n    val expectedArrival: LocalDateTime?,\r\n    val timerEnd: LocalDateTime?,\r\n    val guardians: List<Guardian>\r\n)\r\n\r\n// ✅ 5. 상세 정보에 사용되는 부가 모델\r\ndata class Ward(val id: Long, val name: String)\r\ndata class Guardian(val id: Long, val name: String)\r\ndata class LocationDetail(val lat: Double, val lon: Double, val addressText: String)\r\n\r\n// ✅ 6. 세션 종료 이유\r\nenum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/domain/src/main/java/com/selfbell/domain/model/SafeWalks.kt b/domain/src/main/java/com/selfbell/domain/model/SafeWalks.kt
+--- a/domain/src/main/java/com/selfbell/domain/model/SafeWalks.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/domain/src/main/java/com/selfbell/domain/model/SafeWalks.kt	(date 1755957075278)
+@@ -33,11 +33,18 @@
+     val ward: Ward,
+     val origin: LocationDetail,
+     val destination: LocationDetail,
+-    val status: String,
++    val status: SafeWalkStatus,
+     val startedAt: LocalDateTime,
+     val expectedArrival: LocalDateTime?,
+     val timerEnd: LocalDateTime?,
+-    val guardians: List<Guardian>
++    val guardians: List<Guardian>,
++    val endedAt: LocalDateTime?,
++    // ✅ 서버에서 받아올 추가 필드들
++    val expectedStartTime: LocalDateTime? = null, // 상대가 설정한 시작 시간
++    val expectedEndTime: LocalDateTime? = null,   // 상대가 설정한 종료 시간
++    val estimatedDurationMinutes: Int? = null,   // 예상 소요 시간 (분)
++    val actualDurationMinutes: Int? = null,      // 실제 소요 시간 (분)
++    val timeDifferenceMinutes: Int? = null       // 예상 대비 실제 시간 차이 (분)
+ )
+ 
+ // ✅ 5. 상세 정보에 사용되는 부가 모델
+@@ -46,4 +53,11 @@
+ data class LocationDetail(val lat: Double, val lon: Double, val addressText: String)
+ 
+ // ✅ 6. 세션 종료 이유
+-enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
+\ No newline at end of file
++enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
++
++enum class SafeWalkStatus {
++    IN_PROGRESS, // 귀가중
++    COMPLETED,   // 완료
++    CANCELED,    // 취소됨
++    ENDED        // 종료됨
++}
+Index: feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailViewModel.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.home.ui\r\n\r\nimport androidx.lifecycle.ViewModel\r\nimport androidx.lifecycle.viewModelScope\r\nimport com.selfbell.domain.model.*\r\nimport com.selfbell.domain.repository.SafeWalkRepository\r\nimport com.selfbell.domain.repository.ReverseGeocodingRepository\r\nimport dagger.hilt.android.lifecycle.HiltViewModel\r\nimport kotlinx.coroutines.flow.MutableStateFlow\r\nimport kotlinx.coroutines.flow.StateFlow\r\nimport kotlinx.coroutines.flow.asStateFlow\r\nimport kotlinx.coroutines.launch\r\nimport javax.inject.Inject\r\n\r\nsealed interface HistoryDetailUiState {\r\n    object Loading : HistoryDetailUiState\r\n    data class Success(val detail: SafeWalkDetail) : HistoryDetailUiState\r\n    data class Error(val message: String) : HistoryDetailUiState\r\n}\r\n\r\n@HiltViewModel\r\nclass HistoryDetailViewModel @Inject constructor(\r\n    private val safeWalkRepository: SafeWalkRepository,\r\n    private val reverseGeocodingRepository: ReverseGeocodingRepository\r\n) : ViewModel() {\r\n\r\n    private val _uiState = MutableStateFlow<HistoryDetailUiState>(HistoryDetailUiState.Loading)\r\n    val uiState: StateFlow<HistoryDetailUiState> = _uiState.asStateFlow()\r\n\r\n    fun loadSafeWalkDetail(sessionId: Long) {\r\n        _uiState.value = HistoryDetailUiState.Loading\r\n        viewModelScope.launch {\r\n            try {\r\n                val detail = safeWalkRepository.getSafeWalkDetail(sessionId)\r\n                _uiState.value = HistoryDetailUiState.Success(detail)\r\n            } catch (e: Exception) {\r\n                _uiState.value = HistoryDetailUiState.Error(e.message ?: \"상세 정보 로드 실패\")\r\n            }\r\n        }\r\n    }\r\n    \r\n    /**\r\n     * 위도/경도 좌표를 주소로 변환합니다.\r\n     * \r\n     * @param lat 위도\r\n     * @param lon 경도\r\n     * @return 주소 문자열, 실패 시 null\r\n     */\r\n    suspend fun getAddressFromCoordinates(lat: Double, lon: Double): String? {\r\n        return try {\r\n            reverseGeocodingRepository.reverseGeocode(lat, lon)\r\n        } catch (e: Exception) {\r\n            null\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailViewModel.kt b/feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailViewModel.kt
+--- a/feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailViewModel.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailViewModel.kt	(date 1755957075274)
+@@ -4,7 +4,6 @@
+ import androidx.lifecycle.viewModelScope
+ import com.selfbell.domain.model.*
+ import com.selfbell.domain.repository.SafeWalkRepository
+-import com.selfbell.domain.repository.ReverseGeocodingRepository
+ import dagger.hilt.android.lifecycle.HiltViewModel
+ import kotlinx.coroutines.flow.MutableStateFlow
+ import kotlinx.coroutines.flow.StateFlow
+@@ -20,8 +19,7 @@
+ 
+ @HiltViewModel
+ class HistoryDetailViewModel @Inject constructor(
+-    private val safeWalkRepository: SafeWalkRepository,
+-    private val reverseGeocodingRepository: ReverseGeocodingRepository
++    private val safeWalkRepository: SafeWalkRepository
+ ) : ViewModel() {
+ 
+     private val _uiState = MutableStateFlow<HistoryDetailUiState>(HistoryDetailUiState.Loading)
+@@ -38,19 +36,4 @@
+             }
+         }
+     }
+-    
+-    /**
+-     * 위도/경도 좌표를 주소로 변환합니다.
+-     * 
+-     * @param lat 위도
+-     * @param lon 경도
+-     * @return 주소 문자열, 실패 시 null
+-     */
+-    suspend fun getAddressFromCoordinates(lat: Double, lon: Double): String? {
+-        return try {
+-            reverseGeocodingRepository.reverseGeocode(lat, lon)
+-        } catch (e: Exception) {
+-            null
+-        }
+-    }
+ }
+\ No newline at end of file
+Index: feature/home/src/main/java/com/selfbell/home/ui/HistoryScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.home.ui\r\n\r\nimport androidx.compose.foundation.layout.*\r\nimport androidx.compose.foundation.lazy.LazyColumn\r\nimport androidx.compose.foundation.lazy.items\r\nimport androidx.compose.material3.*\r\nimport androidx.compose.runtime.*\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.unit.dp\r\nimport androidx.hilt.navigation.compose.hiltViewModel\r\nimport com.selfbell.core.ui.theme.Typography\r\nimport com.selfbell.domain.model.HistoryUserFilter\r\nimport com.selfbell.home.ui.composables.HistoryCardItem\r\nimport com.selfbell.home.ui.HistoryDateFilterDropdown\r\nimport com.selfbell.home.ui.HistorySortDropdown\r\nimport com.selfbell.domain.model.SafeWalkHistoryItem\r\n\r\n@Composable\r\nfun HistoryScreen(\r\n    onNavigateToDetail: (sessionId: Long) -> Unit,\r\n    viewModel: HistoryViewModel = hiltViewModel()\r\n) {\r\n    val uiState by viewModel.uiState.collectAsState()\r\n\r\n    Column(\r\n        modifier = Modifier.fillMaxSize()\r\n    ) {\r\n        // ✅ 3가지 탭\r\n        TabRow(selectedTabIndex = viewModel.currentFilter.value.userType.ordinal) {\r\n            HistoryUserFilter.values().forEach { filterType ->\r\n                Tab(\r\n                    selected = viewModel.currentFilter.value.userType == filterType,\r\n                    onClick = {\r\n                        viewModel.setFilter(\r\n                            viewModel.currentFilter.value.copy(userType = filterType)\r\n                        )\r\n                    },\r\n                    text = {\r\n                        Text(text = when (filterType) {\r\n                            HistoryUserFilter.ALL -> \"전체 기록\"\r\n                            HistoryUserFilter.GUARDIANS -> \"보호자/피보호자\"\r\n                            HistoryUserFilter.MINE -> \"나의 귀가\"\r\n                        })\r\n                    }\r\n                )\r\n            }\r\n        }\r\n\r\n        // ✅ 필터 드롭다운\r\n        Row(\r\n            modifier = Modifier\r\n                .fillMaxWidth()\r\n                .padding(horizontal = 16.dp, vertical = 8.dp),\r\n            horizontalArrangement = Arrangement.End,\r\n            verticalAlignment = Alignment.CenterVertically\r\n        ) {\r\n            HistoryDateFilterDropdown(\r\n                selectedFilter = viewModel.currentFilter.value.dateRange,\r\n                onFilterSelected = { newDateFilter ->\r\n                    viewModel.setFilter(\r\n                        viewModel.currentFilter.value.copy(dateRange = newDateFilter)\r\n                    )\r\n                }\r\n            )\r\n            Spacer(modifier = Modifier.width(8.dp))\r\n            HistorySortDropdown(\r\n                selectedSortOrder = viewModel.currentFilter.value.sortOrder,\r\n                onSortSelected = { newSortOrder ->\r\n                    viewModel.setFilter(\r\n                        viewModel.currentFilter.value.copy(sortOrder = newSortOrder)\r\n                    )\r\n                }\r\n            )\r\n        }\r\n\r\n        // ✅ UI 상태에 따른 화면 분기\r\n        when (val state = uiState) {\r\n            is HistoryUiState.Loading -> {\r\n                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {\r\n                    CircularProgressIndicator()\r\n                }\r\n            }\r\n            is HistoryUiState.Error -> {\r\n                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {\r\n                    Text(text = state.message, color = MaterialTheme.colorScheme.error)\r\n                }\r\n            }\r\n            is HistoryUiState.Success -> {\r\n                if (state.historyItems.isEmpty()) {\r\n                    EmptyHistoryScreen()\r\n                } else {\r\n                    HistoryList(\r\n                        historyItems = state.historyItems,\r\n                        onNavigateToDetail = onNavigateToDetail\r\n                    )\r\n                }\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n// ✅ 히스토리 목록을 보여주는 Composable\r\n@Composable\r\nfun HistoryList(\r\n    historyItems: List<SafeWalkHistoryItem>,\r\n    onNavigateToDetail: (sessionId: Long) -> Unit\r\n) {\r\n    LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {\r\n        items(historyItems, key = { it.sessionId }) { item -> // id -> sessionId로 변경\r\n            HistoryCardItem(\r\n                historyItem = item,\r\n                onClick = { onNavigateToDetail(item.sessionId) } // id -> sessionId로 변경\r\n            )\r\n            Divider()\r\n        }\r\n    }\r\n}\r\n\r\n// ✅ 내역이 없을 때 화면\r\n@Composable\r\nfun EmptyHistoryScreen() {\r\n    Box(\r\n        modifier = Modifier.fillMaxSize(),\r\n        contentAlignment = Alignment.Center\r\n    ) {\r\n        Text(\r\n            text = \"요청 내역이 없습니다\",\r\n            style = Typography.titleMedium,\r\n            color = MaterialTheme.colorScheme.onSurfaceVariant\r\n        )\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/feature/home/src/main/java/com/selfbell/home/ui/HistoryScreen.kt b/feature/home/src/main/java/com/selfbell/home/ui/HistoryScreen.kt
+--- a/feature/home/src/main/java/com/selfbell/home/ui/HistoryScreen.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/feature/home/src/main/java/com/selfbell/home/ui/HistoryScreen.kt	(date 1755957075275)
+@@ -15,6 +15,12 @@
+ import com.selfbell.home.ui.HistoryDateFilterDropdown
+ import com.selfbell.home.ui.HistorySortDropdown
+ import com.selfbell.domain.model.SafeWalkHistoryItem
++import androidx.compose.foundation.BorderStroke
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.ui.graphics.Color
++import com.selfbell.core.ui.composables.SelfBellButton
++import com.selfbell.core.ui.composables.SelfBellButtonType
++import com.selfbell.core.R as CoreR
+ 
+ @Composable
+ fun HistoryScreen(
+@@ -23,29 +29,21 @@
+ ) {
+     val uiState by viewModel.uiState.collectAsState()
+ 
++    // ✅ 수정: collectAsState()를 사용하여 currentFilter 상태를 구독
++    val currentFilter by viewModel.currentFilter.collectAsState()
++
+     Column(
+         modifier = Modifier.fillMaxSize()
+     ) {
+-        // ✅ 3가지 탭
+-        TabRow(selectedTabIndex = viewModel.currentFilter.value.userType.ordinal) {
+-            HistoryUserFilter.values().forEach { filterType ->
+-                Tab(
+-                    selected = viewModel.currentFilter.value.userType == filterType,
+-                    onClick = {
+-                        viewModel.setFilter(
+-                            viewModel.currentFilter.value.copy(userType = filterType)
+-                        )
+-                    },
+-                    text = {
+-                        Text(text = when (filterType) {
+-                            HistoryUserFilter.ALL -> "전체 기록"
+-                            HistoryUserFilter.GUARDIANS -> "보호자/피보호자"
+-                            HistoryUserFilter.MINE -> "나의 귀가"
+-                        })
+-                    }
+-                )
+-            }
+-        }
++        // ✅ 3가지 탭을 대신할 버튼 그룹 Composable
++        HistoryFilterButtons(
++            selectedFilter = currentFilter.userType, // ✅ 수정: .value 제거
++            onFilterSelected = { newFilterType ->
++                viewModel.setFilter(
++                    currentFilter.copy(userType = newFilterType) // ✅ 수정: .value 제거
++                )
++            }
++        )
+ 
+         // ✅ 필터 드롭다운
+         Row(
+@@ -56,19 +54,19 @@
+             verticalAlignment = Alignment.CenterVertically
+         ) {
+             HistoryDateFilterDropdown(
+-                selectedFilter = viewModel.currentFilter.value.dateRange,
++                selectedFilter = currentFilter.dateRange, // ✅ 수정: .value 제거
+                 onFilterSelected = { newDateFilter ->
+                     viewModel.setFilter(
+-                        viewModel.currentFilter.value.copy(dateRange = newDateFilter)
++                        currentFilter.copy(dateRange = newDateFilter) // ✅ 수정: .value 제거
+                     )
+                 }
+             )
+             Spacer(modifier = Modifier.width(8.dp))
+             HistorySortDropdown(
+-                selectedSortOrder = viewModel.currentFilter.value.sortOrder,
++                selectedSortOrder = currentFilter.sortOrder, // ✅ 수정: .value 제거
+                 onSortSelected = { newSortOrder ->
+                     viewModel.setFilter(
+-                        viewModel.currentFilter.value.copy(sortOrder = newSortOrder)
++                        currentFilter.copy(sortOrder = newSortOrder) // ✅ 수정: .value 제거
+                     )
+                 }
+             )
+@@ -99,25 +97,59 @@
+         }
+     }
+ }
++@Composable
++private fun HistoryFilterButtons(
++    selectedFilter: HistoryUserFilter,
++    onFilterSelected: (HistoryUserFilter) -> Unit
++) {
++    Row(
++        modifier = Modifier
++            .fillMaxWidth()
++            .padding(horizontal = 16.dp, vertical = 12.dp),
++        horizontalArrangement = Arrangement.spacedBy(8.dp),
++        verticalAlignment = Alignment.CenterVertically
++    ) {
++        HistoryUserFilter.values().forEach { filterType ->
++            val isSelected = selectedFilter == filterType
+ 
+-// ✅ 히스토리 목록을 보여주는 Composable
++            val buttonType = if (isSelected) {
++                SelfBellButtonType.PRIMARY_FILLED
++            } else {
++                SelfBellButtonType.OUTLINED
++            }
++
++            // ✅ SelfBellButton 컴포넌트 사용
++            SelfBellButton(
++                text = when (filterType) {
++                    //HistoryUserFilter.ALL -> "전체 기록"
++                    HistoryUserFilter.GUARDIANS -> "보호자/피보호자"
++                    HistoryUserFilter.MINE -> "나의 귀가"
++                },
++                onClick = { onFilterSelected(filterType) },
++                // ✅ weight(1f) 제거. 텍스트 길이에 맞춰 너비가 유동적으로 변함
++                modifier = Modifier,
++                buttonType = buttonType,
++                isSmall = true,
++            )
++        }
++    }
++}
+ @Composable
+ fun HistoryList(
+     historyItems: List<SafeWalkHistoryItem>,
+     onNavigateToDetail: (sessionId: Long) -> Unit
+ ) {
+     LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
+-        items(historyItems, key = { it.sessionId }) { item -> // id -> sessionId로 변경
++        items(historyItems, key = { it.id }) { item ->
+             HistoryCardItem(
+                 historyItem = item,
+-                onClick = { onNavigateToDetail(item.sessionId) } // id -> sessionId로 변경
++                onClick = { onNavigateToDetail(item.id) }
+             )
+             Divider()
+         }
+     }
+ }
+ 
+-// ✅ 내역이 없을 때 화면
+ @Composable
+ fun EmptyHistoryScreen() {
+     Box(
+Index: feature/home/src/main/java/com/selfbell/home/ui/HistoryCardItem.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.home.ui.composables\r\n\r\nimport androidx.compose.foundation.Image\r\nimport androidx.compose.foundation.layout.*\r\nimport androidx.compose.foundation.shape.CircleShape\r\nimport androidx.compose.material3.Card\r\nimport androidx.compose.material3.ExperimentalMaterial3Api\r\nimport androidx.compose.material3.MaterialTheme\r\nimport androidx.compose.material3.Text\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.draw.clip\r\nimport androidx.compose.ui.layout.ContentScale\r\nimport androidx.compose.ui.res.painterResource\r\nimport androidx.compose.ui.text.font.FontWeight\r\nimport androidx.compose.ui.unit.dp\r\nimport com.selfbell.core.ui.theme.Typography\r\nimport com.selfbell.domain.model.SafeWalkHistoryItem\r\n\r\n@OptIn(ExperimentalMaterial3Api::class)\r\n@Composable\r\nfun HistoryCardItem(\r\n    historyItem: SafeWalkHistoryItem, // SafeWalkDetail 타입\r\n    onClick: () -> Unit,\r\n    modifier: Modifier = Modifier\r\n) {\r\n    Card(\r\n        onClick = onClick,\r\n        modifier = modifier.fillMaxWidth()\r\n    ) {\r\n        Row(\r\n            modifier = Modifier\r\n                .fillMaxWidth()\r\n                .padding(16.dp),\r\n            verticalAlignment = Alignment.CenterVertically,\r\n            horizontalArrangement = Arrangement.SpaceBetween\r\n        ) {\r\n            // ✅ 프로필 이미지 및 텍스트 정보\r\n            Row(verticalAlignment = Alignment.CenterVertically) {\r\n                // 프로필 이미지\r\n                Image(\r\n                    painter = painterResource(id = com.selfbell.core.R.drawable.default_profile_icon2),\r\n                    contentDescription = \"Profile Picture\",\r\n                    modifier = Modifier\r\n                        .size(48.dp)\r\n                        .clip(CircleShape),\r\n                    contentScale = ContentScale.Crop\r\n                )\r\n                Spacer(modifier = Modifier.width(16.dp))\r\n                // 이름 및 주소/날짜\r\n                Column {\r\n                    Text(\r\n                        text = historyItem.ward.name, // 실제 사용자 이름\r\n                        style = Typography.titleMedium,\r\n                        fontWeight = FontWeight.Bold\r\n                    )\r\n                    Spacer(modifier = Modifier.width(4.dp))\r\n                    Text(\r\n                        text = \"${historyItem.destination.addressText} · ${historyItem.startedAt.toLocalDate()}\", // 실제 목적지와 시작 시간\r\n                        style = Typography.bodySmall,\r\n                        color = MaterialTheme.colorScheme.onSurfaceVariant\r\n                    )\r\n                }\r\n            }\r\n            // ✅ 상태 텍스트\r\n            Text(\r\n                text = when (historyItem.status) {\r\n                    \"IN_PROGRESS\" -> \"귀가중\"\r\n                    \"COMPLETED\" -> \"완료\"\r\n                    \"CANCELED\" -> \"취소\"\r\n                    \"ENDED\" -> \"완료\"\r\n                    else -> historyItem.status\r\n                },\r\n                style = Typography.bodyMedium,\r\n                color = if (historyItem.status == \"IN_PROGRESS\") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant\r\n            )\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/feature/home/src/main/java/com/selfbell/home/ui/HistoryCardItem.kt b/feature/home/src/main/java/com/selfbell/home/ui/HistoryCardItem.kt
+--- a/feature/home/src/main/java/com/selfbell/home/ui/HistoryCardItem.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/feature/home/src/main/java/com/selfbell/home/ui/HistoryCardItem.kt	(date 1755957075276)
+@@ -3,44 +3,63 @@
+ import androidx.compose.foundation.Image
+ import androidx.compose.foundation.layout.*
+ import androidx.compose.foundation.shape.CircleShape
++import androidx.compose.foundation.shape.RoundedCornerShape
+ import androidx.compose.material3.Card
+ import androidx.compose.material3.ExperimentalMaterial3Api
+ import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.Surface
+ import androidx.compose.material3.Text
+ import androidx.compose.runtime.Composable
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
+ import androidx.compose.ui.draw.clip
++import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.layout.ContentScale
+ import androidx.compose.ui.res.painterResource
+ import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.tooling.preview.Preview
+ import androidx.compose.ui.unit.dp
+ import com.selfbell.core.ui.theme.Typography
+ import com.selfbell.domain.model.SafeWalkHistoryItem
++import com.selfbell.domain.model.SafeWalkStatus
++import com.selfbell.feature.home.R
++import java.time.LocalDateTime
++import com.selfbell.core.R as CoreR
++import com.selfbell.core.ui.theme.Primary
++import com.selfbell.core.ui.theme.GrayInactive
++import com.selfbell.core.ui.theme.Black
++import com.selfbell.core.ui.theme.Success
++import com.selfbell.core.ui.theme.Danger
++import com.selfbell.core.ui.composables.SelfBellButtonType
++import com.selfbell.core.ui.composables.SelfBellButton
+ 
+ @OptIn(ExperimentalMaterial3Api::class)
+ @Composable
+ fun HistoryCardItem(
+-    historyItem: SafeWalkHistoryItem, // SafeWalkDetail 타입
++    historyItem: SafeWalkHistoryItem,
+     onClick: () -> Unit,
+     modifier: Modifier = Modifier
+ ) {
+     Card(
+         onClick = onClick,
+-        modifier = modifier.fillMaxWidth()
++        modifier = modifier.fillMaxWidth(),
++        colors = androidx.compose.material3.CardDefaults.cardColors(
++            containerColor = Color.Transparent
++        ),
++        elevation = androidx.compose.material3.CardDefaults.cardElevation(
++            defaultElevation = 0.dp
++        )
+     ) {
+         Row(
+             modifier = Modifier
+                 .fillMaxWidth()
+-                .padding(16.dp),
++                .padding(vertical = 12.dp),
+             verticalAlignment = Alignment.CenterVertically,
+             horizontalArrangement = Arrangement.SpaceBetween
+         ) {
+-            // ✅ 프로필 이미지 및 텍스트 정보
+             Row(verticalAlignment = Alignment.CenterVertically) {
+-                // 프로필 이미지
+                 Image(
+-                    painter = painterResource(id = com.selfbell.core.R.drawable.default_profile_icon2),
++                    painter = painterResource(id = CoreR.drawable.default_profile_icon2),
+                     contentDescription = "Profile Picture",
+                     modifier = Modifier
+                         .size(48.dp)
+@@ -48,32 +67,118 @@
+                     contentScale = ContentScale.Crop
+                 )
+                 Spacer(modifier = Modifier.width(16.dp))
+-                // 이름 및 주소/날짜
+                 Column {
+                     Text(
+-                        text = historyItem.ward.name, // 실제 사용자 이름
++                        text = historyItem.userName,
+                         style = Typography.titleMedium,
+-                        fontWeight = FontWeight.Bold
++                        fontWeight = FontWeight.Bold,
++                        color = Black
+                     )
+-                    Spacer(modifier = Modifier.width(4.dp))
++                    Spacer(modifier = Modifier.height(4.dp))
+                     Text(
+-                        text = "${historyItem.destination.addressText} · ${historyItem.startedAt.toLocalDate()}", // 실제 목적지와 시작 시간
++                        text = "${historyItem.destinationName} · ${historyItem.dateTime.toLocalDate()}",
+                         style = Typography.bodySmall,
+-                        color = MaterialTheme.colorScheme.onSurfaceVariant
++                        color = Black
+                     )
+                 }
+             }
+-            // ✅ 상태 텍스트
+-            Text(
+-                text = when (historyItem.status) {
+-                    "IN_PROGRESS" -> "귀가중"
+-                    "COMPLETED" -> "완료"
+-                    "CANCELED" -> "취소"
+-                    "ENDED" -> "완료"
+-                    else -> historyItem.status
+-                },
+-                style = Typography.bodyMedium,
+-                color = if (historyItem.status == "IN_PROGRESS") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
++            SelfBellStatusBadge(status = historyItem.status)
++        }
++    }
++}
++
++@Composable
++private fun SelfBellStatusBadge(status: SafeWalkStatus) {
++    val buttonType = when (status) {
++        SafeWalkStatus.IN_PROGRESS -> SelfBellButtonType.PRIMARY_FILLED
++        SafeWalkStatus.COMPLETED, SafeWalkStatus.ENDED -> SelfBellButtonType.OUTLINED
++        SafeWalkStatus.CANCELED -> SelfBellButtonType.OUTLINED // 취소 상태도 OUTLINED로 처리
++    }
++
++    val text = when (status) {
++        SafeWalkStatus.IN_PROGRESS -> "귀가중"
++        SafeWalkStatus.COMPLETED, SafeWalkStatus.ENDED -> "완료"
++        SafeWalkStatus.CANCELED -> "완료" // 취소 상태도 "완료"로 표시
++    }
++
++    SelfBellButton(
++        text = text,
++        onClick = { /* 상태 배지는 클릭 불가 */ },
++        buttonType = buttonType,
++        isSmall = true,
++        enabled = true,
++        modifier = Modifier.wrapContentSize()
++    )
++}
++
++@Preview(showBackground = true)
++@Composable
++fun HistoryCardItemPreview() {
++    MaterialTheme {
++        Column(modifier = Modifier.padding(16.dp)) {
++            HistoryCardItem(
++                historyItem = SafeWalkHistoryItem(
++                    id = 1,
++                    userProfileUrl = null,
++                    userName = "엄마",
++                    userType = "WARD",
++                    destinationName = "집",
++                    dateTime = LocalDateTime.now(),
++                    status = SafeWalkStatus.IN_PROGRESS
++                ),
++                onClick = {}
++            )
++            Spacer(modifier = Modifier.height(8.dp))
++            HistoryCardItem(
++                historyItem = SafeWalkHistoryItem(
++                    id = 2,
++                    userProfileUrl = null,
++                    userName = "누나",
++                    userType = "WARD",
++                    destinationName = "집",
++                    dateTime = LocalDateTime.now(),
++                    status = SafeWalkStatus.IN_PROGRESS
++                ),
++                onClick = {}
++            )
++            Spacer(modifier = Modifier.height(8.dp))
++            HistoryCardItem(
++                historyItem = SafeWalkHistoryItem(
++                    id = 3,
++                    userProfileUrl = null,
++                    userName = "나의 귀가",
++                    userType = "MINE",
++                    destinationName = "집",
++                    dateTime = LocalDateTime.now().minusDays(2),
++                    status = SafeWalkStatus.COMPLETED
++                ),
++                onClick = {}
++            )
++            Spacer(modifier = Modifier.height(8.dp))
++            HistoryCardItem(
++                historyItem = SafeWalkHistoryItem(
++                    id = 4,
++                    userProfileUrl = null,
++                    userName = "친구",
++                    userType = "WARD",
++                    destinationName = "본가",
++                    dateTime = LocalDateTime.now().minusDays(2),
++                    status = SafeWalkStatus.COMPLETED
++                ),
++                onClick = {}
++            )
++            Spacer(modifier = Modifier.height(8.dp))
++            HistoryCardItem(
++                historyItem = SafeWalkHistoryItem(
++                    id = 5,
++                    userProfileUrl = null,
++                    userName = "아빠",
++                    userType = "WARD",
++                    destinationName = "집",
++                    dateTime = LocalDateTime.now().minusDays(8),
++                    status = SafeWalkStatus.COMPLETED
++                ),
++                onClick = {}
+             )
+         }
+     }
+Index: feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.home.ui\r\n\r\nimport androidx.compose.foundation.layout.*\r\nimport androidx.compose.material3.CircularProgressIndicator\r\nimport androidx.compose.material3.MaterialTheme\r\nimport androidx.compose.material3.Surface\r\nimport androidx.compose.material3.Text\r\nimport androidx.compose.runtime.*\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.graphics.Color\r\nimport androidx.compose.ui.text.font.FontWeight\r\nimport androidx.compose.ui.unit.dp\r\nimport androidx.hilt.navigation.compose.hiltViewModel\r\nimport com.naver.maps.geometry.LatLng\r\n//import com.naver.maps.map.compose.*\r\nimport com.naver.maps.map.overlay.Marker\r\nimport com.naver.maps.map.overlay.PathOverlay\r\nimport com.selfbell.core.ui.composables.ReportScreenHeader\r\nimport com.selfbell.core.ui.composables.ReusableNaverMap // ✅ ReusableNaverMap import\r\nimport com.selfbell.core.ui.theme.Typography\r\nimport com.selfbell.domain.model.SafeWalkDetail\r\nimport java.time.format.DateTimeFormatter\r\n\r\n@Composable\r\nfun HistoryDetailScreen(\r\n    sessionId: Long?,\r\n    onBackClick: () -> Unit,\r\n    viewModel: HistoryDetailViewModel = hiltViewModel()\r\n) {\r\n    val uiState by viewModel.uiState.collectAsState()\r\n\r\n    LaunchedEffect(sessionId) {\r\n        if (sessionId != null) {\r\n            viewModel.loadSafeWalkDetail(sessionId)\r\n        }\r\n    }\r\n\r\n    Column(\r\n        modifier = Modifier.fillMaxSize()\r\n    ) {\r\n        ReportScreenHeader(\r\n            title = \"히스토리 - 상세 내역\",\r\n            showCloseButton = false,\r\n            onCloseClick = {},\r\n            showBackButton = true,\r\n            onBackClick = onBackClick\r\n        )\r\n\r\n        when (val state = uiState) {\r\n            is HistoryDetailUiState.Loading -> {\r\n                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {\r\n                    CircularProgressIndicator()\r\n                }\r\n            }\r\n            is HistoryDetailUiState.Error -> {\r\n                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {\r\n                    Text(text = state.message, color = MaterialTheme.colorScheme.error)\r\n                }\r\n            }\r\n            is HistoryDetailUiState.Success -> {\r\n                val detail = state.detail\r\n                val startLatLng = LatLng(detail.origin.lat, detail.origin.lon)\r\n                val endLatLng = LatLng(detail.destination.lat, detail.destination.lon)\r\n\r\n                Box(modifier = Modifier.fillMaxSize()) {\r\n                    // ✅ ReusableNaverMap 사용\r\n                    ReusableNaverMap(\r\n                        modifier = Modifier.fillMaxSize(),\r\n                        cameraPosition = startLatLng,\r\n                        onMapReady = { naverMap ->\r\n                            // 시작점 마커\r\n                            Marker().apply {\r\n                                position = startLatLng\r\n                                captionText = \"출발\"\r\n                                map = naverMap\r\n                            }\r\n                            // 도착점 마커\r\n                            Marker().apply {\r\n                                position = endLatLng\r\n                                captionText = \"도착\"\r\n                                map = naverMap\r\n                            }\r\n                            // 경로\r\n                            PathOverlay().apply {\r\n                                coords = listOf(startLatLng, endLatLng)\r\n                                color = Color.Blue.hashCode()\r\n                                width = 10\r\n                                map = naverMap\r\n                            }\r\n                        }\r\n                    )\r\n\r\n                    HistoryDetailCard(\r\n                        detail = detail,\r\n                        modifier = Modifier\r\n                            .align(Alignment.BottomCenter)\r\n                            .padding(horizontal = 16.dp, vertical = 24.dp)\r\n                            .wrapContentHeight()\r\n                            .fillMaxWidth()\r\n                    )\r\n                }\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n// ... HistoryDetailCard와 DetailItem Composable은 이전과 동일하게 유지 ...\r\n@Composable\r\nfun HistoryDetailCard(\r\n    detail: SafeWalkDetail,\r\n    modifier: Modifier = Modifier,\r\n    viewModel: HistoryDetailViewModel = hiltViewModel()\r\n) {\r\n    var originAddress by remember { mutableStateOf<String?>(null) }\r\n    var destinationAddress by remember { mutableStateOf<String?>(null) }\r\n    \r\n    // 출발지 주소 가져오기\r\n    LaunchedEffect(detail.origin.lat, detail.origin.lon) {\r\n        originAddress = viewModel.getAddressFromCoordinates(detail.origin.lat, detail.origin.lon)\r\n    }\r\n    \r\n    // 도착지 주소 가져오기\r\n    LaunchedEffect(detail.destination.lat, detail.destination.lon) {\r\n        destinationAddress = viewModel.getAddressFromCoordinates(detail.destination.lat, detail.destination.lon)\r\n    }\r\n    Surface(\r\n        modifier = modifier,\r\n        shape = MaterialTheme.shapes.extraLarge,\r\n        color = MaterialTheme.colorScheme.surface\r\n    ) {\r\n        Column(\r\n            modifier = Modifier.padding(24.dp)\r\n        ) {\r\n            Row(verticalAlignment = Alignment.CenterVertically) {\r\n                Text(\"위치 기록\", style = Typography.titleLarge, fontWeight = FontWeight.Bold)\r\n                Spacer(modifier = Modifier.width(8.dp))\r\n                Text(\r\n                    text = detail.ward.name, // nickname -> name으로 변경\r\n                    style = Typography.titleMedium,\r\n                    color = MaterialTheme.colorScheme.onSurfaceVariant\r\n                )\r\n            }\r\n            Spacer(modifier = Modifier.height(8.dp))\r\n            Text(\r\n                text = detail.startedAt.format(DateTimeFormatter.ofPattern(\"yyyy년 MM월 dd일 오전 HH시 mm분\")),\r\n                style = Typography.bodyMedium,\r\n                color = Color.Gray\r\n            )\r\n            Spacer(modifier = Modifier.height(24.dp))\r\n            DetailItem(\r\n                label = \"상대가 설정한 시간\",\r\n                value = detail.expectedArrival?.let { expected ->\r\n                    \"${detail.startedAt.format(DateTimeFormatter.ofPattern(\"HH:mm\"))} ~ ${expected.format(DateTimeFormatter.ofPattern(\"HH:mm\"))}\"\r\n                } ?: \"설정되지 않음\"\r\n            )\r\n            Spacer(modifier = Modifier.height(8.dp))\r\n            DetailItem(\r\n                label = \"도착시간\",\r\n                value = when (detail.status) { // SafeWalkStatus enum 대신 String 사용\r\n                    \"IN_PROGRESS\" -> \"진행 중\"\r\n                    \"COMPLETED\" -> \"완료됨\"\r\n                    \"ENDED\" -> \"종료됨\"\r\n                    \"CANCELED\" -> \"취소됨\"\r\n                    else -> \"알 수 없음\"\r\n                }\r\n            )\r\n            Spacer(modifier = Modifier.height(8.dp))\r\n            DetailItem(\r\n                label = \"출발지\", \r\n                value = originAddress ?: \"주소를 가져올 수 없습니다\"\r\n            )\r\n            Spacer(modifier = Modifier.height(8.dp))\r\n            DetailItem(\r\n                label = \"도착지\", \r\n                value = destinationAddress ?: detail.destination.addressText ?: \"주소를 가져올 수 없습니다\"\r\n            )\r\n        }\r\n    }\r\n}\r\n\r\n@Composable\r\nfun DetailItem(label: String, value: String) {\r\n    Column {\r\n        Text(text = label, style = Typography.bodyMedium, color = Color.Gray)\r\n        Spacer(modifier = Modifier.height(4.dp))\r\n        Text(text = value, style = Typography.bodyLarge)\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailScreen.kt b/feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailScreen.kt
+--- a/feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailScreen.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/feature/home/src/main/java/com/selfbell/home/ui/HistoryDetailScreen.kt	(date 1755957075274)
+@@ -109,21 +109,8 @@
+ @Composable
+ fun HistoryDetailCard(
+     detail: SafeWalkDetail,
+-    modifier: Modifier = Modifier,
+-    viewModel: HistoryDetailViewModel = hiltViewModel()
++    modifier: Modifier = Modifier
+ ) {
+-    var originAddress by remember { mutableStateOf<String?>(null) }
+-    var destinationAddress by remember { mutableStateOf<String?>(null) }
+-    
+-    // 출발지 주소 가져오기
+-    LaunchedEffect(detail.origin.lat, detail.origin.lon) {
+-        originAddress = viewModel.getAddressFromCoordinates(detail.origin.lat, detail.origin.lon)
+-    }
+-    
+-    // 도착지 주소 가져오기
+-    LaunchedEffect(detail.destination.lat, detail.destination.lon) {
+-        destinationAddress = viewModel.getAddressFromCoordinates(detail.destination.lat, detail.destination.lon)
+-    }
+     Surface(
+         modifier = modifier,
+         shape = MaterialTheme.shapes.extraLarge,
+@@ -166,15 +153,7 @@
+                 }
+             )
+             Spacer(modifier = Modifier.height(8.dp))
+-            DetailItem(
+-                label = "출발지", 
+-                value = originAddress ?: "주소를 가져올 수 없습니다"
+-            )
+-            Spacer(modifier = Modifier.height(8.dp))
+-            DetailItem(
+-                label = "도착지", 
+-                value = destinationAddress ?: detail.destination.addressText ?: "주소를 가져올 수 없습니다"
+-            )
++            DetailItem("주소", detail.destination.addressText)
+         }
+     }
+ }
+Index: data/src/main/java/com/selfbell/data/api/NaverReverseGeocodingService.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.data.api\r\n\r\nimport com.selfbell.data.api.response.NaverReverseGeocodeResponse\r\nimport retrofit2.http.GET\r\nimport retrofit2.http.Query\r\n\r\ninterface NaverReverseGeocodingService {\r\n    @GET(\"map-reversegeocode/v2/gc\")\r\n    suspend fun reverseGeocode(\r\n        @Query(\"coords\") coords: String, // \"경도,위도\" 형식\r\n        @Query(\"output\") output: String = \"json\",\r\n        @Query(\"orders\") orders: String = \"roadaddr,addr\" // 도로명, 지번 순으로 조회\r\n    ): NaverReverseGeocodeResponse\r\n}
+===================================================================
+diff --git a/data/src/main/java/com/selfbell/data/api/NaverReverseGeocodingService.kt b/data/src/main/java/com/selfbell/data/api/NaverReverseGeocodingService.kt
+--- a/data/src/main/java/com/selfbell/data/api/NaverReverseGeocodingService.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/data/src/main/java/com/selfbell/data/api/NaverReverseGeocodingService.kt	(date 1755957075278)
+@@ -1,12 +1,16 @@
+ package com.selfbell.data.api
+ 
++import com.selfbell.BuildConfig
+ import com.selfbell.data.api.response.NaverReverseGeocodeResponse
+ import retrofit2.http.GET
++import retrofit2.http.Header
+ import retrofit2.http.Query
+ 
+-interface NaverReverseGeocodingService {
++interface NaverGeocodingService {
+     @GET("map-reversegeocode/v2/gc")
+     suspend fun reverseGeocode(
++        @Header("X-NCP-APIGW-API-KEY-ID") clientId: String = BuildConfig.NAVER_MAPS_API_CLIENT_ID,
++        @Header("X-NCP-APIGW-API-KEY") clientSecret: String = BuildConfig.NAVER_MAPS_API_CLIENT_SECRET,
+         @Query("coords") coords: String, // "경도,위도" 형식
+         @Query("output") output: String = "json",
+         @Query("orders") orders: String = "roadaddr,addr" // 도로명, 지번 순으로 조회

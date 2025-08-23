@@ -1,7 +1,7 @@
 // feature/escort/ui/EscortViewModel.kt
 package com.selfbell.escort.ui
 
-import SafeWalkService
+import com.selfbell.escort.ui.SafeWalkService
 import android.app.Application
 import android.content.ContentResolver
 import android.content.Intent
@@ -357,9 +357,9 @@ class EscortViewModel @Inject constructor(
                     _destinationSelectionType.value = DestinationSelectionType.NONE
 
                     // ✅ 서비스를 중단하는 Intent 생성
-                    val serviceIntent = Intent(getApplication(), SafeWalkService::class.java)
+                    val serviceIntent = Intent(application, SafeWalkService::class.java)
                     // ✅ 서비스 중단
-                    getApplication<Application>().stopService(serviceIntent)
+                    application.stopService(serviceIntent)
                     Log.d("EscortViewModel", "SafeWalkService 중단 요청")
 
                     stompManager.disconnect()

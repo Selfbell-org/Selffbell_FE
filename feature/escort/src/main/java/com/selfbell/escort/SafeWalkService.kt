@@ -11,7 +11,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.selfbell.app.MainActivity
+// import com.selfbell.app.MainActivity
 import com.selfbell.core.R
 import com.selfbell.core.location.LocationTracker
 import com.selfbell.data.api.StompManager
@@ -70,7 +70,9 @@ class SafeWalkService : Service() {
     }
 
     private fun startForegroundService() {
-        val notificationIntent = Intent(this, MainActivity::class.java).apply {
+        val notificationIntent = Intent().apply {
+            action = Intent.ACTION_MAIN
+            addCategory(Intent.CATEGORY_LAUNCHER)
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         val pendingIntent = PendingIntent.getActivity(
