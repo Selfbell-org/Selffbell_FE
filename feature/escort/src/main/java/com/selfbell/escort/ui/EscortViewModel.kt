@@ -267,6 +267,19 @@ class EscortViewModel @Inject constructor(
         checkSetupCompletion()
     }
 
+    // ✅ [추가] 보호자 선택을 취소하고 시간 설정으로 돌아가는 함수
+    fun returnToTimeSetup() {
+        // 1. UI 상태를 다시 설정(SETUP) 단계로 변경
+        _escortFlowState.value = EscortFlowState.SETUP
+
+        // 2. 시간 입력 모달을 다시 표시
+        _showTimeInputModal.value = true
+
+        // 3. 혹시 선택했을 수 있는 보호자 목록을 초기화
+        _selectedGuardians.value = emptySet()
+        _isStartButtonEnabled.value = false // 보호자 선택 화면의 '출발하기' 버튼도 비활성화
+    }
+
     // ✅ 선택된 보호자들로 안심귀가 시작 함수
     fun startSafeWalk() {
         viewModelScope.launch {
@@ -344,8 +357,11 @@ class EscortViewModel @Inject constructor(
                     _isSessionActive.value = false
                     _sessionId.value = null
                     _escortFlowState.value = EscortFlowState.SETUP // 초기 설정 화면으로 복귀
+                    _isDestinationSelected.value = false
                     _showTimeInputModal.value = false
-                    _isDestinationSelected.value = false // 목적지 선택 초기화
+                    _isSetupComplete.value = false // '출발하기' 버튼 비활성화
+                    _timerMinutes.value = 30 // 타이머 기본값으로 리셋
+                    _expectedArrivalTime.value = null // 도착 예정 시간 리셋
                     _selectedGuardians.value = emptySet() // 선택된 보호자 초기화
                     _isStartButtonEnabled.value = false // 버튼 비활성화
                     locationTracker.stopLocationUpdates()
