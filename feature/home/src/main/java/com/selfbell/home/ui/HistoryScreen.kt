@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import com.selfbell.core.ui.composables.SelfBellButton
 import com.selfbell.core.ui.composables.SelfBellButtonType
+import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
 import com.selfbell.core.R as CoreR
 
 @Composable
@@ -31,6 +32,7 @@ fun HistoryScreen(
 
     // ✅ 수정: collectAsState()를 사용하여 currentFilter 상태를 구독
     val currentFilter by viewModel.currentFilter.collectAsState()
+    val floatingBottomPadding = LocalFloatingBottomBarPadding.current
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -90,7 +92,8 @@ fun HistoryScreen(
                 } else {
                     HistoryList(
                         historyItems = state.historyItems,
-                        onNavigateToDetail = onNavigateToDetail
+                        onNavigateToDetail = onNavigateToDetail,
+                        contentPadding = floatingBottomPadding
                     )
                 }
             }
@@ -137,9 +140,11 @@ private fun HistoryFilterButtons(
 @Composable
 fun HistoryList(
     historyItems: List<SafeWalkHistoryItem>,
-    onNavigateToDetail: (sessionId: Long) -> Unit
+    onNavigateToDetail: (sessionId: Long) -> Unit,
+    contentPadding: PaddingValues
 ) {
-    LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
+    LazyColumn(modifier = Modifier.padding(horizontal = 16.dp),
+        contentPadding = contentPadding) {
         items(historyItems, key = { it.sessionId }) { item -> // id -> sessionId로 변경
             HistoryCardItem(
                 historyItem = item,

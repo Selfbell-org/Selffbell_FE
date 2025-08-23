@@ -12,19 +12,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.naver.maps.geometry.LatLng
-//import com.naver.maps.map.compose.*
 import com.naver.maps.map.overlay.Marker
-import com.naver.maps.map.overlay.PathOverlay
 import com.selfbell.core.ui.composables.ReportScreenHeader
-import com.selfbell.core.ui.composables.ReusableNaverMap // ✅ ReusableNaverMap import
+import com.selfbell.core.ui.composables.ReusableNaverMap
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkDetail
-import com.selfbell.domain.model.SafeWalkStatus
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.geometry.LatLngBounds
+import com.naver.maps.map.CameraUpdate
+import com.naver.maps.map.overlay.PolylineOverlay
+import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
 import com.selfbell.core.ui.theme.GrayInactive
 import com.selfbell.core.ui.theme.Primary
+import java.time.Duration
 
 @Composable
 fun HistoryDetailScreen(
@@ -33,6 +36,9 @@ fun HistoryDetailScreen(
     viewModel: HistoryDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val floatingBottomPadding = LocalFloatingBottomBarPadding.current
+    val trackCoordinates by viewModel.trackCoordinates.collectAsState()
+
 
     LaunchedEffect(sessionId) {
         if (sessionId != null) {
@@ -40,9 +46,7 @@ fun HistoryDetailScreen(
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         ReportScreenHeader(
             title = "히스토리 - 상세 내역",
             showCloseButton = false,
@@ -68,29 +72,35 @@ fun HistoryDetailScreen(
                 val endLatLng = LatLng(detail.destination.lat, detail.destination.lon)
 
                 Box(modifier = Modifier.fillMaxSize()) {
-                    // ✅ ReusableNaverMap 사용
                     ReusableNaverMap(
                         modifier = Modifier.fillMaxSize(),
                         cameraPosition = startLatLng,
                         onMapReady = { naverMap ->
-                            // 시작점 마커
                             Marker().apply {
                                 position = startLatLng
                                 captionText = "출발"
                                 map = naverMap
                             }
-                            // 도착점 마커
                             Marker().apply {
                                 position = endLatLng
                                 captionText = "도착"
                                 map = naverMap
                             }
-                            // 경로
-                            PathOverlay().apply {
-                                coords = listOf(startLatLng, endLatLng)
-                                color = Color.Blue.hashCode()
-                                width = 10
-                                map = naverMap
+                            // ✅ [수정] 받아온 실제 트랙 좌표로 Polyline을 그림
+                            if (trackCoordinates.size >= 2) {
+                                PolylineOverlay().apply {
+                                    coords = trackCoordinates
+                                    color = Color(0xFF007AFF).hashCode() // 파란색 계열
+                                    width = 12
+                                    capType = PolylineOverlay.LineCap.Round
+                                    joinType = PolylineOverlay.LineJoin.Round
+                                    map = naverMap
+                                }
+
+                                // ✅ [추가] 경로 전체가 보이도록 카메라 위치/줌 자동 조정
+                                val bounds = LatLngBounds.from(trackCoordinates)
+                                val cameraUpdate = CameraUpdate.fitBounds(bounds, 100) // 100은 패딩값
+                                naverMap.moveCamera(cameraUpdate)
                             }
                         }
                     )
@@ -99,9 +109,8 @@ fun HistoryDetailScreen(
                         detail = detail,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(horizontal = 16.dp, vertical = 24.dp)
-                            .wrapContentHeight()
-                            .fillMaxWidth()
+                            .padding(floatingBottomPadding)
+                            .padding(bottom = 24.dp)
                     )
                 }
             }
@@ -109,52 +118,48 @@ fun HistoryDetailScreen(
     }
 }
 
-// ... HistoryDetailCard와 DetailItem Composable은 이전과 동일하게 유지 ...
+
 @Composable
 fun HistoryDetailCard(
     detail: SafeWalkDetail,
-    modifier: Modifier = Modifier,
-    viewModel: HistoryDetailViewModel = hiltViewModel()
+    modifier: Modifier = Modifier
 ) {
-    var originAddress by remember { mutableStateOf<String?>(null) }
-    var destinationAddress by remember { mutableStateOf<String?>(null) }
-    
-    // 출발지 주소 가져오기
-    LaunchedEffect(detail.origin.lat, detail.origin.lon) {
-        originAddress = viewModel.getAddressFromCoordinates(detail.origin.lat, detail.origin.lon)
-    }
-    
-    // 도착지 주소 가져오기
-    LaunchedEffect(detail.destination.lat, detail.destination.lon) {
-        destinationAddress = viewModel.getAddressFromCoordinates(detail.destination.lat, detail.destination.lon)
-    }
+    // 날짜/시간 포맷터 정의
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
     Surface(
-        modifier = modifier,
+        modifier = modifier.shadow(
+            elevation = 59.dp,
+            spotColor = Color(0x40000000),
+            ambientColor = Color(0x40000000))
+            .fillMaxWidth()
+            .height(244.dp),
         shape = RoundedCornerShape(16.dp),
         color = Color.White,
         shadowElevation = 8.dp
     ) {
+        // 👇 [수정] Column에 modifier와 적절한 arrangement를 다시 추가합니다.
         Column(
-            modifier = Modifier.padding(20.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp) // 아이템 사이의 수직 간격
         ) {
-            // 제목과 배지
+            // --- 제목과 배지 ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "위치 기록",
                     style = Typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    fontWeight = FontWeight.Bold
                 )
-                
-                // 배지
+                Spacer(modifier = Modifier.width(8.dp))
                 Surface(
                     color = Primary,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.wrapContentSize()
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
                         text = detail.ward.nickname,
@@ -164,97 +169,72 @@ fun HistoryDetailCard(
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // 날짜와 시간
+
+            // --- 날짜와 시간 ---
             Text(
-                text = detail.startedAt.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 오전 HH시 mm분")),
+                text = detail.startedAt.format(dateFormatter) + " " + detail.startedAt.format(timeFormatter),
                 style = Typography.bodyMedium,
                 color = GrayInactive
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // 상대가 설정한 시간
-            val expectedStartTime = detail.expectedStartTime
-            val expectedEndTime = detail.expectedEndTime
-            val estimatedDuration = detail.estimatedDurationMinutes
-            
-            if (expectedStartTime != null && expectedEndTime != null) {
-                Row {
-                    Text(
-                        text = "상대가 설정한 시간 ",
-                        style = Typography.bodyMedium,
-                        color = GrayInactive
-                    )
-                    Text(
-                        text = "${expectedStartTime.format(DateTimeFormatter.ofPattern("HH:mm"))} ~ ${expectedEndTime.format(DateTimeFormatter.ofPattern("HH:mm"))}",
-                        style = Typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = " (${estimatedDuration ?: java.time.Duration.between(expectedStartTime, expectedEndTime).toMinutes()}분)",
-                        style = Typography.bodyMedium,
-                        color = GrayInactive
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-            
-            // 도착시간
-            val arrivalTime = if (detail.status == SafeWalkStatus.IN_PROGRESS) {
-                "진행 중"
-            } else {
-                detail.endedAt?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "알 수 없음"
-            }
-            
-            val endedAt = detail.endedAt
-            val timeDifference = detail.timeDifferenceMinutes
-            
-            Row {
-                Text(
-                    text = "도착시간 ",
-                    style = Typography.bodyMedium,
-                    color = GrayInactive
+
+            // --- 설정 귀가 시간 ---
+            val targetTime = detail.timerEnd ?: detail.expectedArrival
+            if (targetTime != null) {
+                val durationInMinutes = Duration.between(detail.startedAt, targetTime).toMinutes()
+                val timeRangeText =
+                    "${detail.startedAt.format(timeFormatter)} ~ ${targetTime.format(timeFormatter)} (${durationInMinutes}분)"
+                DetailItem(
+                    label = "설정 귀가 시간",
+                    value = timeRangeText
                 )
-                Text(
-                    text = arrivalTime,
-                    style = Typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
+            }
+
+            // --- 도착시간 ---
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val arrivalTimeText = detail.endedAt?.format(timeFormatter) ?: "진행 중"
+                DetailItem(
+                    label = "도착 시간",
+                    value = arrivalTimeText
                 )
-                if (timeDifference != null && endedAt != null) {
-                    val timeText = when {
-                        timeDifference > 0 -> " (예상 도착 시간 ${timeDifference}분 후)"
-                        timeDifference < 0 -> " (예상 도착 시간 ${-timeDifference}분 전)"
-                        else -> " (예상 도착 시간과 동일)"
+
+                if (detail.endedAt != null && targetTime != null) {
+                    val differenceInMinutes = Duration.between(detail.endedAt, targetTime).toMinutes()
+                    val differenceText = when {
+                        differenceInMinutes > 0 -> "(예상보다 ${differenceInMinutes}분 일찍 도착)"
+                        differenceInMinutes < 0 -> "(예상보다 ${-differenceInMinutes}분 늦게 도착)"
+                        else -> "(예상 시간과 동일)"
                     }
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = timeText,
+                        text = differenceText,
                         style = Typography.bodyMedium,
                         color = GrayInactive
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // 주소
-            Row {
-                Text(
-                    text = "주소 ",
-                    style = Typography.bodyMedium,
-                    color = GrayInactive
-                )
-                Text(
-                    text = detail.destination.addressText,
-                    style = Typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-            }
+
+            // --- 주소 ---
+            DetailItem(
+                label = "주소",
+                value = detail.destination.addressText
+            )
         }
+    }
+}
+
+@Composable
+private fun DetailItem(label: String, value: String) {
+    Row(verticalAlignment = Alignment.Top) {
+        Text(
+            text = "$label ",
+            style = Typography.bodyMedium,
+            color = GrayInactive
+        )
+        Text(
+            text = value,
+            style = Typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
     }
 }

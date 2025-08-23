@@ -40,10 +40,10 @@ fun SafeWalkDetailResponse.toDomainModel(): SafeWalkDetail {
         destination = this.destination.toDomainModel(),
         status = SafeWalkStatus.valueOf(this.status),
         startedAt = LocalDateTime.parse(this.startedAt),
+        endedAt = this.endedAt?.let { LocalDateTime.parse(it) },
         expectedArrival = this.expectedArrival?.let { LocalDateTime.parse(it) },
         timerEnd = this.timerEnd?.let { LocalDateTime.parse(it) },
-        guardians = this.guardians.map { it.toDomainModel() },
-        endedAt = this.endedAt?.let { LocalDateTime.parse(it) }
+        guardians = this.guardians.map { it.toDomainModel() }
     )
 }
 
