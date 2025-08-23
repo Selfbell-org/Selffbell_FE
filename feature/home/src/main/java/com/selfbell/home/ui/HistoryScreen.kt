@@ -121,7 +121,7 @@ private fun HistoryFilterButtons(
             // ✅ SelfBellButton 컴포넌트 사용
             SelfBellButton(
                 text = when (filterType) {
-                    HistoryUserFilter.ALL -> "전체 기록"
+                    //HistoryUserFilter.ALL -> "전체 기록"
                     HistoryUserFilter.GUARDIANS -> "보호자/피보호자"
                     HistoryUserFilter.MINE -> "나의 귀가"
                 },
