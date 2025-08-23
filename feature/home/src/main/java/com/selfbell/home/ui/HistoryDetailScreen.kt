@@ -1,6 +1,5 @@
 package com.selfbell.home.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -13,7 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.overlay.Marker
 import com.selfbell.core.ui.composables.ReportScreenHeader
 import com.selfbell.core.ui.composables.ReusableNaverMap
@@ -22,6 +20,10 @@ import com.selfbell.domain.model.SafeWalkDetail
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.shadow
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.geometry.LatLngBounds
+import com.naver.maps.map.CameraUpdate
+import com.naver.maps.map.overlay.PolylineOverlay
 import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
 import com.selfbell.core.ui.theme.GrayInactive
 import com.selfbell.core.ui.theme.Primary
@@ -35,6 +37,8 @@ fun HistoryDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val floatingBottomPadding = LocalFloatingBottomBarPadding.current
+    val trackCoordinates by viewModel.trackCoordinates.collectAsState()
+
 
     LaunchedEffect(sessionId) {
         if (sessionId != null) {
@@ -81,6 +85,22 @@ fun HistoryDetailScreen(
                                 position = endLatLng
                                 captionText = "도착"
                                 map = naverMap
+                            }
+                            // ✅ [수정] 받아온 실제 트랙 좌표로 Polyline을 그림
+                            if (trackCoordinates.size >= 2) {
+                                PolylineOverlay().apply {
+                                    coords = trackCoordinates
+                                    color = Color(0xFF007AFF).hashCode() // 파란색 계열
+                                    width = 12
+                                    capType = PolylineOverlay.LineCap.Round
+                                    joinType = PolylineOverlay.LineJoin.Round
+                                    map = naverMap
+                                }
+
+                                // ✅ [추가] 경로 전체가 보이도록 카메라 위치/줌 자동 조정
+                                val bounds = LatLngBounds.from(trackCoordinates)
+                                val cameraUpdate = CameraUpdate.fitBounds(bounds, 100) // 100은 패딩값
+                                naverMap.moveCamera(cameraUpdate)
                             }
                         }
                     )
