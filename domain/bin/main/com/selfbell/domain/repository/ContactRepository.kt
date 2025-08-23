@@ -49,4 +49,11 @@ interface ContactRepository {
      * @param contactId 수락할 연락처 요청 ID
      */
     suspend fun acceptContactRequest(contactId: Long)
+
+    /**
+     * 특정 사용자의 FCM 토큰을 가져옵니다.
+     * @param userId FCM 토큰을 가져올 사용자 ID
+     * @return FCM 토큰 (없으면 null)
+     */
+    suspend fun getUserFCMToken(userId: String): String?
 }

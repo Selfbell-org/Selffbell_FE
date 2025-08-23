@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng
 import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.repository.AddressRepository
+import com.selfbell.domain.repository.ContactRepository
 import com.selfbell.domain.model.Criminal
 import com.selfbell.domain.model.EmergencyBell
 import com.selfbell.domain.model.EmergencyBellDetail
@@ -23,6 +24,7 @@ import javax.inject.Inject
 import com.selfbell.core.location.LocationTracker
 import kotlin.text.ifEmpty
 import kotlin.text.toDoubleOrNull
+import com.selfbell.core.model.Contact // ✅ Contact 모델 import
 
 // ✅ 지도의 마커 표시 모드를 위한 enum 클래스 (HomeViewModel이 접근 가능하도록 이 파일에 추가)
 enum class MapMarkerMode {
@@ -49,7 +51,9 @@ class HomeViewModel @Inject constructor(
     private val emergencyBellRepository: EmergencyBellRepository,
     private val criminalRepository: CriminalRepository,
     private val locationTracker: LocationTracker,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val emergencyRepository: EmergencyBellRepository, // ✅ EmergencyRepository 주입
+    private val contactRepository: ContactRepository // ✅ ContactRepository 주입
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -77,8 +81,28 @@ class HomeViewModel @Inject constructor(
     private val _isCriminalsLoading = MutableStateFlow(false)
     val isCriminalsLoading: StateFlow<Boolean> = _isCriminalsLoading.asStateFlow()
 
+    // ✅ 긴급 신고 시 선택된 보호자 목록 (더미 데이터)
+    private val _selectedGuardians = MutableStateFlow(
+        listOf(
+            Contact(1L, null, "엄마", "01011112222", "fcm_token_1"),
+            Contact(2L, null, "아빠", "01033334444", "fcm_token_2"),
+        )
+    )
+    val selectedGuardians: StateFlow<List<Contact>> = _selectedGuardians.asStateFlow()
+
+    // ✅ 긴급 신고 메시지 템플릿
+    private val _messageTemplates = MutableStateFlow(
+        listOf(
+            "위급 상황입니다. 제 위치를 확인해주세요.",
+            "현재 위험에 처해있습니다. 도움을 요청합니다."
+        )
+    )
+    val messageTemplates: StateFlow<List<String>> = _messageTemplates.asStateFlow()
+
+
     init {
         startHomeLocationStream()
+        loadAcceptedGuardians()
         // ✅ 추가: _preloadedCriminals의 변경을 감지하여 UIState를 업데이트합니다.
         viewModelScope.launch {
             _preloadedCriminals.collectLatest { criminalsList ->
@@ -111,8 +135,6 @@ class HomeViewModel @Inject constructor(
                     }
 
                     // UI 상태 업데이트
-                    // ✅ 수정: _uiState를 초기화할 때, _preloadedCriminals.value를 사용하되,
-                    // 이는 초기에는 빈 리스트일 수 있다는 것을 감안합니다.
                     _uiState.value = HomeUiState.Success(
                         userLatLng = userLatLng,
                         emergencyBells = emergencyBells,
@@ -135,19 +157,52 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * ✅ 백그라운드에서 범죄자 정보를 미리 가져오는 함수
-     * 이 함수는 UI 로딩을 방해하지 않습니다.
-     */
+    private fun loadAcceptedGuardians() {
+        viewModelScope.launch {
+            try {
+                if (tokenManager.hasValidToken()) {
+                    val relationships = contactRepository.getContactsFromServer(status = "ACCEPTED", page = 0, size = 100)
+                    val guardians = mutableListOf<Contact>()
+                    
+                    for (rel in relationships) {
+                        val phone = if (rel.toPhoneNumber.isNotBlank()) rel.toPhoneNumber else rel.fromPhoneNumber
+                        val userId = rel.toUserId
+                        
+                        // FCM 토큰 가져오기
+                        val fcmToken = if (userId.isNotBlank()) {
+                            contactRepository.getUserFCMToken(userId)
+                        } else null
+                        
+                        guardians.add(Contact(
+                            id = rel.id.toLongOrNull() ?: 0L,
+                            userId = userId.toLongOrNull(),
+                            name = rel.name,
+                            phoneNumber = phone,
+                            fcmToken = fcmToken
+                        ))
+                    }
+                    
+                    _selectedGuardians.value = guardians
+                    Log.d("HomeViewModel", "수락된 보호자 ${guardians.size}명 로드 완료 (FCM 토큰 포함)")
+                } else {
+                    Log.d("HomeViewModel", "토큰이 없어 보호자 목록을 로드하지 않습니다")
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "보호자 목록 로드 실패: ${e.message}", e)
+                // 실패 시 더미 데이터 유지
+            }
+        }
+    }
+
     private fun fetchCriminals(userLatLng: LatLng) {
         viewModelScope.launch {
             try {
-                _isCriminalsLoading.value = true // 로딩 시작
+                _isCriminalsLoading.value = true
                 if (tokenManager.hasValidToken()) {
                     val criminals = criminalRepository.getNearbyCriminals(
                         lat = userLatLng.latitude,
                         lon = userLatLng.longitude,
-                        radius = 1000 // API 명세에 따라 500m~1000m 사이의 값으로 조정 가능
+                        radius = 1000
                     )
                     _preloadedCriminals.value = criminals
                     Log.d("HomeViewModel", "범죄자 ${criminals.size}개 사전 로드 완료")
@@ -156,17 +211,13 @@ class HomeViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "범죄자 정보 사전 로드 실패: ${e.message}", e)
-                _preloadedCriminals.value = emptyList() // 실패 시 빈 리스트로 초기화
+                _preloadedCriminals.value = emptyList()
             } finally {
-                _isCriminalsLoading.value = false // 로딩 종료
+                _isCriminalsLoading.value = false
             }
         }
     }
 
-    /**
-     * ✅ 지도의 마커 모드를 전환하는 함수
-     * 이 함수는 즉시 상태를 전환하며, 네트워크 요청을 하지 않습니다.
-     */
     fun toggleMapMarkerMode() {
         _mapMarkerMode.value = if (_mapMarkerMode.value == MapMarkerMode.SAFETY_BELL_ONLY) {
             MapMarkerMode.SAFETY_BELL_AND_CRIMINALS
@@ -249,5 +300,38 @@ class HomeViewModel @Inject constructor(
         _cameraTargetLatLng.value = markerData.latLng
         _searchText.value = markerData.address
         _searchResultMessage.value = null
+    }
+
+    // ✅ 긴급 신고 메시지를 보내는 함수 추가
+    fun sendEmergencyAlert(guardians: List<Contact>, message: String) {
+        viewModelScope.launch {
+            try {
+                // 현재 위치 정보를 가져오기
+                val currentState = _uiState.value
+                val currentLocation = if (currentState is HomeUiState.Success) {
+                    currentState.userLatLng
+                } else {
+                    DEFAULT_LAT_LNG
+                }
+                
+                val myUserId = "userId_123" // TODO: 실제 사용자 ID 가져오기
+
+                guardians.forEach { contact ->
+                    val recipientToken = contact.fcmToken ?: return@forEach // 토큰이 없으면 건너뜀
+
+                    emergencyRepository.sendEmergencyAlert(
+                        recipientToken = recipientToken,
+                        senderId = myUserId,
+                        message = message,
+                        lat = currentLocation.latitude,
+                        lon = currentLocation.longitude
+                    )
+                }
+                
+                Log.d("HomeViewModel", "긴급 신고 메시지 전송 성공: ${guardians.size}명에게 전송")
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "긴급 신고 메시지 전송 실패", e)
+            }
+        }
     }
 }

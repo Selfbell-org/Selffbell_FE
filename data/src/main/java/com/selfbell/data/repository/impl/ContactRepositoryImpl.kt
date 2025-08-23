@@ -102,4 +102,20 @@ class ContactRepositoryImpl @Inject constructor(
             throw e
         }
     }
+
+    override suspend fun getUserFCMToken(userId: String): String? {
+        return try {
+            val response = contactService.getUserFCMToken(userId)
+            if (response.success && response.fcmToken != null) {
+                Log.d("ContactRepo", "FCM 토큰 가져오기 성공: userId=$userId")
+                response.fcmToken
+            } else {
+                Log.d("ContactRepo", "FCM 토큰이 없음: userId=$userId")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("ContactRepo", "FCM 토큰 가져오기 실패: userId=$userId", e)
+            null
+        }
+    }
 }

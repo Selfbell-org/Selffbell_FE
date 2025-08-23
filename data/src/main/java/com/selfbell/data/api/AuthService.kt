@@ -27,8 +27,8 @@ data class SignupRequest(
 data class LoginRequest(
     val phoneNumber: String,
     val password: String,
-    val deviceToken: String, // ✅ 추가
-    val deviceType: String   // ✅ 추가
+//    val deviceToken: String, // ✅ 추가
+//    val deviceType: String   // ✅ 추가
 )
 
 // ✅ 프로필 업데이트 요청 데이터 클래스 추가
