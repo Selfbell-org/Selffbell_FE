@@ -16,6 +16,10 @@ class SafeWalkRepositoryImpl @Inject constructor(
     private val api: SafeWalksApi
 ) : SafeWalkRepository {
 
+    // ✅ [추가] 서버가 요구하는 ISO 8601 날짜/시간 형식을 정의합니다.
+    private val isoFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+
+
     // ✅ 파라미터로 받은 정보들을 사용해 SafeWalkCreateRequest를 생성
     override suspend fun createSafeWalkSession(
         originLat: Double,
@@ -24,6 +28,7 @@ class SafeWalkRepositoryImpl @Inject constructor(
         destinationLat: Double,
         destinationLon: Double,
         destinationAddress: String,
+        destinationName: String,
         expectedArrival: LocalDateTime?,
         timerMinutes: Int?,
         guardianIds: List<Long>
@@ -33,6 +38,7 @@ class SafeWalkRepositoryImpl @Inject constructor(
             originAddress = originAddress,
             destination = LocationRequest(destinationLat, destinationLon),
             destinationAddress = destinationAddress,
+            destinationName = destinationName,
             expectedArrival = expectedArrival?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             timerMinutes = timerMinutes,
             guardianIds = guardianIds
@@ -51,7 +57,7 @@ class SafeWalkRepositoryImpl @Inject constructor(
             lat = lat,
             lon = lon,
             accuracyM = accuracy,
-            capturedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            capturedAt = LocalDateTime.now().format(isoFormatter)
         )
         
         Log.d("SafeWalkRepository", "=== 위치 트랙 업로드 시작 ===")

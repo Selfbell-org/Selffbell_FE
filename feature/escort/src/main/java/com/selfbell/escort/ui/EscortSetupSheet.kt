@@ -39,7 +39,6 @@ fun EscortSetupSheet(
     showTimeInputModal: Boolean,
     onCloseTimeInputModal: () -> Unit
 ) {
-    var activeTab by remember { mutableStateOf("destination") }
 
     Card(
         modifier = modifier
@@ -55,16 +54,16 @@ fun EscortSetupSheet(
                 TabButton(
                     text = "출발지 입력",
                     subText = startLocationName,
-                    isSelected = activeTab == "start",
-                    onClick = { activeTab = "start" },
+                    isSelected = false,
+                    onClick = { },
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 TabButton(
                     text = "도착지 입력",
                     subText = destinationLocationName,
-                    isSelected = activeTab == "destination",
-                    onClick = { activeTab = "destination" },
+                    isSelected = true,
+                    onClick = { },
                     modifier = Modifier.weight(1f)
                 )
             }

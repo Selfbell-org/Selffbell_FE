@@ -27,6 +27,7 @@ import com.selfbell.domain.model.FavoriteAddress
 import com.selfbell.domain.repository.AddressRepository
 import com.selfbell.domain.repository.FavoriteAddressRepository
 import com.selfbell.domain.repository.ContactRepository
+import com.selfbell.domain.repository.ReverseGeocodingRepository
 import com.selfbell.domain.model.ContactRelationship
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -39,6 +40,10 @@ enum class EscortFlowState {
     IN_PROGRESS
 }
 
+// ✅ [추가] 목적지 선택 방식을 구분하기 위한 enum
+private enum class DestinationSelectionType {
+    NONE, FAVORITE, DIRECT
+}
 
 @HiltViewModel
 class EscortViewModel @Inject constructor(
@@ -49,7 +54,8 @@ class EscortViewModel @Inject constructor(
     private val addressRepository: AddressRepository,
     private val locationTracker: LocationTracker,
     private val tokenManager: TokenManager,
-    private val contactRepository: ContactRepository
+    private val contactRepository: ContactRepository,
+    private val reverseGeocodingRepository: ReverseGeocodingRepository
 ) : ViewModel() {
 
     private val stompManager = StompManager()
@@ -115,8 +121,13 @@ class EscortViewModel @Inject constructor(
     private val _showTimeInputModal = MutableStateFlow(false)
     val showTimeInputModal = _showTimeInputModal.asStateFlow()
 
+    // ✅ [추가] 목적지 선택 방식을 저장할 상태 변수
+    private val _destinationSelectionType = MutableStateFlow(DestinationSelectionType.NONE)
+
+
 
     init {
+        trackCurrentUserLocationForSetup()
         loadContacts()
         loadAcceptedFriends() // 친구 목록 로드 추가
         checkCurrentSession() // ✅ ViewModel 생성 시 진행 중인 세션 확인
@@ -169,9 +180,10 @@ class EscortViewModel @Inject constructor(
         )
         _isDestinationSelected.value = true
         _showTimeInputModal.value = true // 시간 입력 모달 표시
+        _destinationSelectionType.value = DestinationSelectionType.FAVORITE
         Log.d(
             "EscortViewModel",
-            "[onFavoriteAddressSelected] destination=${_destinationLocation.value.name}, lat=${_destinationLocation.value.latLng.latitude}, lon=${_destinationLocation.value.latLng.longitude}, isDestinationSelected=${_isDestinationSelected.value}, showTimeInputModal=${_showTimeInputModal.value}"
+            "[onFavoriteAddressSelected] destination=${_destinationLocation.value.name}, lat=${_destinationLocation.value.latLng.latitude}, lon=${_destinationLocation.value.latLng.longitude}, isDestinationSelected=${_isDestinationSelected.value}, showTimeInputModal=${_showTimeInputModal.value}, destinationSelectionType=${_destinationSelectionType.value}"
         )
     }
 
@@ -184,9 +196,10 @@ class EscortViewModel @Inject constructor(
         _destinationLocation.value = LocationState(name, latLng)
         _isDestinationSelected.value = true
         _showTimeInputModal.value = true // 시간 입력 모달 표시
+        _destinationSelectionType.value = DestinationSelectionType.DIRECT
         Log.d(
             "EscortViewModel",
-            "[onDirectAddressSelected] destination=${_destinationLocation.value.name}, lat=${_destinationLocation.value.latLng.latitude}, lon=${_destinationLocation.value.latLng.longitude}, isDestinationSelected=${_isDestinationSelected.value}, showTimeInputModal=${_showTimeInputModal.value}"
+            "[onDirectAddressSelected] destination=${_destinationLocation.value.name}, lat=${_destinationLocation.value.latLng.latitude}, lon=${_destinationLocation.value.latLng.longitude}, isDestinationSelected=${_isDestinationSelected.value}, showTimeInputModal=${_showTimeInputModal.value}, destinationSelectionType=${_destinationSelectionType.value}"
         )
     }
 
@@ -304,6 +317,13 @@ class EscortViewModel @Inject constructor(
                     }
                 }
 
+                // ✅ [추가] 선택 방식에 따라 destinationName 결정
+                val destinationName = when (_destinationSelectionType.value) {
+                    DestinationSelectionType.FAVORITE -> _destinationLocation.value.name
+                    DestinationSelectionType.DIRECT -> "직접 입력한 주소"
+                    else -> _destinationLocation.value.name // 예외 처리, 기본값으로 주소 이름 사용
+                }
+
                 val session = safeWalkRepository.createSafeWalkSession(
                     originLat = _startLocation.value.latLng.latitude,
                     originLon = _startLocation.value.latLng.longitude,
@@ -311,6 +331,7 @@ class EscortViewModel @Inject constructor(
                     destinationLat = _destinationLocation.value.latLng.latitude,
                     destinationLon = _destinationLocation.value.latLng.longitude,
                     destinationAddress = _destinationLocation.value.name,
+                    destinationName = destinationName,
                     expectedArrival = expectedArrival,
                     timerMinutes = if (_arrivalMode.value == ArrivalMode.TIMER) _timerMinutes.value else null,
                     guardianIds = guardianIds
@@ -364,6 +385,7 @@ class EscortViewModel @Inject constructor(
                     _expectedArrivalTime.value = null // 도착 예정 시간 리셋
                     _selectedGuardians.value = emptySet() // 선택된 보호자 초기화
                     _isStartButtonEnabled.value = false // 버튼 비활성화
+                    _destinationSelectionType.value = DestinationSelectionType.NONE
                     locationTracker.stopLocationUpdates()
                     stompManager.disconnect()
                 }
@@ -396,8 +418,44 @@ class EscortViewModel @Inject constructor(
         }
     }
 
-    fun updateStartLocation(name: String, latLng: LatLng) {
-        _startLocation.value = LocationState(name, latLng)
+    // ✅ [추가] 안심귀가 설정 단계에서 사용자의 현재 위치를 추적하고 업데이트하는 함수
+    private fun trackCurrentUserLocationForSetup() {
+        viewModelScope.launch {
+            // 위치 권한이 허용되었다고 가정
+            locationTracker.getLocationUpdates().collect { location ->
+                val currentLatLng = LatLng(location.latitude, location.longitude)
+                
+                Log.d("EscortViewModel", "=== 현재 위치 추적 시작 ===")
+                Log.d("EscortViewModel", "위치 좌표: lat=${location.latitude}, lon=${location.longitude}")
+                Log.d("EscortViewModel", "위치 정확도: ${location.accuracy}m")
+                
+                // Reverse Geocoding을 사용하여 현재 위치의 주소를 가져옴
+                val currentAddress = try {
+                    Log.d("EscortViewModel", "Reverse Geocoding API 호출 시작...")
+                    val address = reverseGeocodingRepository.reverseGeocode(location.latitude, location.longitude)
+                    Log.d("EscortViewModel", "Reverse Geocoding API 호출 완료")
+                    Log.d("EscortViewModel", "변환된 주소: $address")
+                    address
+                } catch (e: Exception) {
+                    Log.e("EscortViewModel", "=== Reverse Geocoding 실패 ===")
+                    Log.e("EscortViewModel", "에러 타입: ${e.javaClass.simpleName}")
+                    Log.e("EscortViewModel", "에러 메시지: ${e.message}")
+                    Log.e("EscortViewModel", "스택 트레이스: ${e.stackTraceToString()}")
+                    null
+                }
+                
+                // 주소를 가져오지 못한 경우 기본값 사용
+                val addressName = currentAddress ?: "현재 위치"
+                
+                Log.d("EscortViewModel", "=== 현재 위치 업데이트 완료 ===")
+                Log.d("EscortViewModel", "최종 주소: $addressName")
+                Log.d("EscortViewModel", "위치 상태 업데이트: name=$addressName, lat=${currentLatLng.latitude}, lon=${currentLatLng.longitude}")
+                
+                _startLocation.value = LocationState(addressName, currentLatLng)
+                
+                Log.d("EscortViewModel", "=== 현재 위치 추적 완료 ===")
+            }
+        }
     }
 
     fun updateDestinationLocation(name: String, latLng: LatLng) {
@@ -424,6 +482,7 @@ class EscortViewModel @Inject constructor(
         _isSetupComplete.value = false // 설정 완료 상태도 초기화
         // 도착지 이름도 초기값으로 되돌림
         _destinationLocation.value = LocationState("메인 주소 (더미)", LatLng(37.5665, 126.9780))
+        _destinationSelectionType.value = DestinationSelectionType.NONE
     }
 
     fun setArrivalMode(mode: ArrivalMode) {

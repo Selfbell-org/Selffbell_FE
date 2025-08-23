@@ -3,6 +3,7 @@ package com.selfbell.data.di
 import android.content.Context
 import android.content.pm.PackageManager
 import com.selfbell.data.api.NaverApiService
+import com.selfbell.data.api.NaverReverseGeocodingService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,6 +18,8 @@ import javax.inject.Named
 import javax.inject.Singleton
 import com.selfbell.data.api.CriminalApi // ✅ 추가
 import com.selfbell.data.api.AuthInterceptor // ✅ 추가
+import com.selfbell.data.repository.impl.ReverseGeocodingRepositoryImpl
+import com.selfbell.domain.repository.ReverseGeocodingRepository
 import java.util.concurrent.TimeUnit
 
 @Module
@@ -62,6 +65,12 @@ object DataModule {
     @Singleton
     fun provideNaverApiService(@Named("naverRetrofit") retrofit: Retrofit): NaverApiService {
         return retrofit.create(NaverApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNaverReverseGeocodingService(@Named("naverRetrofit") retrofit: Retrofit): NaverReverseGeocodingService {
+        return retrofit.create(NaverReverseGeocodingService::class.java)
     }
 
     @Provides
@@ -127,5 +136,11 @@ object DataModule {
     @Singleton
     fun provideCriminalApi(@Named("criminalRetrofit") retrofit: Retrofit): CriminalApi {
         return retrofit.create(CriminalApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideReverseGeocodingRepository(impl: ReverseGeocodingRepositoryImpl): ReverseGeocodingRepository {
+        return impl
     }
 }

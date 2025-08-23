@@ -7,6 +7,7 @@ data class SafeWalkCreateRequest(
     val originAddress: String,
     val destination: LocationRequest,
     val destinationAddress: String,
+    @SerializedName("destinationName") val destinationName: String,
     val expectedArrival: String? = null,
     val timerMinutes: Int? = null,
     val guardianIds: List<Long>

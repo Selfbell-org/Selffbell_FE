@@ -109,8 +109,21 @@ fun HistoryDetailScreen(
 @Composable
 fun HistoryDetailCard(
     detail: SafeWalkDetail,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: HistoryDetailViewModel = hiltViewModel()
 ) {
+    var originAddress by remember { mutableStateOf<String?>(null) }
+    var destinationAddress by remember { mutableStateOf<String?>(null) }
+    
+    // 출발지 주소 가져오기
+    LaunchedEffect(detail.origin.lat, detail.origin.lon) {
+        originAddress = viewModel.getAddressFromCoordinates(detail.origin.lat, detail.origin.lon)
+    }
+    
+    // 도착지 주소 가져오기
+    LaunchedEffect(detail.destination.lat, detail.destination.lon) {
+        destinationAddress = viewModel.getAddressFromCoordinates(detail.destination.lat, detail.destination.lon)
+    }
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.extraLarge,
@@ -153,7 +166,15 @@ fun HistoryDetailCard(
                 }
             )
             Spacer(modifier = Modifier.height(8.dp))
-            DetailItem("주소", detail.destination.addressText)
+            DetailItem(
+                label = "출발지", 
+                value = originAddress ?: "주소를 가져올 수 없습니다"
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            DetailItem(
+                label = "도착지", 
+                value = destinationAddress ?: detail.destination.addressText ?: "주소를 가져올 수 없습니다"
+            )
         }
     }
 }

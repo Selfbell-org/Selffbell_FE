@@ -145,19 +145,6 @@ object NetworkModule {
         return EmergencyBellRepositoryImpl(api)
     }
 
-    // 범죄자 API 관련 코드 추가
-//    @Provides
-//    @Singleton
-//    fun provideCriminalApi(@Named("backendRetrofit") retrofit: Retrofit): CriminalApi {
-//        return retrofit.create(CriminalApi::class.java)
-//    }
-
-//    @Provides
-//    @Singleton
-//    fun provideCriminalRepository(api: CriminalApi): CriminalRepository {
-//        return CriminalRepositoryImpl(api)
-//    }
-
     // SafeWalks API 관련 코드 추가
     @Provides
     @Singleton
