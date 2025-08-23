@@ -4,6 +4,7 @@ import com.selfbell.data.api.request.ContactRequestDto
 import com.selfbell.data.api.request.ContactRequestRequest
 import com.selfbell.data.api.response.ContactListResponseDto
 import com.selfbell.data.api.response.ContactResponseDto
+import com.selfbell.data.api.response.FCMTokenResponse
 import com.selfbell.data.api.response.UserExistsResponse
 import com.selfbell.data.api.response.ContactRequestResponse
 import retrofit2.Response
@@ -54,4 +55,13 @@ interface ContactService {
     suspend fun acceptContactRequest(
         @Path("contactId") contactId: Long
     ): ContactResponseDto
+
+    /**
+     * 특정 사용자의 FCM 토큰을 가져옵니다.
+     * @param userId FCM 토큰을 가져올 사용자 ID
+     */
+    @GET("/api/v1/users/{userId}/fcm-token")
+    suspend fun getUserFCMToken(
+        @Path("userId") userId: String
+    ): FCMTokenResponse
 }

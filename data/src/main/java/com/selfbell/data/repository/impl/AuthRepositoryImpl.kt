@@ -75,8 +75,8 @@ class AuthRepositoryImpl @Inject constructor(
         val request = LoginRequest(
             phoneNumber = phoneNumber,
             password = password,
-            deviceToken = deviceToken,
-            deviceType = deviceType
+//            deviceToken = deviceToken,
+//            deviceType = deviceType
         )
         try {
             Log.d("AuthRepository", "로그인 요청: phoneNumber=$phoneNumber")

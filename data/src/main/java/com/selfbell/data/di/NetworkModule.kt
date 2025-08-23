@@ -5,6 +5,7 @@ import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.ContactService
 import com.selfbell.data.api.CriminalApi
 import com.selfbell.data.api.EmergencyBellApi
+import com.selfbell.data.api.FCMNotificationApi
 import com.selfbell.data.api.FavoriteAddressService
 import com.selfbell.data.api.SafeWalksApi
 import com.selfbell.data.repository.impl.CriminalRepositoryImpl
@@ -135,8 +136,14 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideEmergencyBellRepository(api: EmergencyBellApi): EmergencyBellRepository {
-        return EmergencyBellRepositoryImpl(api)
+    fun provideFCMNotificationApi(@Named("backendRetrofit") retrofit: Retrofit): FCMNotificationApi {
+        return retrofit.create(FCMNotificationApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEmergencyBellRepository(api: EmergencyBellApi, fcmNotificationApi: FCMNotificationApi): EmergencyBellRepository {
+        return EmergencyBellRepositoryImpl(api, fcmNotificationApi)
     }
 
     // 범죄자 API 관련 코드 추가
