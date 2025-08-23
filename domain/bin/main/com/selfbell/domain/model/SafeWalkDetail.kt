@@ -55,10 +55,28 @@ data class LocationDetail(val lat: Double, val lon: Double, val addressText: Str
 // ✅ 6. 상태를 정의하는 Enum
 enum class SafeWalkStatus {
     IN_PROGRESS, // 귀가중
-    COMPLETED,   // 완료
-    CANCELED,    // 취소됨
-    ENDED        // 종료됨
+    MANUAL_END,   // 완료
+    ARRIVED,
+    TIMEOUT;
+    companion object {
+        fun fromString(status: String): SafeWalkStatus {
+            return try {
+                valueOf(status.uppercase())
+            } catch (e: IllegalArgumentException) {
+                // 서버 응답에 없는 상태값이 올 경우 기본값 처리
+                MANUAL_END // 또는 적절한 기본값
+            }
+        }
+    }
 }
 
 // ✅ 7. 세션 종료 이유
 enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
+
+data class SafeWalkHistoryItem(
+    val sessionId: Long,
+    val wardName: String,
+    val destinationName: String?,
+    val startedAt: LocalDateTime,
+    val status: SafeWalkStatus
+)

@@ -4,8 +4,10 @@
 
     <uses-feature
         android:name="android.hardware.telephony"
-        android:required="false" />
 
+        android:required="false" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
@@ -48,15 +50,12 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <!-- ✅ 안심귀가 위치 추적을 위한 포그라운드 서비스 등록 -->
+        <service
+            android:name="com.selfbell.escort.ui.SafeWalkService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
-<!--        <meta-data-->
-<!--            android:name="com.google.firebase.messaging.default_notification_icon"-->
-<!--            android:resource="@drawable/ic_notification_icon" />-->
-<!--        <meta-data-->
-<!--            android:name="com.google.firebase.messaging.default_notification_color"-->
-<!--            android:resource="@color/teal_200" />-->
-<!--        <meta-data-->
-<!--            android:name="com.google.firebase.messaging.default_notification_channel_id"-->
-<!--            android:value="@string/default_notification_channel_id" />-->
     </application>
 </manifest>
