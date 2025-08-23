@@ -20,6 +20,7 @@ import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkDetail
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
 import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
 import com.selfbell.core.ui.theme.GrayInactive
 import com.selfbell.core.ui.theme.Primary
@@ -96,6 +97,7 @@ fun HistoryDetailScreen(
     }
 }
 
+
 @Composable
 fun HistoryDetailCard(
     detail: SafeWalkDetail,
@@ -111,12 +113,15 @@ fun HistoryDetailCard(
         color = Color.White,
         shadowElevation = 8.dp
     ) {
+        // 👇 [수정] Column에 modifier와 적절한 arrangement를 다시 추가합니다.
         Column(
-            modifier = Modifier.padding(20.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp) // 아이템 사이의 수직 간격
         ) {
             // --- 제목과 배지 ---
             Row(
-                // 👇 [수정] Arrangement 변경 및 verticalAlignment 추가
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -125,21 +130,19 @@ fun HistoryDetailCard(
                     style = Typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.width(8.dp)) // 👇 [추가] 간격
+                Spacer(modifier = Modifier.width(8.dp))
                 Surface(
                     color = Primary,
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
-                        text = detail.ward.nickname, // ward.nickname -> ward.name
+                        text = detail.ward.nickname,
                         style = Typography.labelMedium,
                         color = Color.White,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             // --- 날짜와 시간 ---
             Text(
@@ -148,9 +151,7 @@ fun HistoryDetailCard(
                 color = GrayInactive
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // --- [수정] 설정 귀가 시간 (계산 로직 추가) ---
+            // --- 설정 귀가 시간 ---
             val targetTime = detail.timerEnd ?: detail.expectedArrival
             if (targetTime != null) {
                 val durationInMinutes = Duration.between(detail.startedAt, targetTime).toMinutes()
@@ -160,11 +161,9 @@ fun HistoryDetailCard(
                     label = "설정 귀가 시간",
                     value = timeRangeText
                 )
-                Spacer(modifier = Modifier.height(12.dp))
             }
 
-
-            // --- [수정] 도착시간 (계산 로직 추가) ---
+            // --- 도착시간 ---
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val arrivalTimeText = detail.endedAt?.format(timeFormatter) ?: "진행 중"
                 DetailItem(
@@ -172,7 +171,6 @@ fun HistoryDetailCard(
                     value = arrivalTimeText
                 )
 
-                // 예상 시간과 실제 도착 시간 차이 계산 및 표시
                 if (detail.endedAt != null && targetTime != null) {
                     val differenceInMinutes = Duration.between(detail.endedAt, targetTime).toMinutes()
                     val differenceText = when {
@@ -189,9 +187,6 @@ fun HistoryDetailCard(
                 }
             }
 
-
-            Spacer(modifier = Modifier.height(12.dp))
-
             // --- 주소 ---
             DetailItem(
                 label = "주소",
@@ -203,7 +198,7 @@ fun HistoryDetailCard(
 
 @Composable
 private fun DetailItem(label: String, value: String) {
-    Row(verticalAlignment = Alignment.Top) { // Top 정렬로 변경
+    Row(verticalAlignment = Alignment.Top) {
         Text(
             text = "$label ",
             style = Typography.bodyMedium,
