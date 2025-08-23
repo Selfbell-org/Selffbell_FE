@@ -185,60 +185,29 @@ class SafeWalkRepositoryImpl @Inject constructor(
             throw e
         }
     }
-    // ✅ 히스토리 조회 함수 - 더미 데이터 사용
+
+    // ✅ [수정] 히스토리 조회 함수를 실제 API 호출 로직으로 교체
     override suspend fun getSafeWalkHistory(filter: HistoryFilter): List<SafeWalkHistoryItem> {
         return try {
-            // 더미 데이터 생성
-            val dummyHistoryItems = listOf(
-                SafeWalkDetail(
-                    sessionId = 50L,
-                    ward = Ward(id = 13L, nickname = "사용자1"),
-                    origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지1"),
-                    destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지1"),
-                    status = SafeWalkStatus.COMPLETED,
-                    startedAt = LocalDateTime.now().minusHours(2),
-                    expectedArrival = LocalDateTime.now().minusHours(1),
-                    timerEnd = LocalDateTime.now().minusHours(1),
-                    guardians = listOf(Guardian(id = 5L, nickname = "보호자1")),
-                    endedAt = LocalDateTime.now().minusHours(1)
-                ),
-                SafeWalkDetail(
-                    sessionId = 51L,
-                    ward = Ward(id = 13L, nickname = "사용자1"),
-                    origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지2"),
-                    destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지2"),
-                    status = SafeWalkStatus.IN_PROGRESS,
-                    startedAt = LocalDateTime.now().minusMinutes(30),
-                    expectedArrival = LocalDateTime.now().plusMinutes(30),
-                    timerEnd = LocalDateTime.now().plusMinutes(30),
-                    guardians = listOf(Guardian(id = 5L, nickname = "보호자1")),
-                    endedAt = null
-                ),
-                SafeWalkDetail(
-                    sessionId = 52L,
-                    ward = Ward(id = 13L, nickname = "사용자1"),
-                    origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지3"),
-                    destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지3"),
-                    status = SafeWalkStatus.COMPLETED,
-                    startedAt = LocalDateTime.now().minusDays(1),
-                    expectedArrival = LocalDateTime.now().minusDays(1).plusHours(1),
-                    timerEnd = LocalDateTime.now().minusDays(1).plusHours(1),
-                    guardians = listOf(Guardian(id = 5L, nickname = "보호자1")),
-                    endedAt = LocalDateTime.now().minusDays(1).plusHours(1)
-                )
-            )
-            
-            // 필터에 따라 정렬 및 필터링
-            val filteredItems = when (filter.userType) {
-                HistoryUserFilter.GUARDIANS -> dummyHistoryItems.filter { it.status == SafeWalkStatus.IN_PROGRESS }
-                HistoryUserFilter.MINE -> dummyHistoryItems.filter { it.ward.id == 13L }
+            // 1. 필터 값에 따라 API 파라미터 결정 ("MINE" -> "me", "GUARDIANS" -> "ward")
+            val target = when (filter.userType) {
+                HistoryUserFilter.MINE -> "me"
+                HistoryUserFilter.GUARDIANS -> "ward"
             }
-            
+
+            // 2. 실제 API 호출
+            val response = api.getHistory(target)
+
+            // 3. 응답 DTO를 Domain 모델로 변환
+            val historyItems = response.sessions.map { it.toDomainModel() }
+
+            // 4. 정렬은 클라이언트에서 수행 (날짜 필터링은 API 지원 필요)
+            // TODO: 날짜 필터링(WEEK, MONTH 등)은 백엔드 API에 파라미터 추가가 필요합니다.
             when (filter.sortOrder) {
-                HistorySortOrder.LATEST -> filteredItems.sortedByDescending { it.startedAt }
-                HistorySortOrder.OLDEST -> filteredItems.sortedBy { it.startedAt }
+                HistorySortOrder.LATEST -> historyItems.sortedByDescending { it.startedAt }
+                HistorySortOrder.OLDEST -> historyItems.sortedBy { it.startedAt }
             }
-            
+
         } catch (e: Exception) {
             Log.e("SafeWalkRepository", "히스토리 조회 실패", e)
             emptyList() // 에러 시 빈 리스트 반환

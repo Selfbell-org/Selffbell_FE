@@ -68,14 +68,14 @@ fun HistoryCardItem(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        text = historyItem.ward.nickname, // 실제 사용자 이름
+                        text = historyItem.wardName, // 실제 사용자 이름
                         style = Typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Black
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${historyItem.destination.addressText} · ${historyItem.startedAt.toLocalDate()}", // 실제 목적지와 시작 시간
+                        text = "${historyItem.destinationName} · ${historyItem.startedAt.toLocalDate()}", // 실제 목적지와 시작 시간
                         style = Typography.bodySmall,
                         color = Black
                     )
@@ -90,14 +90,14 @@ fun HistoryCardItem(
 private fun SelfBellStatusBadge(status: SafeWalkStatus) {
     val buttonType = when (status) {
         SafeWalkStatus.IN_PROGRESS -> SelfBellButtonType.PRIMARY_FILLED
-        SafeWalkStatus.COMPLETED, SafeWalkStatus.ENDED -> SelfBellButtonType.OUTLINED
-        SafeWalkStatus.CANCELED -> SelfBellButtonType.OUTLINED // 취소 상태도 OUTLINED로 처리
+        SafeWalkStatus.ARRIVED, SafeWalkStatus.MANUAL_END -> SelfBellButtonType.OUTLINED
+        SafeWalkStatus.TIMEOUT -> SelfBellButtonType.OUTLINED // 취소 상태도 OUTLINED로 처리
     }
 
     val text = when (status) {
         SafeWalkStatus.IN_PROGRESS -> "귀가중"
-        SafeWalkStatus.COMPLETED, SafeWalkStatus.ENDED -> "완료"
-        SafeWalkStatus.CANCELED -> "완료" // 취소 상태도 "완료"로 표시
+        SafeWalkStatus.ARRIVED, SafeWalkStatus.MANUAL_END -> "완료"
+        SafeWalkStatus.TIMEOUT -> "완료" // 취소 상태도 "완료"로 표시
     }
 
     SelfBellButton(
