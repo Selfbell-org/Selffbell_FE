@@ -4,14 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.selfbell.domain.model.*
 import com.selfbell.domain.repository.SafeWalkRepository
+import com.selfbell.domain.repository.ReverseGeocodingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
-import java.time.LocalDateTime
 import javax.inject.Inject
+import java.time.LocalDateTime
 
 sealed interface HistoryDetailUiState {
     object Loading : HistoryDetailUiState
@@ -21,7 +21,8 @@ sealed interface HistoryDetailUiState {
 
 @HiltViewModel
 class HistoryDetailViewModel @Inject constructor(
-    private val safeWalkRepository: SafeWalkRepository
+    private val safeWalkRepository: SafeWalkRepository,
+    private val reverseGeocodingRepository: ReverseGeocodingRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HistoryDetailUiState>(HistoryDetailUiState.Loading)
@@ -30,20 +31,27 @@ class HistoryDetailViewModel @Inject constructor(
     fun loadSafeWalkDetail(sessionId: Long) {
         _uiState.value = HistoryDetailUiState.Loading
         viewModelScope.launch {
-            /*
-            // --- ⬇️ 실제 API 연동 코드 (현재 주석 처리) ⬇️ ---
             try {
                 val detail = safeWalkRepository.getSafeWalkDetail(sessionId)
                 _uiState.value = HistoryDetailUiState.Success(detail)
             } catch (e: Exception) {
                 _uiState.value = HistoryDetailUiState.Error(e.message ?: "상세 정보 로드 실패")
             }
-            */
-
-            // --- ⬇️ 더미데이터 테스트 코드 (현재 사용) ⬇️ ---
-            delay(1000) // 로딩 효과를 위한 딜레이
-            val dummyDetail = createDummyDetail(sessionId)
-            _uiState.value = HistoryDetailUiState.Success(dummyDetail)
+        }
+    }
+    
+    /**
+     * 위도/경도 좌표를 주소로 변환합니다.
+     * 
+     * @param lat 위도
+     * @param lon 경도
+     * @return 주소 문자열, 실패 시 null
+     */
+    suspend fun getAddressFromCoordinates(lat: Double, lon: Double): String? {
+        return try {
+            reverseGeocodingRepository.reverseGeocode(lat, lon)
+        } catch (e: Exception) {
+            null
         }
     }
 }

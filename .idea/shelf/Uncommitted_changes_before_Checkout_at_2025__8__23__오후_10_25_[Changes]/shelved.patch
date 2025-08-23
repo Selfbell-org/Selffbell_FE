@@ -1,0 +1,271 @@
+Index: domain/bin/main/com/selfbell/domain/model/SafeWalks.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.domain.model\n\nimport java.time.LocalDateTime\n\n//// ✅ 1. 안심 귀가 세션의 기본 정보\n//data class SafeWalkSession(\n//    val sessionId: Long,\n//    val status: SafeWalkStatus,\n//    val startedAt: LocalDateTime,\n//    val expectedArrival: LocalDateTime?,\n//    val timerEnd: LocalDateTime?,\n//    val topic: String\n//)\n\n// ✅ 2. 현재 진행 중인 세션 상태\ndata class SafeWalkSessionState(\n    val sessionId: Long,\n    val status: String,\n    val topic: String\n)\n\n//// ✅ 3. 트랙킹 아이템\n//data class TrackItem(\n//    val lat: Double,\n//    val lon: Double,\n//    val accuracy: Double,\n//    val capturedAt: LocalDateTime\n//)\n\n//// ✅ 4. 안심 귀가 세션의 상세 정보\n//data class SafeWalkDetail(\n//    val sessionId: Long,\n//    val ward: Ward,\n//    val origin: LocationDetail,\n//    val destination: LocationDetail,\n//    val status: SafeWalkStatus,\n//    val startedAt: LocalDateTime,\n//    val expectedArrival: LocalDateTime?,\n//    val timerEnd: LocalDateTime?,\n//    val guardians: List<Guardian>,\n//    val endedAt: LocalDateTime?\n//)\n\n//// ✅ 5. 상세 정보에 사용되는 부가 모델\n//data class Ward(val id: Long, val nickname: String)\n//data class Guardian(val id: Long, val nickname: String)\n//data class LocationDetail(val lat: Double, val lon: Double, val addressText: String)\n\n//// ✅ 6. 상태를 정의하는 Enum\n//enum class SafeWalkStatus {\n//    IN_PROGRESS, // 진행 중\n//    COMPLETED,   // 완료\n//    CANCELED,    // 취소됨\n//    ENDED        // 종료됨\n//}\n\n// ✅ 7. 세션 종료 이유\n//enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/domain/bin/main/com/selfbell/domain/model/SafeWalks.kt b/domain/bin/main/com/selfbell/domain/model/SafeWalks.kt
+--- a/domain/bin/main/com/selfbell/domain/model/SafeWalks.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/domain/bin/main/com/selfbell/domain/model/SafeWalks.kt	(date 1755955469947)
+@@ -2,15 +2,15 @@
+ 
+ import java.time.LocalDateTime
+ 
+-//// ✅ 1. 안심 귀가 세션의 기본 정보
+-//data class SafeWalkSession(
+-//    val sessionId: Long,
+-//    val status: SafeWalkStatus,
+-//    val startedAt: LocalDateTime,
+-//    val expectedArrival: LocalDateTime?,
+-//    val timerEnd: LocalDateTime?,
+-//    val topic: String
+-//)
++// ✅ 1. 안심 귀가 세션의 기본 정보
++data class SafeWalkSession(
++    val sessionId: Long,
++    val status: String,
++    val startedAt: LocalDateTime,
++    val expectedArrival: LocalDateTime?,
++    val timerEnd: LocalDateTime?,
++    val topic: String
++)
+ 
+ // ✅ 2. 현재 진행 중인 세션 상태
+ data class SafeWalkSessionState(
+@@ -19,40 +19,31 @@
+     val topic: String
+ )
+ 
+-//// ✅ 3. 트랙킹 아이템
+-//data class TrackItem(
+-//    val lat: Double,
+-//    val lon: Double,
+-//    val accuracy: Double,
+-//    val capturedAt: LocalDateTime
+-//)
++// ✅ 3. 트랙킹 아이템
++data class TrackItem(
++    val lat: Double,
++    val lon: Double,
++    val accuracy: Double,
++    val capturedAt: LocalDateTime
++)
+ 
+-//// ✅ 4. 안심 귀가 세션의 상세 정보
+-//data class SafeWalkDetail(
+-//    val sessionId: Long,
+-//    val ward: Ward,
+-//    val origin: LocationDetail,
+-//    val destination: LocationDetail,
+-//    val status: SafeWalkStatus,
+-//    val startedAt: LocalDateTime,
+-//    val expectedArrival: LocalDateTime?,
+-//    val timerEnd: LocalDateTime?,
+-//    val guardians: List<Guardian>,
+-//    val endedAt: LocalDateTime?
+-//)
++// ✅ 4. 안심 귀가 세션의 상세 정보
++data class SafeWalkDetail(
++    val sessionId: Long,
++    val ward: Ward,
++    val origin: LocationDetail,
++    val destination: LocationDetail,
++    val status: String,
++    val startedAt: LocalDateTime,
++    val expectedArrival: LocalDateTime?,
++    val timerEnd: LocalDateTime?,
++    val guardians: List<Guardian>
++)
+ 
+-//// ✅ 5. 상세 정보에 사용되는 부가 모델
+-//data class Ward(val id: Long, val nickname: String)
+-//data class Guardian(val id: Long, val nickname: String)
+-//data class LocationDetail(val lat: Double, val lon: Double, val addressText: String)
++// ✅ 5. 상세 정보에 사용되는 부가 모델
++data class Ward(val id: Long, val name: String)
++data class Guardian(val id: Long, val name: String)
++data class LocationDetail(val lat: Double, val lon: Double, val addressText: String)
+ 
+-//// ✅ 6. 상태를 정의하는 Enum
+-//enum class SafeWalkStatus {
+-//    IN_PROGRESS, // 진행 중
+-//    COMPLETED,   // 완료
+-//    CANCELED,    // 취소됨
+-//    ENDED        // 종료됨
+-//}
+-
+-// ✅ 7. 세션 종료 이유
+-//enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
+\ No newline at end of file
++// ✅ 6. 세션 종료 이유
++enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
+\ No newline at end of file
+Index: domain/bin/main/com/selfbell/domain/repository/SafeWalkRepository.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.domain.repository\n\nimport com.selfbell.domain.model.*\nimport java.time.LocalDateTime\n\ninterface SafeWalkRepository {\n    suspend fun createSafeWalkSession(\n        originLat: Double,\n        originLon: Double,\n        originAddress: String,\n        destinationLat: Double,\n        destinationLon: Double,\n        destinationAddress: String,\n        expectedArrival: LocalDateTime?,\n        timerMinutes: Int?,\n        guardianIds: List<Long>\n    ): SafeWalkSession\n\n    suspend fun uploadLocationTrack(sessionId: Long, lat: Double, lon: Double, accuracy: Double): Boolean\n    suspend fun endSafeWalkSession(sessionId: Long, reason: SessionEndReason): Boolean\n    suspend fun getSafeWalkDetail(sessionId: Long): SafeWalkDetail\n    suspend fun getCurrentSafeWalk(): SafeWalkSessionState?\n    suspend fun getTracks(sessionId: Long, cursor: String?, size: Int, order: String): List<TrackItem>\n\n    /**\n     * ✅ 히스토리 목록을 가져오는 함수 추가\n     * @param filter 필터링 옵션 (사용자 유형, 기간, 정렬 순서)\n     * @return 필터링된 히스토리 목록\n     */\n    suspend fun getSafeWalkHistory(filter: HistoryFilter): List<SafeWalkHistoryItem>\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/domain/bin/main/com/selfbell/domain/repository/SafeWalkRepository.kt b/domain/bin/main/com/selfbell/domain/repository/SafeWalkRepository.kt
+--- a/domain/bin/main/com/selfbell/domain/repository/SafeWalkRepository.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/domain/bin/main/com/selfbell/domain/repository/SafeWalkRepository.kt	(date 1755955469950)
+@@ -11,6 +11,7 @@
+         destinationLat: Double,
+         destinationLon: Double,
+         destinationAddress: String,
++        destinationName: String,
+         expectedArrival: LocalDateTime?,
+         timerMinutes: Int?,
+         guardianIds: List<Long>
+Index: domain/bin/main/com/selfbell/domain/model/SafeWalkHistoryItem.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.domain.model\n\nimport java.time.LocalDateTime\n\ndata class SafeWalkHistoryItem(\n    val id: Long,\n    val userProfileUrl: String?, // 사용자 프로필 이미지 URL\n    val userName: String,       // \"나의 귀가\" 또는 상대방 이름\n    val userType: String,       // \"나\", \"보호자\", \"피보호자\" 등\n    val destinationName: String, // 목적지 주소 또는 별칭 (예: \"집\")\n    val dateTime: LocalDateTime,\n    val status: SafeWalkStatus // \"귀가중\", \"완료\" 등\n)\n\n//enum class SafeWalkStatus {\n//    IN_PROGRESS, // 귀가중\n//    COMPLETED,   // 완료\n//    CANCELED     // 취소됨\n//}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/domain/bin/main/com/selfbell/domain/model/SafeWalkHistoryItem.kt b/domain/bin/main/com/selfbell/domain/model/SafeWalkHistoryItem.kt
+--- a/domain/bin/main/com/selfbell/domain/model/SafeWalkHistoryItem.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/domain/bin/main/com/selfbell/domain/model/SafeWalkHistoryItem.kt	(date 1755955469947)
+@@ -1,19 +1,5 @@
+ package com.selfbell.domain.model
+ 
+-import java.time.LocalDateTime
+-
+-data class SafeWalkHistoryItem(
+-    val id: Long,
+-    val userProfileUrl: String?, // 사용자 프로필 이미지 URL
+-    val userName: String,       // "나의 귀가" 또는 상대방 이름
+-    val userType: String,       // "나", "보호자", "피보호자" 등
+-    val destinationName: String, // 목적지 주소 또는 별칭 (예: "집")
+-    val dateTime: LocalDateTime,
+-    val status: SafeWalkStatus // "귀가중", "완료" 등
+-)
+-
+-//enum class SafeWalkStatus {
+-//    IN_PROGRESS, // 귀가중
+-//    COMPLETED,   // 완료
+-//    CANCELED     // 취소됨
+-//}
+\ No newline at end of file
++// ✅ SafeWalkHistoryItem을 SafeWalkDetail로 교체
++// 실제 세션 데이터를 사용하므로 더미 데이터 구조가 필요 없음
++typealias SafeWalkHistoryItem = SafeWalkDetail
+\ No newline at end of file
+Index: domain/bin/main/com/selfbell/domain/model/SafeWalkDetail.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.selfbell.domain.model\n\nimport java.time.LocalDateTime\n\n// ✅ 1. 안심 귀가 세션의 기본 정보\ndata class SafeWalkSession(\n    val sessionId: Long,\n    val status: SafeWalkStatus,\n    val startedAt: LocalDateTime,\n    val expectedArrival: LocalDateTime?,\n    val timerEnd: LocalDateTime?,\n    val topic: String\n)\n\n// ✅ 2. 트랙킹 아이템\ndata class TrackItem(\n    val lat: Double,\n    val lon: Double,\n    val accuracy: Double,\n    val capturedAt: LocalDateTime\n)\n\n// ✅ 3. 안심 귀가 세션의 상세 정보\ndata class SafeWalkDetail(\n    val sessionId: Long,\n    val ward: Ward,\n    val origin: LocationDetail,\n    val destination: LocationDetail,\n    val status: SafeWalkStatus,\n    val startedAt: LocalDateTime,\n    val expectedArrival: LocalDateTime?,\n    val timerEnd: LocalDateTime?,\n    val guardians: List<Guardian>,\n    val endedAt: LocalDateTime?\n)\n\n// ✅ 4. 상세 정보에 사용되는 부가 모델\ndata class Ward(val id: Long, val nickname: String)\ndata class Guardian(val id: Long, val nickname: String)\ndata class LocationDetail(val lat: Double, val lon: Double, val addressText: String)\n\n// ✅ 5. 상태를 정의하는 Enum\nenum class SafeWalkStatus {\n    IN_PROGRESS, // 귀가중\n    COMPLETED,   // 완료\n    CANCELED,    // 취소됨\n    ENDED        // 종료됨\n}\n\n// ✅ 6. 세션 종료 이유\nenum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/domain/bin/main/com/selfbell/domain/model/SafeWalkDetail.kt b/domain/bin/main/com/selfbell/domain/model/SafeWalkDetail.kt
+--- a/domain/bin/main/com/selfbell/domain/model/SafeWalkDetail.kt	(revision 03a2821816c7bd565e962d86441a765ed7c17781)
++++ b/domain/bin/main/com/selfbell/domain/model/SafeWalkDetail.kt	(date 1755955469947)
+@@ -1,51 +1,51 @@
+-package com.selfbell.domain.model
+-
+-import java.time.LocalDateTime
+-
+-// ✅ 1. 안심 귀가 세션의 기본 정보
+-data class SafeWalkSession(
+-    val sessionId: Long,
+-    val status: SafeWalkStatus,
+-    val startedAt: LocalDateTime,
+-    val expectedArrival: LocalDateTime?,
+-    val timerEnd: LocalDateTime?,
+-    val topic: String
+-)
+-
+-// ✅ 2. 트랙킹 아이템
+-data class TrackItem(
+-    val lat: Double,
+-    val lon: Double,
+-    val accuracy: Double,
+-    val capturedAt: LocalDateTime
+-)
+-
+-// ✅ 3. 안심 귀가 세션의 상세 정보
+-data class SafeWalkDetail(
+-    val sessionId: Long,
+-    val ward: Ward,
+-    val origin: LocationDetail,
+-    val destination: LocationDetail,
+-    val status: SafeWalkStatus,
+-    val startedAt: LocalDateTime,
+-    val expectedArrival: LocalDateTime?,
+-    val timerEnd: LocalDateTime?,
+-    val guardians: List<Guardian>,
+-    val endedAt: LocalDateTime?
+-)
+-
+-// ✅ 4. 상세 정보에 사용되는 부가 모델
+-data class Ward(val id: Long, val nickname: String)
+-data class Guardian(val id: Long, val nickname: String)
+-data class LocationDetail(val lat: Double, val lon: Double, val addressText: String)
+-
+-// ✅ 5. 상태를 정의하는 Enum
+-enum class SafeWalkStatus {
+-    IN_PROGRESS, // 귀가중
+-    COMPLETED,   // 완료
+-    CANCELED,    // 취소됨
+-    ENDED        // 종료됨
+-}
+-
+-// ✅ 6. 세션 종료 이유
+-enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
+\ No newline at end of file
++//package com.selfbell.domain.model
++//
++//import java.time.LocalDateTime
++//
++//// ✅ 1. 안심 귀가 세션의 기본 정보
++//data class SafeWalkSession(
++//    val sessionId: Long,
++//    val status: SafeWalkStatus,
++//    val startedAt: LocalDateTime,
++//    val expectedArrival: LocalDateTime?,
++//    val timerEnd: LocalDateTime?,
++//    val topic: String
++//)
++//
++//// ✅ 2. 트랙킹 아이템
++//data class TrackItem(
++//    val lat: Double,
++//    val lon: Double,
++//    val accuracy: Double,
++//    val capturedAt: LocalDateTime
++//)
++//
++//// ✅ 3. 안심 귀가 세션의 상세 정보
++//data class SafeWalkDetail(
++//    val sessionId: Long,
++//    val ward: Ward,
++//    val origin: LocationDetail,
++//    val destination: LocationDetail,
++//    val status: SafeWalkStatus,
++//    val startedAt: LocalDateTime,
++//    val expectedArrival: LocalDateTime?,
++//    val timerEnd: LocalDateTime?,
++//    val guardians: List<Guardian>,
++//    val endedAt: LocalDateTime?
++//)
++//
++//// ✅ 4. 상세 정보에 사용되는 부가 모델
++//data class Ward(val id: Long, val nickname: String)
++//data class Guardian(val id: Long, val nickname: String)
++//data class LocationDetail(val lat: Double, val lon: Double, val addressText: String)
++//
++//// ✅ 5. 상태를 정의하는 Enum
++//enum class SafeWalkStatus {
++//    IN_PROGRESS, // 귀가중
++//    COMPLETED,   // 완료
++//    CANCELED,    // 취소됨
++//    ENDED        // 종료됨
++//}
++//
++//// ✅ 6. 세션 종료 이유
++//enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
+\ No newline at end of file

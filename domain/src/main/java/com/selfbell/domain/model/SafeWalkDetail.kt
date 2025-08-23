@@ -5,14 +5,21 @@ import java.time.LocalDateTime
 // ✅ 1. 안심 귀가 세션의 기본 정보
 data class SafeWalkSession(
     val sessionId: Long,
-    val status: SafeWalkStatus,
+    val status: String,
     val startedAt: LocalDateTime,
     val expectedArrival: LocalDateTime?,
     val timerEnd: LocalDateTime?,
     val topic: String
 )
 
-// ✅ 2. 트랙킹 아이템
+// ✅ 2. 현재 진행 중인 세션 상태
+data class SafeWalkSessionState(
+    val sessionId: Long,
+    val status: String,
+    val topic: String
+)
+
+// ✅ 3. 트랙킹 아이템
 data class TrackItem(
     val lat: Double,
     val lon: Double,
@@ -20,7 +27,7 @@ data class TrackItem(
     val capturedAt: LocalDateTime
 )
 
-// ✅ 3. 안심 귀가 세션의 상세 정보
+// ✅ 4. 안심 귀가 세션의 상세 정보
 data class SafeWalkDetail(
     val sessionId: Long,
     val ward: Ward,
@@ -40,12 +47,12 @@ data class SafeWalkDetail(
     val timeDifferenceMinutes: Int? = null       // 예상 대비 실제 시간 차이 (분)
 )
 
-// ✅ 4. 상세 정보에 사용되는 부가 모델
+// ✅ 5. 상세 정보에 사용되는 부가 모델
 data class Ward(val id: Long, val nickname: String)
 data class Guardian(val id: Long, val nickname: String)
 data class LocationDetail(val lat: Double, val lon: Double, val addressText: String)
 
-// ✅ 5. 상태를 정의하는 Enum
+// ✅ 6. 상태를 정의하는 Enum
 enum class SafeWalkStatus {
     IN_PROGRESS, // 귀가중
     COMPLETED,   // 완료
@@ -53,5 +60,5 @@ enum class SafeWalkStatus {
     ENDED        // 종료됨
 }
 
-// ✅ 6. 세션 종료 이유
+// ✅ 7. 세션 종료 이유
 enum class SessionEndReason { MANUAL, ARRIVED, TIMEOUT }
