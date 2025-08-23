@@ -71,6 +71,7 @@ dependencies {
     // Coroutines!
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     // Hilt (core 모듈이 Hilt를 사용하거나 DI 모듈이 있다면)
     implementation(libs.hilt.android)

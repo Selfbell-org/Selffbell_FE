@@ -41,6 +41,7 @@ import com.selfbell.alerts.model.AlertData
 import com.selfbell.alerts.model.AlertType
 import com.selfbell.core.R as CoreR
 import android.util.Log // ✅ Log 클래스 임포트
+import com.selfbell.domain.model.CriminalDetail
 
 // ✅ 새로운 Enum 클래스를 정의하여 지도에 표시할 마커 모드를 관리합니다.
 //enum class MapMarkerMode {
@@ -64,6 +65,9 @@ fun HomeScreen(
     // ✅ 변경: HomeViewModel의 criminals 상태를 직접 관찰합니다.
     val criminals by viewModel.criminals.collectAsState()
 
+    // ✅ 성범죄자 상세 정보 상태 관찰
+    val selectedCriminalDetail by viewModel.selectedCriminalDetail.collectAsState()
+
     // ✅ ViewModel의 새로운 상태를 관찰합니다.
     val mapMarkerMode by viewModel.mapMarkerMode.collectAsState()
 
@@ -86,6 +90,7 @@ fun HomeScreen(
             currentModalMode = ModalMode.SEARCH
             // 상세정보 상태 초기화
             viewModel.setSelectedEmergencyBellDetail(null)
+            viewModel.setSelectedCriminalDetail(null)
         }
     }
 
@@ -161,7 +166,15 @@ fun HomeScreen(
                             distance = criminal.distanceMeters
                         ),
                         onClick = { markerData ->
-                            infoWindowData = markerData.latLng to markerData.address
+                            // 성범죄자 상세 정보 생성
+                            val criminalDetail = CriminalDetail(
+                                address = markerData.address,
+                                lat = markerData.latLng.latitude,
+                                lon = markerData.latLng.longitude,
+                                distanceMeters = markerData.distance
+                            )
+                            viewModel.setSelectedCriminalDetail(criminalDetail)
+                            currentModalMode = ModalMode.DETAIL
                         }
                     )
                     allMarkers.add(marker)
@@ -294,6 +307,7 @@ fun HomeScreen(
                     mapMarkers = modalMapMarkers,
                     onMarkerItemClick = viewModel::onMapMarkerClicked,
                     selectedEmergencyBellDetail = state.selectedEmergencyBellDetail,
+                    selectedCriminalDetail = state.selectedCriminalDetail,
                     modalMode = currentModalMode,
                     onModalModeChange = { newMode -> currentModalMode = newMode },
                     mapMarkerMode = mapMarkerMode // ✅ 추가된 파라미터
