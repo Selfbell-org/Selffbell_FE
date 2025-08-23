@@ -7,7 +7,7 @@ data class HistoryFilter(
 )
 
 enum class HistoryUserFilter {
-    ALL,        // 전체 기록
+ //   ALL,        // 전체 기록
     GUARDIANS,  // 보호자/피보호자
     MINE        // 나의 귀가
 }

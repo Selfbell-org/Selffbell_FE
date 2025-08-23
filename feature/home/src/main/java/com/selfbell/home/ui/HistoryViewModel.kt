@@ -29,7 +29,7 @@ class HistoryViewModel @Inject constructor(
 
     val currentFilter = MutableStateFlow(
         HistoryFilter(
-            userType = HistoryUserFilter.ALL,
+            userType = HistoryUserFilter.GUARDIANS,
             dateRange = HistoryDateFilter.WEEK,
             sortOrder = HistorySortOrder.LATEST
         )
@@ -60,7 +60,7 @@ class HistoryViewModel @Inject constructor(
             // 필터에 따라 더미데이터 필터링
             val filteredData = dummyData.filter {
                 when (currentFilter.value.userType) {
-                    HistoryUserFilter.ALL -> true
+                    //HistoryUserFilter.ALL -> true
                     HistoryUserFilter.GUARDIANS -> it.userType == "GUARDIAN"
                     HistoryUserFilter.MINE -> it.userType == "MINE"
                 }

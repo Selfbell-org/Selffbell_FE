@@ -42,6 +42,7 @@ import com.selfbell.core.ui.theme.Primary
 import com.selfbell.core.ui.theme.SelfBellTheme
 import com.selfbell.core.ui.theme.Typography
 import kotlinx.coroutines.launch
+import com.example.auth.ui.MainAddressSetupViewModel // ✅ viewModel import 추가
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,142 +120,141 @@ fun MainAddressSetupScreen(
                 .fillMaxWidth()
                 .padding(top = 16.dp)
         ) {
-                    OnboardingProgressBar(
-                        currentStep = 3,
-                        totalSteps = 4
-                    )
-                    Spacer(modifier = Modifier.height(40.dp))
-                    Text(
-                        text = "자주 이용하는 메인주소를\n등록해 주세요.",
-                        style = Typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+            OnboardingProgressBar(
+                currentStep = 3,
+                totalSteps = 4
+            )
+            Spacer(modifier = Modifier.height(40.dp))
+            Text(
+                text = "자주 이용하는 메인주소를\n등록해 주세요.",
+                style = Typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
-                // == 지도 화면 영역 ==
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    shadowElevation = 8.dp
-                ) {
-                    Box {
-                        ReusableNaverMap(
-                            modifier = Modifier.fillMaxSize(),
-                            onMapReady = { map ->
-                                naverMap = map
-                                uiState.userLatLng?.let { pos ->
-                                    marker = moveOrAddMarker(map, pos, marker)
-                                    map.moveCamera(CameraUpdate.scrollTo(pos))
-                                }
-                            },
-                            onLocationChanged = { }
-                        )
-                    }
-                }
-
-                // == 하단 설정 UI 영역 ==
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp)
-                        .weight(1f), // 하단 버튼을 제외한 남은 공간 차지
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        AddressTypeButton(
-                            text = "집",
-                            isSelected = selectedAddrType == "집",
-                            onClick = {
-                                selectedAddrType = "집"
-                                isDirectInputSelected = false
-                                viewModel.updateAddrType("집")
-                            },
-                            icon = R.drawable.home_icon,
-                            modifier = Modifier.weight(1f)
-                        )
-                        AddressTypeButton(
-                            text = "학교",
-                            isSelected = selectedAddrType == "학교",
-                            onClick = {
-                                selectedAddrType = "학교"
-                                isDirectInputSelected = false
-                                viewModel.updateAddrType("학교")
-                            },
-                            icon = R.drawable.school_icon,
-                            modifier = Modifier.weight(1f)
-                        )
-                        AddressTypeButton(
-                            text = "직접 입력",
-                            isSelected = isDirectInputSelected,
-                            onClick = {
-                                isDirectInputSelected = true
-                                selectedAddrType = "직접 입력"
-                                directInputName = ""
-                            },
-                            icon = R.drawable.location_icon,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    AnimatedVisibility(
-                        visible = isDirectInputSelected,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        OutlinedTextField(
-                            value = directInputName,
-                            onValueChange = { directInputName = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp)
-                                .focusRequester(directInputFocusRequester),
-                            placeholder = { Text("예: 회사, 학원") }
-                        )
-                    }
-                }
-
-                // 버튼
-                SelfBellButton(
-                    text = if (authUiState is AuthUiState.Loading) "등록 중..." else "다음으로",
-                    onClick = {
-                        val name = if (isDirectInputSelected) directInputName else selectedAddrType
-                        
-                        // ✅ 실제 주소 등록 API 호출 (토큰은 AuthInterceptor에서 자동 추가)
-                        authViewModel.registerMainAddress(
-                            name = name,
-                            address = address,
-                            lat = lat,
-                            lon = lon
-                        )
+        // == 지도 화면 영역 ==
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            shadowElevation = 8.dp
+        ) {
+            Box {
+                ReusableNaverMap(
+                    modifier = Modifier.fillMaxSize(),
+                    onMapReady = { map ->
+                        naverMap = map
+                        uiState.userLatLng?.let { pos ->
+                            marker = moveOrAddMarker(map, pos, marker)
+                            map.moveCamera(CameraUpdate.scrollTo(pos))
+                        }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 20.dp)
-                        .navigationBarsPadding(),
-                    enabled = ((selectedAddrType == "직접 입력" && directInputName.isNotBlank()) || (selectedAddrType != "직접 입력")) && authUiState !is AuthUiState.Loading // 📌 로딩 중일 때 비활성화
+                    onLocationChanged = { }
+                )
+            }
+        }
+
+        // == 하단 설정 UI 영역 ==
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .weight(1f), // 하단 버튼을 제외한 남은 공간 차지
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AddressTypeButton(
+                    text = "집",
+                    isSelected = selectedAddrType == "집",
+                    onClick = {
+                        selectedAddrType = "집"
+                        isDirectInputSelected = false
+                        viewModel.updateAddrType("집")
+                    },
+                    icon = R.drawable.home_icon,
+                    modifier = Modifier.weight(1f)
+                )
+                AddressTypeButton(
+                    text = "학교",
+                    isSelected = selectedAddrType == "학교",
+                    onClick = {
+                        selectedAddrType = "학교"
+                        isDirectInputSelected = false
+                        viewModel.updateAddrType("학교")
+                    },
+                    icon = R.drawable.school_icon,
+                    modifier = Modifier.weight(1f)
+                )
+                AddressTypeButton(
+                    text = "직접 입력",
+                    isSelected = isDirectInputSelected,
+                    onClick = {
+                        isDirectInputSelected = true
+                        selectedAddrType = "직접 입력"
+                        directInputName = ""
+                    },
+                    icon = R.drawable.location_icon,
+                    modifier = Modifier.weight(1f)
                 )
             }
 
-            // 📌 로딩 중일 때 로딩 인디케이터 표시
-            if (authUiState is AuthUiState.Loading) {
-                Box(
+            AnimatedVisibility(
+                visible = isDirectInputSelected,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                OutlinedTextField(
+                    value = directInputName,
+                    onValueChange = { directInputName = it },
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .clickable(enabled = false) {},
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                        .focusRequester(directInputFocusRequester),
+                    placeholder = { Text("예: 회사, 학원") }
+                )
             }
         }
+
+        // 버튼
+        SelfBellButton(
+            text = if (authUiState is AuthUiState.Loading) "등록 중..." else "다음으로",
+            onClick = {
+                val name = if (isDirectInputSelected) directInputName else selectedAddrType
+
+                // ✅ 실제 주소 등록 API 호출 (토큰은 AuthInterceptor에서 자동 추가)
+                authViewModel.registerMainAddress(
+                    address = address,
+                    lat = lat,
+                    lon = lon
+                )
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 20.dp)
+                .navigationBarsPadding(),
+            enabled = ((selectedAddrType == "직접 입력" && directInputName.isNotBlank()) || (selectedAddrType != "직접 입력")) && authUiState !is AuthUiState.Loading // 📌 로딩 중일 때 비활성화
+        )
+    }
+
+    // 📌 로딩 중일 때 로딩 인디케이터 표시
+    if (authUiState is AuthUiState.Loading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .clickable(enabled = false) {},
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+}
 
 
 
