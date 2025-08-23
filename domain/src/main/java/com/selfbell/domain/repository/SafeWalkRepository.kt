@@ -11,6 +11,7 @@ interface SafeWalkRepository {
         destinationLat: Double,
         destinationLon: Double,
         destinationAddress: String,
+        destinationName: String,
         expectedArrival: LocalDateTime?,
         timerMinutes: Int?,
         guardianIds: List<Long>

@@ -5,8 +5,11 @@ import io.reactivex.disposables.CompositeDisposable
 import ua.naiksoftware.stomp.Stomp
 import ua.naiksoftware.stomp.StompClient
 import ua.naiksoftware.stomp.dto.LifecycleEvent
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class StompManager {
+@Singleton // 👈 Hilt에게 이 클래스를 싱글턴으로 관리하라고 알림
+class StompManager @Inject constructor() {
     private var stompClient: StompClient? = null
     // RxJava 구독을 관리하기 위한 CompositeDisposable
     private val compositeDisposable = CompositeDisposable()

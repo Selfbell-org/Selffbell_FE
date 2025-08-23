@@ -98,6 +98,12 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
+            // 연결 타임아웃 설정 추가
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            // 연결 풀 설정 추가
+            .connectionPool(okhttp3.ConnectionPool(5, 5, TimeUnit.MINUTES))
             .build()
     }
 
@@ -145,19 +151,6 @@ object NetworkModule {
     fun provideEmergencyBellRepository(api: EmergencyBellApi, fcmNotificationApi: FCMNotificationApi): EmergencyBellRepository {
         return EmergencyBellRepositoryImpl(api, fcmNotificationApi)
     }
-
-    // 범죄자 API 관련 코드 추가
-//    @Provides
-//    @Singleton
-//    fun provideCriminalApi(@Named("backendRetrofit") retrofit: Retrofit): CriminalApi {
-//        return retrofit.create(CriminalApi::class.java)
-//    }
-
-//    @Provides
-//    @Singleton
-//    fun provideCriminalRepository(api: CriminalApi): CriminalRepository {
-//        return CriminalRepositoryImpl(api)
-//    }
 
     // SafeWalks API 관련 코드 추가
     @Provides

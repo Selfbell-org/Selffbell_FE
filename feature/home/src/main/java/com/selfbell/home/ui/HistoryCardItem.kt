@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkHistoryItem
@@ -36,7 +35,7 @@ import com.selfbell.core.ui.composables.SelfBellButton
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryCardItem(
-    historyItem: SafeWalkHistoryItem,
+    historyItem: SafeWalkHistoryItem, // SafeWalkDetail 타입
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -69,14 +68,14 @@ fun HistoryCardItem(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        text = historyItem.userName,
+                        text = historyItem.ward.name, // 실제 사용자 이름
                         style = Typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Black
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${historyItem.destinationName} · ${historyItem.dateTime.toLocalDate()}",
+                        text = "${historyItem.destination.addressText} · ${historyItem.startedAt.toLocalDate()}", // 실제 목적지와 시작 시간
                         style = Typography.bodySmall,
                         color = Black
                     )

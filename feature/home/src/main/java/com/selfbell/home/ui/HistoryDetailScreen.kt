@@ -20,7 +20,6 @@ import com.selfbell.core.ui.composables.ReportScreenHeader
 import com.selfbell.core.ui.composables.ReusableNaverMap // ✅ ReusableNaverMap import
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkDetail
-import com.selfbell.domain.model.SafeWalkStatus
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.selfbell.core.ui.theme.GrayInactive
@@ -113,8 +112,21 @@ fun HistoryDetailScreen(
 @Composable
 fun HistoryDetailCard(
     detail: SafeWalkDetail,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: HistoryDetailViewModel = hiltViewModel()
 ) {
+    var originAddress by remember { mutableStateOf<String?>(null) }
+    var destinationAddress by remember { mutableStateOf<String?>(null) }
+    
+    // 출발지 주소 가져오기
+    LaunchedEffect(detail.origin.lat, detail.origin.lon) {
+        originAddress = viewModel.getAddressFromCoordinates(detail.origin.lat, detail.origin.lon)
+    }
+    
+    // 도착지 주소 가져오기
+    LaunchedEffect(detail.destination.lat, detail.destination.lon) {
+        destinationAddress = viewModel.getAddressFromCoordinates(detail.destination.lat, detail.destination.lon)
+    }
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
