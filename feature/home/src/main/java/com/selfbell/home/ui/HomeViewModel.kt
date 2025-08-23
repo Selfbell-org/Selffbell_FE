@@ -8,6 +8,7 @@ import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.repository.AddressRepository
 import com.selfbell.domain.repository.ContactRepository
 import com.selfbell.domain.model.Criminal
+import com.selfbell.domain.model.CriminalDetail
 import com.selfbell.domain.model.EmergencyBell
 import com.selfbell.domain.model.EmergencyBellDetail
 import com.selfbell.domain.repository.CriminalRepository
@@ -38,7 +39,8 @@ sealed interface HomeUiState {
         val userLatLng: LatLng,
         val emergencyBells: List<EmergencyBell>,
         val criminals: List<Criminal>,
-        val selectedEmergencyBellDetail: EmergencyBellDetail? = null
+        val selectedEmergencyBellDetail: EmergencyBellDetail? = null,
+        val selectedCriminalDetail: CriminalDetail? = null
     ) : HomeUiState
     data class Error(val message: String) : HomeUiState
 }
@@ -98,6 +100,10 @@ class HomeViewModel @Inject constructor(
         )
     )
     val messageTemplates: StateFlow<List<String>> = _messageTemplates.asStateFlow()
+
+    // ✅ 성범죄자 상세 정보 상태
+    private val _selectedCriminalDetail = MutableStateFlow<CriminalDetail?>(null)
+    val selectedCriminalDetail: StateFlow<CriminalDetail?> = _selectedCriminalDetail.asStateFlow()
 
 
     init {
@@ -232,6 +238,10 @@ class HomeViewModel @Inject constructor(
         if (currentState is HomeUiState.Success) {
             _uiState.value = currentState.copy(selectedEmergencyBellDetail = detail)
         }
+    }
+
+    fun setSelectedCriminalDetail(detail: CriminalDetail?) {
+        _selectedCriminalDetail.value = detail
     }
 
     fun getEmergencyBellDetail(objtId: Int) {

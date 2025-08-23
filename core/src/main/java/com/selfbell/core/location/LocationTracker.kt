@@ -15,6 +15,7 @@ import com.google.android.gms.location.Priority
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -92,7 +93,7 @@ class LocationTracker @Inject constructor(
 	}
 
 	// ✅ 개선된 버전: 위치 권한과 GPS 상태를 확인하고 더 자세한 로깅 제공
-	fun getLastKnownLocationWithLogging(): Location? {
+	suspend fun getLastKnownLocationWithLogging(): Location? {
 		if (!hasLocationPermission()) {
 			android.util.Log.w("LocationTracker", "위치 권한이 없습니다.")
 			return null
@@ -100,17 +101,13 @@ class LocationTracker @Inject constructor(
 
 		try {
 			val task = fusedLocationClient.lastLocation
-			if (task.isComplete) {
-				val location = task.result
-				if (location != null) {
-					android.util.Log.d("LocationTracker", "마지막 위치 획득: lat=${location.latitude}, lon=${location.longitude}, accuracy=${location.accuracy}m")
-					return location
-				} else {
-					android.util.Log.w("LocationTracker", "마지막 위치가 null입니다. GPS가 활성화되어 있는지 확인하세요.")
-					return null
-				}
+			// 코루틴 내에서 안전하게 결과를 기다림
+			val location = task.await()
+			if (location != null) {
+				android.util.Log.d("LocationTracker", "마지막 위치 획득: lat=${location.latitude}, lon=${location.longitude}, accuracy=${location.accuracy}m")
+				return location
 			} else {
-				android.util.Log.w("LocationTracker", "위치 작업이 아직 완료되지 않았습니다.")
+				android.util.Log.w("LocationTracker", "마지막 위치가 null입니다. GPS가 활성화되어 있는지 확인하세요.")
 				return null
 			}
 		} catch (e: Exception) {
