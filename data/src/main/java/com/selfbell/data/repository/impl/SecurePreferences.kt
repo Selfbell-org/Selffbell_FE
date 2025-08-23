@@ -17,7 +17,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class SecurePreferences @Inject constructor(
     private val context: Context
 ) : TokenManager {
-    
+
     private val dataStore = context.dataStore
 
     override suspend fun saveAccessToken(token: String) {
@@ -59,8 +59,26 @@ class SecurePreferences @Inject constructor(
         return !getAccessToken().isNullOrBlank()
     }
 
+    // ✅ String 값을 저장하는 함수 추가
+    suspend fun saveString(key: String, value: String) {
+        val stringKey = stringPreferencesKey(key)
+        dataStore.edit { preferences ->
+            preferences[stringKey] = value
+        }
+    }
+
+    // ✅ String 값을 가져오는 함수 추가
+    suspend fun getString(key: String): String? {
+        val stringKey = stringPreferencesKey(key)
+        return dataStore.data.map { preferences ->
+            preferences[stringKey]
+        }.first()
+    }
+
     companion object {
         private val KEY_ACCESS_TOKEN = stringPreferencesKey("access_token")
         private val KEY_REFRESH_TOKEN = stringPreferencesKey("refresh_token")
+        // ✅ FCM 토큰을 위한 키 추가 (FCMTokenManager에서 사용)
+        const val KEY_FCM_TOKEN = "fcm_token_key"
     }
-} 
+}
