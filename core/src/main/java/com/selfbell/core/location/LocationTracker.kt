@@ -72,6 +72,53 @@ class LocationTracker @Inject constructor(
 		}
 	}
 
+	fun getLastKnownLocation(): Location? {
+		return if (hasLocationPermission()) {
+			try {
+				// FusedLocationProviderClient의 getLastLocation() 메서드 사용
+				val task = fusedLocationClient.lastLocation
+				// 동기적으로 결과를 기다림 (주의: 메인 스레드에서 호출하면 안됨)
+				if (task.isComplete) {
+					task.result
+				} else {
+					null
+				}
+			} catch (e: Exception) {
+				null
+			}
+		} else {
+			null
+		}
+	}
+
+	// ✅ 개선된 버전: 위치 권한과 GPS 상태를 확인하고 더 자세한 로깅 제공
+	fun getLastKnownLocationWithLogging(): Location? {
+		if (!hasLocationPermission()) {
+			android.util.Log.w("LocationTracker", "위치 권한이 없습니다.")
+			return null
+		}
+
+		try {
+			val task = fusedLocationClient.lastLocation
+			if (task.isComplete) {
+				val location = task.result
+				if (location != null) {
+					android.util.Log.d("LocationTracker", "마지막 위치 획득: lat=${location.latitude}, lon=${location.longitude}, accuracy=${location.accuracy}m")
+					return location
+				} else {
+					android.util.Log.w("LocationTracker", "마지막 위치가 null입니다. GPS가 활성화되어 있는지 확인하세요.")
+					return null
+				}
+			} else {
+				android.util.Log.w("LocationTracker", "위치 작업이 아직 완료되지 않았습니다.")
+				return null
+			}
+		} catch (e: Exception) {
+			android.util.Log.e("LocationTracker", "위치 획득 중 오류 발생", e)
+			return null
+		}
+	}
+
 	private fun hasLocationPermission(): Boolean {
 		return ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
 			   ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED

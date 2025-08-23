@@ -11,7 +11,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-// import com.selfbell.app.MainActivity
+// import com.selfbell.app.ui.MainActivity
 import com.selfbell.core.R
 import com.selfbell.core.location.LocationTracker
 import com.selfbell.data.api.StompManager
@@ -22,11 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -42,7 +38,6 @@ class SafeWalkService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + Job())
     private var sessionId: Long = -1
-    private var updateCount = 0
 
     companion object {
         private const val CHANNEL_ID = "safe_walk_channel"
@@ -55,8 +50,8 @@ class SafeWalkService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("SafeWalkService", "SafeWalkService 시작")
-
         sessionId = intent?.getLongExtra("SESSION_ID", -1L) ?: -1L
+
         if (sessionId == -1L) {
             Log.e("SafeWalkService", "세션 ID가 없어 서비스를 종료합니다.")
             stopSelf()
@@ -64,7 +59,9 @@ class SafeWalkService : Service() {
         }
 
         startForegroundService()
-        startLocationTrackingAndReporting()
+        // ✅ 위치 추적 시작 후 주기적 위치 전송 시작
+        startLocationTracking()
+        startPeriodicLocationReporting()
 
         return START_STICKY
     }
@@ -81,13 +78,12 @@ class SafeWalkService : Service() {
             notificationIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-
         createNotificationChannel()
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("안심 귀가 서비스")
             .setContentText("안심 귀가 중입니다. 목적지까지 안전하게 이동하세요.")
-            .setSmallIcon(R.drawable.default_profile_icon2) // ✅ 알림 아이콘
+            .setSmallIcon(R.drawable.default_profile_icon2)
             .setContentIntent(pendingIntent)
             .build()
 
@@ -108,36 +104,47 @@ class SafeWalkService : Service() {
         }
     }
 
-    private fun startLocationTrackingAndReporting() {
+    // ✅ 위치 추적을 시작하는 함수
+    private fun startLocationTracking() {
+        Log.d("SafeWalkService", "위치 추적 시작")
+        // LocationTracker의 위치 업데이트를 시작하여 초기 위치를 얻음
         serviceScope.launch {
             locationTracker.getLocationUpdates()
-                .distinctUntilChanged()
-                .catch { e ->
-                    Log.e("SafeWalkService", "위치 추적 중 오류 발생", e)
-                }
                 .collect { location ->
-                    // 1분(60초)마다 서버에 위치를 전송하는 로직
-                    // LocationTracker의 업데이트 주기가 10초라면, 6번째 업데이트마다 전송
-                    if (updateCount % 6 == 0) {
-                        try {
-                            safeWalkRepository.uploadLocationTrack(
-                                sessionId = sessionId,
-                                lat = location.latitude,
-                                lon = location.longitude,
-                                accuracy = location.accuracy.toDouble()
-                            )
-                            // WebSocket으로도 위치를 보냄
-                            stompManager.sendLocation(
-                                sessionId = sessionId,
-                                lat = location.latitude,
-                                lon = location.longitude
-                            )
-                        } catch (e: Exception) {
-                            Log.e("SafeWalkService", "위치 정보 서버 전송 실패", e)
-                        }
-                    }
-                    updateCount++
+                    Log.d("SafeWalkService", "위치 업데이트 수신: lat=${location.latitude}, lon=${location.longitude}")
                 }
+        }
+    }
+
+    // ✅ 수정됨: 1분(60초)마다 독립적으로 위치를 전송하는 함수
+    private fun startPeriodicLocationReporting() {
+        serviceScope.launch {
+            while (isActive) {
+                // ✅ 개선된 위치 획득 메서드 사용
+                val location = locationTracker.getLastKnownLocationWithLogging()
+                if (location != null) {
+                    try {
+                        safeWalkRepository.uploadLocationTrack(
+                            sessionId = sessionId,
+                            lat = location.latitude,
+                            lon = location.longitude,
+                            accuracy = location.accuracy.toDouble()
+                        )
+                        stompManager.sendLocation(
+                            sessionId = sessionId,
+                            lat = location.latitude,
+                            lon = location.longitude
+                        )
+                        Log.d("SafeWalkService", "위치 정보 서버 전송 성공: lat=${location.latitude}, lon=${location.longitude}")
+                    } catch (e: Exception) {
+                        Log.e("SafeWalkService", "위치 정보 서버 전송 실패", e)
+                    }
+                } else {
+                    Log.w("SafeWalkService", "마지막으로 알려진 위치를 가져오지 못했습니다.")
+                }
+                // 10초 대기 (테스트용으로 단축)
+                delay(10000)
+            }
         }
     }
 
