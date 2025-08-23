@@ -140,10 +140,10 @@ fun HistoryList(
     onNavigateToDetail: (sessionId: Long) -> Unit
 ) {
     LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
-        items(historyItems, key = { it.id }) { item ->
+        items(historyItems, key = { it.sessionId }) { item -> // id -> sessionId로 변경
             HistoryCardItem(
                 historyItem = item,
-                onClick = { onNavigateToDetail(item.id) }
+                onClick = { onNavigateToDetail(item.sessionId) } // id -> sessionId로 변경
             )
             Divider()
         }

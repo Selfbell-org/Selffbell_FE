@@ -154,16 +154,16 @@ fun EscortScreen(
                 )
 
                 // 하단 '출발하기' 버튼
-                SelfBellButton(
-                    text = "출발하기",
-                    onClick = { viewModel.startSafeWalk() },
-                    enabled = isSetupComplete,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(floatingBottomPadding)
-                        .padding(bottom = 32.dp)
-                        .fillMaxWidth(0.9f)
-                )
+//                SelfBellButton(
+//                    text = "출발하기",
+//                    onClick = { viewModel.startSafeWalk() },
+//                    enabled = isSetupComplete,
+//                    modifier = Modifier
+//                        .align(Alignment.BottomCenter)
+//                        .padding(floatingBottomPadding)
+//                        .padding(bottom = 32.dp)
+//                        .fillMaxWidth(0.9f)
+//                )
             }
             EscortFlowState.GUARDIAN_SELECTION -> {
                 // --- 보호자 선택 단계 UI ---
@@ -175,7 +175,7 @@ fun EscortScreen(
                     selectedGuardians = selectedGuardians,
                     onGuardianToggle = viewModel::toggleGuardianSelection,
                     onStartWithGuardians = { viewModel.startSafeWalk() },
-                    onCloseClick = { viewModel.toggleGuardianShareSheet() }
+                    onCloseClick = { viewModel.returnToTimeSetup() }
                 )
             }
             EscortFlowState.IN_PROGRESS -> {
