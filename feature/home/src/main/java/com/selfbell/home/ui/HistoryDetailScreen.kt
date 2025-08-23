@@ -1,5 +1,6 @@
 package com.selfbell.home.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -108,7 +109,12 @@ fun HistoryDetailCard(
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.shadow(
+            elevation = 59.dp,
+            spotColor = Color(0x40000000),
+            ambientColor = Color(0x40000000))
+            .fillMaxWidth()
+            .height(244.dp),
         shape = RoundedCornerShape(16.dp),
         color = Color.White,
         shadowElevation = 8.dp
