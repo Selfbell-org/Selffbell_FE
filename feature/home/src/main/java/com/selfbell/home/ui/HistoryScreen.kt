@@ -12,9 +12,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.HistoryUserFilter
 import com.selfbell.home.ui.composables.HistoryCardItem
-import com.selfbell.home.ui.HistoryDateFilterDropdown // ✅ import 추가
-import com.selfbell.home.ui.HistorySortDropdown // ✅ import 추가
+import com.selfbell.home.ui.HistoryDateFilterDropdown
+import com.selfbell.home.ui.HistorySortDropdown
 import com.selfbell.domain.model.SafeWalkHistoryItem
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import com.selfbell.core.ui.composables.SelfBellButton
+import com.selfbell.core.ui.composables.SelfBellButtonType
+import com.selfbell.core.R as CoreR
 
 @Composable
 fun HistoryScreen(
@@ -23,29 +29,21 @@ fun HistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // ✅ 수정: collectAsState()를 사용하여 currentFilter 상태를 구독
+    val currentFilter by viewModel.currentFilter.collectAsState()
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // ✅ 3가지 탭
-        TabRow(selectedTabIndex = viewModel.currentFilter.value.userType.ordinal) {
-            HistoryUserFilter.values().forEach { filterType ->
-                Tab(
-                    selected = viewModel.currentFilter.value.userType == filterType,
-                    onClick = {
-                        viewModel.setFilter(
-                            viewModel.currentFilter.value.copy(userType = filterType)
-                        )
-                    },
-                    text = {
-                        Text(text = when (filterType) {
-                            HistoryUserFilter.ALL -> "전체 기록"
-                            HistoryUserFilter.GUARDIANS -> "보호자/피보호자"
-                            HistoryUserFilter.MINE -> "나의 귀가"
-                        })
-                    }
+        // ✅ 3가지 탭을 대신할 버튼 그룹 Composable
+        HistoryFilterButtons(
+            selectedFilter = currentFilter.userType, // ✅ 수정: .value 제거
+            onFilterSelected = { newFilterType ->
+                viewModel.setFilter(
+                    currentFilter.copy(userType = newFilterType) // ✅ 수정: .value 제거
                 )
             }
-        }
+        )
 
         // ✅ 필터 드롭다운
         Row(
@@ -56,19 +54,19 @@ fun HistoryScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             HistoryDateFilterDropdown(
-                selectedFilter = viewModel.currentFilter.value.dateRange,
+                selectedFilter = currentFilter.dateRange, // ✅ 수정: .value 제거
                 onFilterSelected = { newDateFilter ->
                     viewModel.setFilter(
-                        viewModel.currentFilter.value.copy(dateRange = newDateFilter)
+                        currentFilter.copy(dateRange = newDateFilter) // ✅ 수정: .value 제거
                     )
                 }
             )
             Spacer(modifier = Modifier.width(8.dp))
             HistorySortDropdown(
-                selectedSortOrder = viewModel.currentFilter.value.sortOrder,
+                selectedSortOrder = currentFilter.sortOrder, // ✅ 수정: .value 제거
                 onSortSelected = { newSortOrder ->
                     viewModel.setFilter(
-                        viewModel.currentFilter.value.copy(sortOrder = newSortOrder)
+                        currentFilter.copy(sortOrder = newSortOrder) // ✅ 수정: .value 제거
                     )
                 }
             )
@@ -99,8 +97,43 @@ fun HistoryScreen(
         }
     }
 }
+@Composable
+private fun HistoryFilterButtons(
+    selectedFilter: HistoryUserFilter,
+    onFilterSelected: (HistoryUserFilter) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HistoryUserFilter.values().forEach { filterType ->
+            val isSelected = selectedFilter == filterType
 
-// ✅ 히스토리 목록을 보여주는 Composable
+            val buttonType = if (isSelected) {
+                SelfBellButtonType.PRIMARY_FILLED
+            } else {
+                SelfBellButtonType.OUTLINED
+            }
+
+            // ✅ SelfBellButton 컴포넌트 사용
+            SelfBellButton(
+                text = when (filterType) {
+                    HistoryUserFilter.ALL -> "전체 기록"
+                    HistoryUserFilter.GUARDIANS -> "보호자/피보호자"
+                    HistoryUserFilter.MINE -> "나의 귀가"
+                },
+                onClick = { onFilterSelected(filterType) },
+                // ✅ weight(1f) 제거. 텍스트 길이에 맞춰 너비가 유동적으로 변함
+                modifier = Modifier,
+                buttonType = buttonType,
+                isSmall = true,
+            )
+        }
+    }
+}
 @Composable
 fun HistoryList(
     historyItems: List<SafeWalkHistoryItem>,
@@ -117,7 +150,6 @@ fun HistoryList(
     }
 }
 
-// ✅ 내역이 없을 때 화면
 @Composable
 fun EmptyHistoryScreen() {
     Box(

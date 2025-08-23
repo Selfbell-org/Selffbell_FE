@@ -224,7 +224,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(WindowInsets.statusBars.asPaddingValues())
-                        .padding(top = 24.dp, end = 16.dp)
+                        .padding(top = 40.dp, end = 16.dp)
                 )
 
                 infoWindowData?.let { (latLngValue, addressValue) ->

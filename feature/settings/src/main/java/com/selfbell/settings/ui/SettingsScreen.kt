@@ -62,7 +62,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-            .shadow(4.dp, RoundedCornerShape(16.dp))
+                .shadow(4.dp, RoundedCornerShape(16.dp))
                 .background(Color.White)
         ) {
             item {
@@ -77,7 +77,8 @@ fun SettingsScreen(
                 SettingsMenuItem(
                     label = "프로필 관리",
                     onClick = {
-                        navController.navigate(AppRoute.PROFILE_REGISTER_ROUTE_WITH_ARGS)
+                        // ✅ 파라미터를 추가하여, 설정에서 호출된 경로임을 알림
+                        navController.navigate("${AppRoute.PROFILE_REGISTER_ROUTE}?isFromSettings=true")
                     }
                 )
             }
@@ -93,7 +94,8 @@ fun SettingsScreen(
                 SettingsMenuItem(
                     label = "긴급 연락처 관리",
                     onClick = {
-                        navController.navigate(AppRoute.CONTACT_REGISTER_ROUTE)
+                        // ✅ 파라미터를 추가하여, 설정에서 호출된 경로임을 알림
+                        navController.navigate("${AppRoute.CONTACT_REGISTER_ROUTE}?isFromSettings=true")
                     }
                 )
             }
@@ -101,7 +103,8 @@ fun SettingsScreen(
                 SettingsMenuItem(
                     label = "메인 주소 설정",
                     onClick = {
-                        navController.navigate(AppRoute.ADDRESS_REGISTER_ROUTE)
+                        // ✅ 파라미터를 추가하여, 설정에서 호출된 경로임을 알림
+                        navController.navigate("${AppRoute.ADDRESS_REGISTER_ROUTE}?isFromSettings=true")
                     }
                 )
             }
@@ -116,7 +119,8 @@ fun SettingsScreen(
                 SettingsMenuItem(
                     label = "권한 설정",
                     onClick = {
-                        navController.navigate(AppRoute.PERMISSION_ROUTE)
+                        // ✅ 파라미터를 추가하여, 설정에서 호출된 경로임을 알림
+                        navController.navigate("${AppRoute.PERMISSION_ROUTE}?isFromSettings=true")
                     }
                 )
             }

@@ -48,7 +48,10 @@ import com.selfbell.core.ui.theme.Typography
 //enum class PermissionState { ACTIVE, INACTIVE, COMPLETED }
 
 @Composable
-fun PermissionScreen(navController: NavController,modifier: Modifier = Modifier) {
+fun PermissionScreen(
+    navController: NavController,isFromSettings: Boolean,
+    modifier: Modifier = Modifier
+) {
     val totalOnboardingSteps = 3
     val currentOnboardingStep = 2
 
@@ -250,6 +253,6 @@ fun PermissionScreen(navController: NavController,modifier: Modifier = Modifier)
 @Composable
 fun PermissionScreenPreview() {
     SelfBellTheme {
-        PermissionScreen(navController = rememberNavController())
+        PermissionScreen(navController = rememberNavController(),true)
     }
 }

@@ -22,6 +22,9 @@ import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkDetail
 import com.selfbell.domain.model.SafeWalkStatus
 import java.time.format.DateTimeFormatter
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.selfbell.core.ui.theme.GrayInactive
+import com.selfbell.core.ui.theme.Primary
 
 @Composable
 fun HistoryDetailScreen(
@@ -114,54 +117,131 @@ fun HistoryDetailCard(
 ) {
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surface
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        shadowElevation = 8.dp
     ) {
         Column(
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("위치 기록", style = Typography.titleLarge, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.width(8.dp))
+            // 제목과 배지
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = detail.ward.nickname,
-                    style = Typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "위치 기록",
+                    style = Typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
                 )
+                
+                // 배지
+                Surface(
+                    color = Primary,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.wrapContentSize()
+                ) {
+                    Text(
+                        text = detail.ward.nickname,
+                        style = Typography.labelMedium,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // 날짜와 시간
             Text(
                 text = detail.startedAt.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 오전 HH시 mm분")),
                 style = Typography.bodyMedium,
-                color = Color.Gray
+                color = GrayInactive
             )
-            Spacer(modifier = Modifier.height(24.dp))
-            DetailItem(
-                label = "상대가 설정한 시간",
-                value = detail.expectedArrival?.let { expected ->
-                    "${detail.startedAt.format(DateTimeFormatter.ofPattern("HH:mm"))} ~ ${expected.format(DateTimeFormatter.ofPattern("HH:mm"))}"
-                } ?: "설정되지 않음"
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            DetailItem(
-                label = "도착시간",
-                value = if (detail.status == SafeWalkStatus.IN_PROGRESS) {
-                    "진행 중"
-                } else {
-                    detail.endedAt?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "알 수 없음"
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // 상대가 설정한 시간
+            val expectedStartTime = detail.expectedStartTime
+            val expectedEndTime = detail.expectedEndTime
+            val estimatedDuration = detail.estimatedDurationMinutes
+            
+            if (expectedStartTime != null && expectedEndTime != null) {
+                Row {
+                    Text(
+                        text = "상대가 설정한 시간 ",
+                        style = Typography.bodyMedium,
+                        color = GrayInactive
+                    )
+                    Text(
+                        text = "${expectedStartTime.format(DateTimeFormatter.ofPattern("HH:mm"))} ~ ${expectedEndTime.format(DateTimeFormatter.ofPattern("HH:mm"))}",
+                        style = Typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = " (${estimatedDuration ?: java.time.Duration.between(expectedStartTime, expectedEndTime).toMinutes()}분)",
+                        style = Typography.bodyMedium,
+                        color = GrayInactive
+                    )
                 }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            DetailItem("주소", detail.destination.addressText)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            
+            // 도착시간
+            val arrivalTime = if (detail.status == SafeWalkStatus.IN_PROGRESS) {
+                "진행 중"
+            } else {
+                detail.endedAt?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "알 수 없음"
+            }
+            
+            val endedAt = detail.endedAt
+            val timeDifference = detail.timeDifferenceMinutes
+            
+            Row {
+                Text(
+                    text = "도착시간 ",
+                    style = Typography.bodyMedium,
+                    color = GrayInactive
+                )
+                Text(
+                    text = arrivalTime,
+                    style = Typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                if (timeDifference != null && endedAt != null) {
+                    val timeText = when {
+                        timeDifference > 0 -> " (예상 도착 시간 ${timeDifference}분 후)"
+                        timeDifference < 0 -> " (예상 도착 시간 ${-timeDifference}분 전)"
+                        else -> " (예상 도착 시간과 동일)"
+                    }
+                    Text(
+                        text = timeText,
+                        style = Typography.bodyMedium,
+                        color = GrayInactive
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // 주소
+            Row {
+                Text(
+                    text = "주소 ",
+                    style = Typography.bodyMedium,
+                    color = GrayInactive
+                )
+                Text(
+                    text = detail.destination.addressText,
+                    style = Typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
         }
-    }
-}
-
-@Composable
-fun DetailItem(label: String, value: String) {
-    Column {
-        Text(text = label, style = Typography.bodyMedium, color = Color.Gray)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = value, style = Typography.bodyLarge)
     }
 }
