@@ -344,6 +344,7 @@ class EscortViewModel @Inject constructor(
                     _isSessionActive.value = false
                     _sessionId.value = null
                     _escortFlowState.value = EscortFlowState.SETUP // 초기 설정 화면으로 복귀
+                    _showTimeInputModal.value = false
                     _isDestinationSelected.value = false // 목적지 선택 초기화
                     _selectedGuardians.value = emptySet() // 선택된 보호자 초기화
                     _isStartButtonEnabled.value = false // 버튼 비활성화

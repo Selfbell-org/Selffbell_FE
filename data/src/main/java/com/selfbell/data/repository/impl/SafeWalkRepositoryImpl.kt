@@ -54,11 +54,51 @@ class SafeWalkRepositoryImpl @Inject constructor(
             capturedAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         )
         
+        Log.d("SafeWalkRepository", "=== 위치 트랙 업로드 시작 ===")
+        Log.d("SafeWalkRepository", "세션 ID: $sessionId")
+        Log.d("SafeWalkRepository", "요청 데이터: $requestBody")
+        Log.d("SafeWalkRepository", "위치 정보: lat=$lat, lon=$lon, accuracy=${accuracy}m")
+        
+        // 세션 소유권 확인을 위해 세션 상세 정보 조회
+        try {
+            val sessionDetail = getSafeWalkDetail(sessionId)
+            Log.d("SafeWalkRepository", "세션 소유자 정보: ${sessionDetail.ward}")
+            Log.d("SafeWalkRepository", "세션 상태: ${sessionDetail.status}")
+            Log.d("SafeWalkRepository", "보호자 목록: ${sessionDetail.guardians}")
+        } catch (e: Exception) {
+            Log.w("SafeWalkRepository", "세션 상세 정보 조회 실패: ${e.message}")
+        }
+        
         return try {
             val response = api.uploadLocationTrack(sessionId, requestBody)
+            Log.d("SafeWalkRepository", "위치 트랙 업로드 성공: ${response.status}")
+            Log.d("SafeWalkRepository", "응답 데이터: $response")
             response.status == "UPLOADED"
         } catch (e: Exception) {
-            Log.e("SafeWalkRepository", "위치 트랙 업로드 실패", e)
+            Log.e("SafeWalkRepository", "=== 위치 트랙 업로드 실패 ===")
+            Log.e("SafeWalkRepository", "에러 타입: ${e.javaClass.simpleName}")
+            Log.e("SafeWalkRepository", "에러 메시지: ${e.message}")
+            
+            when (e) {
+                is retrofit2.HttpException -> {
+                    val errorBody = e.response()?.errorBody()?.string()
+                    Log.e("SafeWalkRepository", "HTTP 상태 코드: ${e.code()}")
+                    Log.e("SafeWalkRepository", "HTTP 에러 응답: $errorBody")
+                    Log.e("SafeWalkRepository", "요청 URL: ${e.response()?.raw()?.request?.url}")
+                    Log.e("SafeWalkRepository", "요청 메서드: ${e.response()?.raw()?.request?.method}")
+                    Log.e("SafeWalkRepository", "요청 헤더: ${e.response()?.raw()?.request?.headers}")
+                }
+                is java.lang.IllegalStateException -> {
+                    Log.e("SafeWalkRepository", "연결이 닫혀있음 - 네트워크 연결 상태 확인 필요")
+                    Log.e("SafeWalkRepository", "이는 보통 서버 연결이 끊어졌거나 타임아웃으로 인한 문제입니다")
+                }
+                else -> {
+                    Log.e("SafeWalkRepository", "기타 에러: ${e.message}")
+                    Log.e("SafeWalkRepository", "스택 트레이스: ${e.stackTraceToString()}")
+                }
+            }
+            
+            Log.e("SafeWalkRepository", "=== 위치 트랙 업로드 실패 종료 ===")
             false
         }
     }
@@ -145,7 +185,7 @@ class SafeWalkRepositoryImpl @Inject constructor(
             // 더미 데이터 생성
             val dummyHistoryItems = listOf(
                 SafeWalkDetail(
-                    sessionId = 1L,
+                    sessionId = 50L,
                     ward = Ward(id = 13L, name = "사용자1"),
                     origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지1"),
                     destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지1"),
@@ -156,7 +196,7 @@ class SafeWalkRepositoryImpl @Inject constructor(
                     guardians = listOf(Guardian(id = 5L, name = "보호자1"))
                 ),
                 SafeWalkDetail(
-                    sessionId = 2L,
+                    sessionId = 51L,
                     ward = Ward(id = 13L, name = "사용자1"),
                     origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지2"),
                     destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지2"),
@@ -167,7 +207,7 @@ class SafeWalkRepositoryImpl @Inject constructor(
                     guardians = listOf(Guardian(id = 5L, name = "보호자1"))
                 ),
                 SafeWalkDetail(
-                    sessionId = 3L,
+                    sessionId = 52L,
                     ward = Ward(id = 13L, name = "사용자1"),
                     origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지3"),
                     destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지3"),

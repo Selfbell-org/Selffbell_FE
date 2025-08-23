@@ -40,7 +40,13 @@ class AuthInterceptor @Inject constructor(
 
         // 요청 실행
         val response = chain.proceed(requestWithAuth)
-
+        
+        Log.d(TAG, "=== HTTP 응답 분석 ===")
+        Log.d(TAG, "요청 URL: ${originalRequest.url}")
+        Log.d(TAG, "요청 메서드: ${originalRequest.method}")
+        Log.d(TAG, "응답 상태 코드: ${response.code}")
+        Log.d(TAG, "응답 메시지: ${response.message}")
+        
         // ✅ 401 응답 시에만 토큰 재발급 시도 (403은 권한 문제이므로 제외)
         if (response.code == 401 && !cleanedToken.isNullOrBlank()) {
             Log.d(TAG, "토큰 만료 감지. 토큰 재발급 시도...")
@@ -74,6 +80,17 @@ class AuthInterceptor @Inject constructor(
                     .body(responseBody)
                     .build()
             }
+        }
+        
+        // 403 오류에 대한 상세 로그
+        if (response.code == 403) {
+            Log.w(TAG, "=== 403 Forbidden 오류 감지 ===")
+            Log.w(TAG, "요청 URL: ${originalRequest.url}")
+            Log.w(TAG, "요청 메서드: ${originalRequest.method}")
+            Log.w(TAG, "토큰 존재 여부: ${!cleanedToken.isNullOrBlank()}")
+            Log.w(TAG, "토큰 길이: ${cleanedToken?.length ?: 0}")
+            Log.w(TAG, "이는 권한 문제이므로 토큰 재발급을 시도하지 않습니다")
+            Log.w(TAG, "=== 403 Forbidden 오류 분석 완료 ===")
         }
 
         return response
