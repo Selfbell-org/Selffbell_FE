@@ -61,7 +61,8 @@ data class SafeWalkDetailResponse(
     @SerializedName("startedAt") val startedAt: String,
     @SerializedName("expectedArrival") val expectedArrival: String? = null,
     @SerializedName("timerEnd") val timerEnd: String? = null,
-    @SerializedName("guardians") val guardians: List<GuardianResponse>
+    @SerializedName("guardians") val guardians: List<GuardianResponse>,
+    @SerializedName("endedAt") val endedAt: String? = null
 )
 data class WardResponse(
     @SerializedName("id") val id: Long, 

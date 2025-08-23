@@ -49,25 +49,6 @@ class HistoryViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.value = HistoryUiState.Error(e.message ?: "히스토리 로드 실패")
             }
-            */
-
-            // --- ⬇️ 더미데이터 테스트 코드 (현재 사용) ⬇️ ---
-            delay(1000) // 로딩 효과를 위한 딜레이
-            val dummyData = createDummyHistoryData()
-
-            // 필터에 따라 더미데이터 필터링
-            val filteredData = dummyData.filter {
-                when (currentFilter.value.userType) {
-                    //HistoryUserFilter.ALL -> true
-                    HistoryUserFilter.GUARDIANS -> it.userType == "GUARDIAN"
-                    HistoryUserFilter.MINE -> it.userType == "MINE"
-                }
-            }.let {
-                if (currentFilter.value.sortOrder == HistorySortOrder.LATEST) it.sortedByDescending { item -> item.dateTime }
-                else it.sortedBy { item -> item.dateTime }
-            }
-
-            _uiState.value = HistoryUiState.Success(filteredData)
         }
     }
 

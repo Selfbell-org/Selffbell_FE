@@ -68,7 +68,7 @@ fun HistoryCardItem(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        text = historyItem.ward.name, // 실제 사용자 이름
+                        text = historyItem.ward.nickname, // 실제 사용자 이름
                         style = Typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Black
@@ -108,77 +108,4 @@ private fun SelfBellStatusBadge(status: SafeWalkStatus) {
         enabled = true,
         modifier = Modifier.wrapContentSize()
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HistoryCardItemPreview() {
-    MaterialTheme {
-        Column(modifier = Modifier.padding(16.dp)) {
-            HistoryCardItem(
-                historyItem = SafeWalkHistoryItem(
-                    id = 1,
-                    userProfileUrl = null,
-                    userName = "엄마",
-                    userType = "WARD",
-                    destinationName = "집",
-                    dateTime = LocalDateTime.now(),
-                    status = SafeWalkStatus.IN_PROGRESS
-                ),
-                onClick = {}
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            HistoryCardItem(
-                historyItem = SafeWalkHistoryItem(
-                    id = 2,
-                    userProfileUrl = null,
-                    userName = "누나",
-                    userType = "WARD",
-                    destinationName = "집",
-                    dateTime = LocalDateTime.now(),
-                    status = SafeWalkStatus.IN_PROGRESS
-                ),
-                onClick = {}
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            HistoryCardItem(
-                historyItem = SafeWalkHistoryItem(
-                    id = 3,
-                    userProfileUrl = null,
-                    userName = "나의 귀가",
-                    userType = "MINE",
-                    destinationName = "집",
-                    dateTime = LocalDateTime.now().minusDays(2),
-                    status = SafeWalkStatus.COMPLETED
-                ),
-                onClick = {}
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            HistoryCardItem(
-                historyItem = SafeWalkHistoryItem(
-                    id = 4,
-                    userProfileUrl = null,
-                    userName = "친구",
-                    userType = "WARD",
-                    destinationName = "본가",
-                    dateTime = LocalDateTime.now().minusDays(2),
-                    status = SafeWalkStatus.COMPLETED
-                ),
-                onClick = {}
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            HistoryCardItem(
-                historyItem = SafeWalkHistoryItem(
-                    id = 5,
-                    userProfileUrl = null,
-                    userName = "아빠",
-                    userType = "WARD",
-                    destinationName = "집",
-                    dateTime = LocalDateTime.now().minusDays(8),
-                    status = SafeWalkStatus.COMPLETED
-                ),
-                onClick = {}
-            )
-        }
-    }
 }

@@ -192,43 +192,45 @@ class SafeWalkRepositoryImpl @Inject constructor(
             val dummyHistoryItems = listOf(
                 SafeWalkDetail(
                     sessionId = 50L,
-                    ward = Ward(id = 13L, name = "사용자1"),
+                    ward = Ward(id = 13L, nickname = "사용자1"),
                     origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지1"),
                     destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지1"),
-                    status = "COMPLETED",
+                    status = SafeWalkStatus.COMPLETED,
                     startedAt = LocalDateTime.now().minusHours(2),
                     expectedArrival = LocalDateTime.now().minusHours(1),
                     timerEnd = LocalDateTime.now().minusHours(1),
-                    guardians = listOf(Guardian(id = 5L, name = "보호자1"))
+                    guardians = listOf(Guardian(id = 5L, nickname = "보호자1")),
+                    endedAt = LocalDateTime.now().minusHours(1)
                 ),
                 SafeWalkDetail(
                     sessionId = 51L,
-                    ward = Ward(id = 13L, name = "사용자1"),
+                    ward = Ward(id = 13L, nickname = "사용자1"),
                     origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지2"),
                     destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지2"),
-                    status = "IN_PROGRESS",
+                    status = SafeWalkStatus.IN_PROGRESS,
                     startedAt = LocalDateTime.now().minusMinutes(30),
                     expectedArrival = LocalDateTime.now().plusMinutes(30),
                     timerEnd = LocalDateTime.now().plusMinutes(30),
-                    guardians = listOf(Guardian(id = 5L, name = "보호자1"))
+                    guardians = listOf(Guardian(id = 5L, nickname = "보호자1")),
+                    endedAt = null
                 ),
                 SafeWalkDetail(
                     sessionId = 52L,
-                    ward = Ward(id = 13L, name = "사용자1"),
+                    ward = Ward(id = 13L, nickname = "사용자1"),
                     origin = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "출발지3"),
                     destination = LocationDetail(lat = 37.5665, lon = 126.9780, addressText = "도착지3"),
-                    status = "COMPLETED",
+                    status = SafeWalkStatus.COMPLETED,
                     startedAt = LocalDateTime.now().minusDays(1),
                     expectedArrival = LocalDateTime.now().minusDays(1).plusHours(1),
                     timerEnd = LocalDateTime.now().minusDays(1).plusHours(1),
-                    guardians = listOf(Guardian(id = 5L, name = "보호자1"))
+                    guardians = listOf(Guardian(id = 5L, nickname = "보호자1")),
+                    endedAt = LocalDateTime.now().minusDays(1).plusHours(1)
                 )
             )
             
             // 필터에 따라 정렬 및 필터링
             val filteredItems = when (filter.userType) {
-                HistoryUserFilter.ALL -> dummyHistoryItems
-                HistoryUserFilter.GUARDIANS -> dummyHistoryItems.filter { it.status == "IN_PROGRESS" }
+                HistoryUserFilter.GUARDIANS -> dummyHistoryItems.filter { it.status == SafeWalkStatus.IN_PROGRESS }
                 HistoryUserFilter.MINE -> dummyHistoryItems.filter { it.ward.id == 13L }
             }
             

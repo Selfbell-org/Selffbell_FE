@@ -20,6 +20,7 @@ import com.selfbell.core.ui.composables.ReportScreenHeader
 import com.selfbell.core.ui.composables.ReusableNaverMap // ✅ ReusableNaverMap import
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.SafeWalkDetail
+import com.selfbell.domain.model.SafeWalkStatus
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.selfbell.core.ui.theme.GrayInactive

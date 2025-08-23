@@ -38,25 +38,26 @@ fun SafeWalkDetailResponse.toDomainModel(): SafeWalkDetail {
         ward = this.ward.toDomainModel(),
         origin = this.origin.toDomainModel(),
         destination = this.destination.toDomainModel(),
-        status = this.status,
+        status = SafeWalkStatus.valueOf(this.status),
         startedAt = LocalDateTime.parse(this.startedAt),
         expectedArrival = this.expectedArrival?.let { LocalDateTime.parse(it) },
         timerEnd = this.timerEnd?.let { LocalDateTime.parse(it) },
-        guardians = this.guardians.map { it.toDomainModel() }
+        guardians = this.guardians.map { it.toDomainModel() },
+        endedAt = this.endedAt?.let { LocalDateTime.parse(it) }
     )
 }
 
 fun WardResponse.toDomainModel(): Ward {
     return Ward(
         id = this.id,
-        name = this.name
+        nickname = this.name
     )
 }
 
 fun GuardianResponse.toDomainModel(): Guardian {
     return Guardian(
         id = this.id,
-        name = this.name
+        nickname = this.name
     )
 }
 
