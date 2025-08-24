@@ -31,7 +31,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "http://3.37.244.247:8080/"
+    private const val BASE_URL = com.selfbell.data.BuildConfig.API_BASE_URL
 
     /**
      * AuthInterceptor가 토큰 재발급 시에만 사용하는 별도의 OkHttpClient
