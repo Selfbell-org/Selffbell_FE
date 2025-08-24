@@ -300,25 +300,51 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val addresses: List<AddressModel> = addressRepository.searchAddress(query)
+                val firstAddress = addresses.firstOrNull()
 
-                if (addresses.isNotEmpty()) {
-                    val firstAddress = addresses[0]
+                if (firstAddress != null) {
                     val lat = firstAddress.y.toDoubleOrNull()
-                    val lng = firstAddress.x.toDoubleOrNull()
-                    if (lat != null && lng != null) {
-                        _cameraTargetLatLng.value = LatLng(lat, lng)
+                    val lon = firstAddress.x.toDoubleOrNull()
+
+                    if (lat != null && lon != null) {
+                        val newLatLng = LatLng(lat, lon)
+                        _cameraTargetLatLng.value = newLatLng
                         _searchResultMessage.value = "검색 결과: ${firstAddress.roadAddress.ifEmpty { firstAddress.jibunAddress }}"
+
+                        // 🔔 검색된 위치의 안심벨 정보를 불러옵니다.
+                        fetchEmergencyBellsForLocation(newLatLng)
                     } else {
                         _searchResultMessage.value = "주소의 좌표 정보를 가져올 수 없습니다."
-                        _cameraTargetLatLng.value = null
                     }
                 } else {
                     _searchResultMessage.value = "검색 결과가 없습니다. 다른 검색어를 시도해보세요."
-                    _cameraTargetLatLng.value = null
                 }
             } catch (e: Exception) {
                 _searchResultMessage.value = "주소 검색 중 오류가 발생했습니다: ${e.message}"
-                _cameraTargetLatLng.value = null
+                Log.e("HomeViewModel", "주소 검색 오류", e)
+            }
+        }
+    }
+
+    private fun fetchEmergencyBellsForLocation(latLng: LatLng) {
+        viewModelScope.launch {
+            try {
+                Log.d("HomeViewModel", "새 위치의 안심벨 정보를 불러옵니다: $latLng")
+                val newBells = emergencyBellRepository.getNearbyEmergencyBells(
+                    lat = latLng.latitude,
+                    lon = latLng.longitude,
+                    radius = 500 // 검색 반경
+                ).sortedBy { it.distance ?: Double.MAX_VALUE }
+
+                val currentState = _uiState.value
+                if (currentState is HomeUiState.Success) {
+                    // 기존 상태는 유지하되, 안심벨 목록만 교체합니다.
+                    _uiState.value = currentState.copy(emergencyBells = newBells)
+                    Log.d("HomeViewModel", "새로운 안심벨 ${newBells.size}개를 업데이트했습니다.")
+                }
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "새 위치의 안심벨 정보를 불러오는데 실패했습니다.", e)
+                // 필요하다면 사용자에게 오류 메시지를 보여줄 수 있습니다.
             }
         }
     }
