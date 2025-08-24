@@ -6,6 +6,7 @@ import com.selfbell.domain.model.Profile
 
 fun ProfileResponseDto.toProfile(): Profile {
     return Profile(
-        name = this.name
+        name = this.name,
+        phoneNumber = this.phoneNumber
     )
 }

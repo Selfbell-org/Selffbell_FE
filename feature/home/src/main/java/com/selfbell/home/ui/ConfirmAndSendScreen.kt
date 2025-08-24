@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import android.util.Log
 import com.selfbell.core.model.Contact
 import com.selfbell.core.ui.composables.ReportScreenHeader
 import com.selfbell.core.ui.composables.SelfBellButton
@@ -125,13 +126,22 @@ fun ConfirmAndSendScreen(
             SelfBellButton(
                 text = "긴급 문자 전송",
                 onClick = {
+                    Log.d("ConfirmAndSendScreen", "=== 긴급 문자 전송 버튼 클릭 ===")
+                    Log.d("ConfirmAndSendScreen", "선택된 보호자: ${selectedGuardians.size}명")
+                    selectedGuardians.forEachIndexed { index, contact ->
+                        Log.d("ConfirmAndSendScreen", "보호자 ${index + 1}: ${contact.name} (userId: ${contact.userId})")
+                    }
+                    Log.d("ConfirmAndSendScreen", "선택된 메시지: '$selectedMessage'")
+                    
                     if (ContextCompat.checkSelfPermission(
                             context,
                             Manifest.permission.SEND_SMS
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
+                        Log.d("ConfirmAndSendScreen", "SMS 권한 있음, onSendClick() 호출")
                         onSendClick()
                     } else {
+                        Log.d("ConfirmAndSendScreen", "SMS 권한 없음, 권한 요청")
                         smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
                     }
                 },

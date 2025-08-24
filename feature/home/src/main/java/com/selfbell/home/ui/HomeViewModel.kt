@@ -7,6 +7,7 @@ import com.naver.maps.geometry.LatLng
 import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.repository.AddressRepository
 import com.selfbell.domain.repository.ContactRepository
+import com.selfbell.domain.repository.AuthRepository
 import com.selfbell.domain.model.Criminal
 import com.selfbell.domain.model.CriminalDetail
 import com.selfbell.domain.model.EmergencyBell
@@ -14,6 +15,7 @@ import com.selfbell.domain.model.EmergencyBellDetail
 import com.selfbell.domain.repository.CriminalRepository
 import com.selfbell.domain.repository.EmergencyBellRepository
 import com.selfbell.data.repository.impl.TokenManager
+import com.selfbell.domain.model.SosMessageRequest
 import com.selfbell.home.model.MapMarkerData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,7 +57,8 @@ class HomeViewModel @Inject constructor(
     private val locationTracker: LocationTracker,
     private val tokenManager: TokenManager,
     private val emergencyRepository: EmergencyBellRepository, // ✅ EmergencyRepository 주입
-    private val contactRepository: ContactRepository // ✅ ContactRepository 주입
+    private val contactRepository: ContactRepository, // ✅ ContactRepository 주입
+    private val authRepository: AuthRepository // ✅ AuthRepository 주입
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -86,11 +89,15 @@ class HomeViewModel @Inject constructor(
     // ✅ 긴급 신고 시 선택된 보호자 목록 (더미 데이터)
     private val _selectedGuardians = MutableStateFlow(
         listOf(
-            Contact(1L, null, "엄마", "01011112222", "fcm_token_1"),
-            Contact(2L, null, "아빠", "01033334444", "fcm_token_2"),
+            Contact(1L, null, "엄마", "01011112222"),
+            Contact(2L, null, "아빠", "01033334444"),
         )
     )
     val selectedGuardians: StateFlow<List<Contact>> = _selectedGuardians.asStateFlow()
+    
+    // ✅ 보호자 목록 상태 추가
+    private val _guardians = MutableStateFlow<List<Contact>>(emptyList())
+    val guardians: StateFlow<List<Contact>> = _guardians.asStateFlow()
 
     // ✅ 긴급 신고 메시지 템플릿
     private val _messageTemplates = MutableStateFlow(
@@ -167,29 +174,48 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (tokenManager.hasValidToken()) {
+                    Log.d("HomeViewModel", "=== loadAcceptedGuardians 시작 ===")
                     val relationships = contactRepository.getContactsFromServer(status = "ACCEPTED", page = 0, size = 100)
+                    Log.d("HomeViewModel", "서버에서 받은 관계 데이터: ${relationships.size}개")
+                    
                     val guardians = mutableListOf<Contact>()
                     
                     for (rel in relationships) {
-                        val phone = if (rel.toPhoneNumber.isNotBlank()) rel.toPhoneNumber else rel.fromPhoneNumber
-                        val userId = rel.toUserId
+                        Log.d("HomeViewModel", "관계 데이터 분석: id=${rel.id}, name=${rel.name}")
+                        Log.d("HomeViewModel", "  - toUserId: '${rel.toUserId}' (길이: ${rel.toUserId.length})")
+                        Log.d("HomeViewModel", "  - toPhoneNumber: '${rel.toPhoneNumber}'")
+                        Log.d("HomeViewModel", "  - fromPhoneNumber: '${rel.fromPhoneNumber}'")
                         
-                        // FCM 토큰 가져오기
-                        val fcmToken = if (userId.isNotBlank()) {
-                            contactRepository.getUserFCMToken(userId)
-                        } else null
+                        val phone = if (rel.toPhoneNumber.isNotBlank()) rel.toPhoneNumber else rel.fromPhoneNumber
+                        
+                        // userId 설정 로직: rel.toUserId가 비어있으면 전화번호 기반으로 임시 userId 생성
+                        val finalUserId = if (rel.toUserId.isNotBlank()) {
+                            // rel.toUserId가 있으면 그 값을 사용
+                            val parsedUserId = rel.toUserId.toLongOrNull()
+                            Log.d("HomeViewModel", "  - rel.toUserId 사용: $parsedUserId")
+                            parsedUserId
+                        } else {
+                            // rel.toUserId가 비어있으면 전화번호 기반으로 임시 userId 생성
+                            val tempUserId = phone.hashCode().toLong().let { if (it < 0) -it else it }
+                            Log.d("HomeViewModel", "  - 전화번호 기반 임시 userId 생성: $tempUserId (전화번호: $phone)")
+                            tempUserId
+                        }
+                        
+                        Log.d("HomeViewModel", "  - 최종 설정된 userId: $finalUserId")
                         
                         guardians.add(Contact(
                             id = rel.id.toLongOrNull() ?: 0L,
-                            userId = userId.toLongOrNull(),
+                            userId = finalUserId,
                             name = rel.name,
-                            phoneNumber = phone,
-                            fcmToken = fcmToken
+                            phoneNumber = phone
                         ))
                     }
                     
+                    _guardians.value = guardians
                     _selectedGuardians.value = guardians
-                    Log.d("HomeViewModel", "수락된 보호자 ${guardians.size}명 로드 완료 (FCM 토큰 포함)")
+                    Log.d("HomeViewModel", "수락된 보호자 ${guardians.size}명 로드 완료")
+                    Log.d("HomeViewModel", "userId가 있는 보호자: ${guardians.count { it.userId != null }}명")
+                    Log.d("HomeViewModel", "userId가 null인 보호자: ${guardians.count { it.userId == null }}명")
                 } else {
                     Log.d("HomeViewModel", "토큰이 없어 보호자 목록을 로드하지 않습니다")
                 }
@@ -313,34 +339,71 @@ class HomeViewModel @Inject constructor(
     }
 
     // ✅ 긴급 신고 메시지를 보내는 함수 추가
-    fun sendEmergencyAlert(guardians: List<Contact>, message: String) {
+    fun sendEmergencyAlert(selectedGuardians: List<Contact>, message: String) {
+        Log.d("HomeViewModel", "=== sendEmergencyAlert 함수 시작 ===")
+        Log.d("HomeViewModel", "입력받은 보호자: ${selectedGuardians.size}명")
+        selectedGuardians.forEachIndexed { index, contact ->
+            Log.d("HomeViewModel", "보호자 ${index + 1}: ${contact.name} (ID: ${contact.id}, userId: ${contact.userId}, 전화번호: ${contact.phoneNumber})")
+        }
+        Log.d("HomeViewModel", "입력받은 메시지: '$message'")
+        
         viewModelScope.launch {
             try {
-                // 현재 위치 정보를 가져오기
+                // 1. 현재 사용자의 위치(lat, lon)를 가져옵니다.
+                Log.d("HomeViewModel", "1단계: 현재 사용자 위치 가져오기")
                 val currentState = _uiState.value
                 val currentLocation = if (currentState is HomeUiState.Success) {
                     currentState.userLatLng
                 } else {
                     DEFAULT_LAT_LNG
                 }
+                Log.d("HomeViewModel", "현재 위치: lat=${currentLocation.latitude}, lon=${currentLocation.longitude}")
                 
-                val myUserId = "userId_123" // TODO: 실제 사용자 ID 가져오기
-
-                guardians.forEach { contact ->
-                    val recipientToken = contact.fcmToken ?: return@forEach // 토큰이 없으면 건너뜀
-
-                    emergencyRepository.sendEmergencyAlert(
-                        recipientToken = recipientToken,
-                        senderId = myUserId,
-                        message = message,
-                        lat = currentLocation.latitude,
-                        lon = currentLocation.longitude
-                    )
+                // 2. selectedGuardians 리스트에서 userId만 추출하여 List<Long> 타입의 receiverIds를 만듭니다.
+                Log.d("HomeViewModel", "2단계: 보호자 userId 추출")
+                val receiverIds = selectedGuardians
+                    .mapNotNull { it.userId }
+                    .filter { it > 0 }
+                
+                Log.d("HomeViewModel", "추출된 receiverIds: $receiverIds")
+                
+                if (receiverIds.isEmpty()) {
+                    Log.w("HomeViewModel", "유효한 receiver ID가 없습니다")
+                    return@launch
                 }
                 
-                Log.d("HomeViewModel", "긴급 신고 메시지 전송 성공: ${guardians.size}명에게 전송")
+                // 3. SosMessageRequest 객체를 생성합니다.
+                //    - templateId 필드를 항상 1로 하드코딩합니다.
+                //    - message 필드에는 함수로 전달받은 message 문자열을 그대로 넣습니다.
+                Log.d("HomeViewModel", "3단계: SosMessageRequest 객체 생성")
+                val request = SosMessageRequest(
+                    receiverUserIds = receiverIds,
+                    templateId = 1, // 항상 1로 하드코딩
+                    message = message,
+                    lat = currentLocation.latitude,
+                    lon = currentLocation.longitude
+                )
+                Log.d("HomeViewModel", "생성된 SosMessageRequest: $request")
+                
+                // 4. 생성된 Request 객체를 사용하여 emergencyBellRepository.sendSosMessage()를 호출합니다.
+                Log.d("HomeViewModel", "4단계: emergencyBellRepository.sendSosMessage() 호출")
+                Log.d("HomeViewModel", "API 호출 시작: POST /api/v1/sos/messages")
+                
+                val response = emergencyBellRepository.sendSosMessage(request)
+                
+                // 5. 성공 및 실패 시 로그를 출력합니다.
+                Log.d("HomeViewModel", "=== SOS 메시지 전송 성공! ===")
+                Log.d("HomeViewModel", "응답 ID: ${response.id}")
+                Log.d("HomeViewModel", "전송된 수: ${response.sentCount}")
+                Log.d("HomeViewModel", "전체 응답: $response")
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "긴급 신고 메시지 전송 실패", e)
+                Log.e("HomeViewModel", "=== SOS 메시지 전송 실패! ===", e)
+                Log.e("HomeViewModel", "에러 타입: ${e.javaClass.simpleName}")
+                Log.e("HomeViewModel", "에러 메시지: ${e.message}")
+                if (e is retrofit2.HttpException) {
+                    Log.e("HomeViewModel", "HTTP 에러 코드: ${e.code()}")
+                    Log.e("HomeViewModel", "HTTP 에러 메시지: ${e.message()}")
+                }
             }
         }
     }
