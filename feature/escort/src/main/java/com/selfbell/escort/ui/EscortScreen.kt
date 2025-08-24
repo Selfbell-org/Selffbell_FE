@@ -239,14 +239,17 @@ fun EscortingInfoCard(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text("안심귀가를 시작했어요!", style = Typography.titleMedium)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text("목적지: $destinationName", style = Typography.bodyMedium)
             }
-            Button(onClick = onShareClick) {
-                Text("공유")
-            }
+//            Button(onClick = onShareClick) {
+//                Text("공유")
+//            }
         }
     }
 }
