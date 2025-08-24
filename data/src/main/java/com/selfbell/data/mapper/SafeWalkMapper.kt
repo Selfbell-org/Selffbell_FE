@@ -69,7 +69,6 @@ fun LocationDetailResponse.toDomainModel(): LocationDetail {
     )
 }
 
-// ✅ [추가] HistorySessionDto를 SafeWalkHistoryItem으로 변환하는 Mapper 함수
 fun HistorySessionDto.toDomainModel(): SafeWalkHistoryItem {
     return SafeWalkHistoryItem(
         sessionId = this.session.id,

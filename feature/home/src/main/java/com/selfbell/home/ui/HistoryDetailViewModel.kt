@@ -42,7 +42,6 @@ class HistoryDetailViewModel @Inject constructor(
             try {
                 // 👇 [수정] 상세 정보와 트랙 목록을 동시에 요청하여 더 빠르게 로드
                 val detailDeferred = async { safeWalkRepository.getSafeWalkDetail(sessionId) }
-                // 트랙 API 호출: size=500(최대), order=asc(시간 오름차순)으로 경로 그리기에 적합하게 설정
                 val tracksDeferred = async { safeWalkRepository.getTracks(sessionId, null, 500, "asc") }
 
                 val detail = detailDeferred.await()

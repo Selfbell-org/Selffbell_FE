@@ -7,21 +7,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.selfbell.core.ui.theme.Typography
 import com.selfbell.domain.model.HistoryUserFilter
 import com.selfbell.home.ui.composables.HistoryCardItem
-import com.selfbell.home.ui.HistoryDateFilterDropdown
-import com.selfbell.home.ui.HistorySortDropdown
 import com.selfbell.domain.model.SafeWalkHistoryItem
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
-import com.selfbell.core.ui.composables.SelfBellButton
-import com.selfbell.core.ui.composables.SelfBellButtonType
+import androidx.compose.ui.unit.sp
 import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
-import com.selfbell.core.R as CoreR
+import com.selfbell.core.ui.theme.GrayInactive
+import com.selfbell.core.ui.theme.Primary
 
 @Composable
 fun HistoryScreen(
@@ -29,25 +27,28 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    // ✅ 수정: collectAsState()를 사용하여 currentFilter 상태를 구독
     val currentFilter by viewModel.currentFilter.collectAsState()
     val floatingBottomPadding = LocalFloatingBottomBarPadding.current
 
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // ✅ 3가지 탭을 대신할 버튼 그룹 Composable
+        // ✅ [추가] 화면 최상단에 "히스토리" 타이틀 추가
+        Text(
+            text = "히스토리",
+            style = Typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp)
+        )
+
         HistoryFilterButtons(
-            selectedFilter = currentFilter.userType, // ✅ 수정: .value 제거
+            selectedFilter = currentFilter.userType,
             onFilterSelected = { newFilterType ->
                 viewModel.setFilter(
-                    currentFilter.copy(userType = newFilterType) // ✅ 수정: .value 제거
+                    currentFilter.copy(userType = newFilterType)
                 )
             }
         )
 
-        // ✅ 필터 드롭다운
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -56,25 +57,24 @@ fun HistoryScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             HistoryDateFilterDropdown(
-                selectedFilter = currentFilter.dateRange, // ✅ 수정: .value 제거
+                selectedFilter = currentFilter.dateRange,
                 onFilterSelected = { newDateFilter ->
                     viewModel.setFilter(
-                        currentFilter.copy(dateRange = newDateFilter) // ✅ 수정: .value 제거
+                        currentFilter.copy(dateRange = newDateFilter)
                     )
                 }
             )
             Spacer(modifier = Modifier.width(8.dp))
             HistorySortDropdown(
-                selectedSortOrder = currentFilter.sortOrder, // ✅ 수정: .value 제거
+                selectedSortOrder = currentFilter.sortOrder,
                 onSortSelected = { newSortOrder ->
                     viewModel.setFilter(
-                        currentFilter.copy(sortOrder = newSortOrder) // ✅ 수정: .value 제거
+                        currentFilter.copy(sortOrder = newSortOrder)
                     )
                 }
             )
         }
 
-        // ✅ UI 상태에 따른 화면 분기
         when (val state = uiState) {
             is HistoryUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -100,55 +100,69 @@ fun HistoryScreen(
         }
     }
 }
+
+// ✅ [수정] HistoryFilterButtons Composable 전체 수정
 @Composable
 private fun HistoryFilterButtons(
     selectedFilter: HistoryUserFilter,
     onFilterSelected: (HistoryUserFilter) -> Unit
 ) {
-    Row(
+    // 버튼들을 감싸는 둥근 배경
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = GrayInactive.copy(alpha = 0.1f) // 배경색
     ) {
-        HistoryUserFilter.values().forEach { filterType ->
-            val isSelected = selectedFilter == filterType
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp), // 내부 패딩
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // ✅ [수정] HistoryUserFilter.values() -> ALL 포함
+            HistoryUserFilter.values().forEach { filterType ->
+                val isSelected = selectedFilter == filterType
 
-            val buttonType = if (isSelected) {
-                SelfBellButtonType.PRIMARY_FILLED
-            } else {
-                SelfBellButtonType.OUTLINED
+                // 개별 버튼
+                TextButton(
+                    onClick = { onFilterSelected(filterType) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = if (isSelected) Primary else Color.Transparent,
+                        contentColor = if (isSelected) Color.White else GrayInactive
+                    )
+                ) {
+                    Text(
+                        text = when (filterType) {
+                            HistoryUserFilter.GUARDIANS -> "보호자/피보호자"
+                            HistoryUserFilter.MINE -> "나의 귀가"
+                        },
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 14.sp
+                    )
+                }
             }
-
-            // ✅ SelfBellButton 컴포넌트 사용
-            SelfBellButton(
-                text = when (filterType) {
-                    //HistoryUserFilter.ALL -> "전체 기록"
-                    HistoryUserFilter.GUARDIANS -> "보호자/피보호자"
-                    HistoryUserFilter.MINE -> "나의 귀가"
-                },
-                onClick = { onFilterSelected(filterType) },
-                // ✅ weight(1f) 제거. 텍스트 길이에 맞춰 너비가 유동적으로 변함
-                modifier = Modifier,
-                buttonType = buttonType,
-                isSmall = true,
-            )
         }
     }
 }
+
 @Composable
 fun HistoryList(
     historyItems: List<SafeWalkHistoryItem>,
     onNavigateToDetail: (sessionId: Long) -> Unit,
     contentPadding: PaddingValues
 ) {
-    LazyColumn(modifier = Modifier.padding(horizontal = 16.dp),
-        contentPadding = contentPadding) {
-        items(historyItems, key = { it.sessionId }) { item -> // id -> sessionId로 변경
+    LazyColumn(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        contentPadding = contentPadding
+    ) {
+        items(historyItems, key = { it.sessionId }) { item ->
             HistoryCardItem(
                 historyItem = item,
-                onClick = { onNavigateToDetail(item.sessionId) } // id -> sessionId로 변경
+                onClick = { onNavigateToDetail(item.sessionId) }
             )
             Divider()
         }

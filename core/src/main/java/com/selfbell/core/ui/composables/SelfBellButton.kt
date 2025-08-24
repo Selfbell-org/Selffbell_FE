@@ -34,7 +34,8 @@ enum class SelfBellButtonType {
     TEXT_ONLY,
     FAB,
     SUCCESS_FILLED, // ✅ 성공 상태를 위한 버튼 (초록색)
-    DANGER_FILLED   // ✅ 위험 상태를 위한 버튼 (빨간색)
+    DANGER_FILLED ,  // ✅ 위험 상태를 위한 버튼 (빨간색)
+    LIGHTER_FILLED
 }
 
 @Composable
@@ -64,6 +65,11 @@ fun SelfBellButton(
         SelfBellButtonType.PRIMARY_FILLED -> {
             backgroundColor = Primary
             contentColor = Color.White
+            borderColor = null
+        }
+        SelfBellButtonType.LIGHTER_FILLED -> {
+            backgroundColor =  Color(0xFFEFF4FF)
+            contentColor = Color.Black
             borderColor = null
         }
         SelfBellButtonType.OUTLINED -> {
