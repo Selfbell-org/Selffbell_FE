@@ -21,7 +21,7 @@ class StompManager @Inject constructor() {
 
         // 2. 엔드포인트 URL 형식을 올바르게 수정
         // SockJS 지원 엔드포인트는 /ws/websocket 경로를 사용합니다.
-        val endpoint = "ws://3.37.244.247:8080/ws/websocket"
+        val endpoint = com.selfbell.data.BuildConfig.STOMP_WS_URL
         stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, endpoint, headers)
 
         // 연결 라이프사이클 이벤트 로그 추가 (디버깅에 유용)

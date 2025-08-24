@@ -126,7 +126,7 @@ object DataModule {
     @Named("criminalRetrofit")
     fun provideCriminalRetrofit(@Named("criminalOkHttpClient") okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://3.37.244.247:8080/") // 📌 여기에 실제 API 베이스 URL 입력
+            .baseUrl(com.selfbell.data.BuildConfig.API_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
