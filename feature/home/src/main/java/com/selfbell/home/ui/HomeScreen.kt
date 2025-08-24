@@ -333,30 +333,21 @@ fun HomeScreen(
                 onDismissRequest = {
                     coroutineScope.launch { sheetState.hide() }
                 },
+                viewModel = viewModel,
                 sendSms = { guardians, message ->
-                    if (ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.SEND_SMS
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        try {
-                            val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                context.getSystemService(SmsManager::class.java)
-                            } else {
-                                @Suppress("DEPRECATION")
-                                SmsManager.getDefault()
-                            }
-                            guardians.forEach { contact ->
-                                smsManager.sendTextMessage(contact.phoneNumber, null, message, null, null)
-                            }
-                            Toast.makeText(context, "긴급 문자가 발송되었습니다.", Toast.LENGTH_SHORT).show()
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "문자 발송에 실패했습니다.", Toast.LENGTH_SHORT).show()
-                            e.printStackTrace()
-                        }
-                    } else {
-                        smsPermissionLauncher.launch(Manifest.permission.SEND_SMS)
+                    Log.d("HomeScreen", "=== sendSms 함수 호출됨 ===")
+                    Log.d("HomeScreen", "전달받은 보호자: ${guardians.size}명")
+                    guardians.forEachIndexed { index, contact ->
+                        Log.d("HomeScreen", "보호자 ${index + 1}: ${contact.name} (ID: ${contact.id}, userId: ${contact.userId}, 전화번호: ${contact.phoneNumber})")
                     }
+                    Log.d("HomeScreen", "전달받은 메시지: '$message'")
+                    
+                    // HomeViewModel의 sendEmergencyAlert 호출
+                    Log.d("HomeScreen", "HomeViewModel.sendEmergencyAlert() 호출 시작...")
+                    viewModel.sendEmergencyAlert(guardians, message)
+                    
+                    Log.d("HomeScreen", "sendEmergencyAlert 호출 완료, Toast 표시")
+                    Toast.makeText(context, "긴급 상황 신고가 전송되었습니다.", Toast.LENGTH_SHORT).show()
                 }
             )
         }

@@ -2,6 +2,8 @@ package com.selfbell.domain.repository
 
 import com.selfbell.domain.model.EmergencyBell
 import com.selfbell.domain.model.EmergencyBellDetail
+import com.selfbell.domain.model.SosMessageRequest
+import com.selfbell.domain.model.SosMessageResponse
 
 interface EmergencyBellRepository {
     suspend fun getNearbyEmergencyBells(lat: Double, lon: Double, radius: Int): List<EmergencyBell>
@@ -13,4 +15,6 @@ interface EmergencyBellRepository {
         lat: Double,
         lon: Double
     )
+    
+    suspend fun sendSosMessage(request: SosMessageRequest): SosMessageResponse
 }

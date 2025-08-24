@@ -2,6 +2,7 @@ package com.selfbell.escort.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.selfbell.core.ui.theme.Black
 import com.selfbell.core.ui.theme.Primary
@@ -103,8 +105,12 @@ fun EscortSetupSheet(
                 ) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         if (isDestinationSelected && !isFavoriteSelected) {
-                            // ✅ 직접 입력으로 선택된 경우: 버튼 라벨을 설정한 주소로 표시
-                            Text(destinationLocationName, color = Color.White)
+                            Text(
+                                text = destinationLocationName,
+                                color = Color.White,
+                                maxLines = 1, // 텍스트를 한 줄로 제한
+                                modifier = Modifier.basicMarquee() // 마퀴 효과 적용
+                            )
                         } else {
                             Text("도착지 주소 직접 입력..", color = Color.Gray)
                         }
@@ -181,7 +187,11 @@ private fun TabButton(
             Text(
                 text = subText,
                 style = Typography.bodyMedium,
-                color = Color.White
+                color = Color.White,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee()
             )
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -194,7 +204,11 @@ private fun TabButton(
                 Text(
                     text = subText,
                     style = Typography.bodyMedium,
-                    color = Black
+                    color = Black,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.basicMarquee()
                 )
             }
         }

@@ -166,7 +166,7 @@ fun AddressRegisterScreen(
                                 MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp), // 테마 색상
                                 shape = RoundedCornerShape(16.dp)
                             )
-                            .padding(vertical = 8.dp) // 항목 내부 상하 패딩
+                            .padding(vertical = 8.dp, horizontal = 16.dp) // 항목 내부 상하 패딩
                     ) {
                         items(addressResults.take(5)) { address -> // 최대 5개 항목만 표시
                             AddressResultItem(address = address) { // AddressModel 전달
@@ -273,12 +273,3 @@ fun AddressRegisterScreen(
         }
     }
 }
-//@Preview(showBackground = true)
-//@Composable
-//fun AddressRegisterScreenPreview() {
-//    SelfBellTheme {
-//        AddressRegisterScreen(
-//            navController = rememberNavController()
-//        )
-//    }
-//}

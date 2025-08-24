@@ -41,11 +41,37 @@ class AuthInterceptor @Inject constructor(
         // 요청 실행
         val response = chain.proceed(requestWithAuth)
         
-        Log.d(TAG, "=== HTTP 응답 분석 ===")
-        Log.d(TAG, "요청 URL: ${originalRequest.url}")
-        Log.d(TAG, "요청 메서드: ${originalRequest.method}")
-        Log.d(TAG, "응답 상태 코드: ${response.code}")
-        Log.d(TAG, "응답 메시지: ${response.message}")
+        // SOS 메시지 API에 대한 특별한 로깅
+        if (originalRequest.url.encodedPath.contains("/sos/messages")) {
+            Log.d(TAG, "=== 🚨 SOS 메시지 API 호출 감지! ===")
+            Log.d(TAG, "요청 URL: ${originalRequest.url}")
+            Log.d(TAG, "요청 메서드: ${originalRequest.method}")
+            Log.d(TAG, "요청 헤더: ${originalRequest.headers}")
+            
+            // 요청 바디 로깅 (가능한 경우)
+            val requestBody = originalRequest.body
+            if (requestBody != null) {
+                Log.d(TAG, "요청 바디 타입: ${requestBody.contentType()}")
+                Log.d(TAG, "요청 바디 크기: ${requestBody.contentLength()} bytes")
+            }
+            
+            Log.d(TAG, "응답 상태 코드: ${response.code}")
+            Log.d(TAG, "응답 메시지: ${response.message}")
+            Log.d(TAG, "응답 헤더: ${response.headers}")
+            
+            if (response.code == 200) {
+                Log.d(TAG, "✅ SOS 메시지 API 호출 성공!")
+            } else {
+                Log.e(TAG, "❌ SOS 메시지 API 호출 실패: ${response.code}")
+            }
+            Log.d(TAG, "=== SOS 메시지 API 분석 완료 ===")
+        } else {
+            Log.d(TAG, "=== HTTP 응답 분석 ===")
+            Log.d(TAG, "요청 URL: ${originalRequest.url}")
+            Log.d(TAG, "요청 메서드: ${originalRequest.method}")
+            Log.d(TAG, "응답 상태 코드: ${response.code}")
+            Log.d(TAG, "응답 메시지: ${response.message}")
+        }
         
         // ✅ 401 응답 시에만 토큰 재발급 시도 (403은 권한 문제이므로 제외)
         if (response.code == 401 && !cleanedToken.isNullOrBlank()) {
