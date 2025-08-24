@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import android.util.Log
 import com.selfbell.core.model.Contact
 import com.selfbell.core.ui.composables.ReportScreenHeader
 import com.selfbell.core.ui.theme.Primary
@@ -20,9 +21,9 @@ enum class MessageReportStep {
 @Composable
 fun MessageReportFlow(
     onDismissRequest: () -> Unit,
+    viewModel: HomeViewModel,
     sendSms: (guardians: List<Contact>, message: String) -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: HomeContactsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    modifier: Modifier = Modifier
 ) {
     var currentStep by remember { mutableStateOf(MessageReportStep.SELECT_RECIPIENT) }
     var selectedGuardians by remember { mutableStateOf(emptyList<Contact>()) }
@@ -56,9 +57,18 @@ fun MessageReportFlow(
                     messageTemplates = dummyMessageTemplates,
                     onCancelClick = onDismissRequest,
                     onNextClick = { guardians, message ->
+                        Log.d("MessageReportFlow", "=== SelectRecipientScreen → ConfirmAndSendScreen ===")
+                        Log.d("MessageReportFlow", "전달받은 보호자: ${guardians.size}명")
+                        guardians.forEachIndexed { index, contact ->
+                            Log.d("MessageReportFlow", "보호자 ${index + 1}: ${contact.name} (userId: ${contact.userId})")
+                        }
+                        Log.d("MessageReportFlow", "전달받은 메시지: '$message'")
+                        
                         selectedGuardians = guardians
                         selectedMessage = message
                         currentStep = MessageReportStep.CONFIRM_SEND
+                        
+                        Log.d("MessageReportFlow", "현재 단계: $currentStep")
                     },
                     selectedGuardians = selectedGuardians,
                     // onGuardianSelect 로직 수정: isSelected 매개변수 없이 토글 로직 구현
@@ -86,8 +96,18 @@ fun MessageReportFlow(
                     selectedMessage = selectedMessage,
                     onBackClick = { currentStep = MessageReportStep.SELECT_RECIPIENT },
                     onSendClick = {
+                        Log.d("MessageReportFlow", "=== ConfirmAndSendScreen → SendCompleteScreen ===")
+                        Log.d("MessageReportFlow", "최종 전송 시작!")
+                        Log.d("MessageReportFlow", "전송할 보호자: ${selectedGuardians.size}명")
+                        selectedGuardians.forEachIndexed { index, contact ->
+                            Log.d("MessageReportFlow", "보호자 ${index + 1}: ${contact.name} (userId: ${contact.userId})")
+                        }
+                        Log.d("MessageReportFlow", "전송할 메시지: '$selectedMessage'")
+                        
                         sendSms(selectedGuardians, selectedMessage)
                         currentStep = MessageReportStep.SEND_COMPLETE
+                        
+                        Log.d("MessageReportFlow", "현재 단계: $currentStep")
                     }
                 )
             }

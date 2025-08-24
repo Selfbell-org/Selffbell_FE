@@ -10,6 +10,7 @@ import com.selfbell.data.mapper.toDomain
 import com.selfbell.domain.model.ContactRelationship
 import com.selfbell.domain.model.ContactRelationshipStatus
 import com.selfbell.domain.model.ContactUser
+import com.selfbell.domain.model.UserInfo
 import com.selfbell.domain.repository.ContactRepository
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -115,6 +116,26 @@ class ContactRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e("ContactRepo", "FCM 토큰 가져오기 실패: userId=$userId", e)
+            null
+        }
+    }
+
+    override suspend fun getUserInfo(phoneNumber: String): UserInfo? {
+        return try {
+            val response = contactService.getUserInfo(phoneNumber)
+            if (response.exists) {
+                Log.d("ContactRepo", "사용자 정보 가져오기 성공: $phoneNumber")
+                UserInfo(
+                    userId = response.userId,
+                    name = response.name,
+                    phoneNumber = response.phoneNumber
+                )
+            } else {
+                Log.d("ContactRepo", "사용자가 존재하지 않음: $phoneNumber")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("ContactRepo", "사용자 정보 가져오기 실패: $phoneNumber", e)
             null
         }
     }
