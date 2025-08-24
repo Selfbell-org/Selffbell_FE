@@ -1,9 +1,5 @@
 package com.selfbell.home.ui
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import android.telephony.SmsManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraAnimation
@@ -37,76 +32,58 @@ import com.selfbell.home.model.MapMarkerData
 import kotlinx.coroutines.launch
 import com.naver.maps.map.overlay.OverlayImage
 import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
-import com.selfbell.alerts.model.AlertData
-import com.selfbell.alerts.model.AlertType
 import com.selfbell.core.R as CoreR
-import android.util.Log // ✅ Log 클래스 임포트
+import android.util.Log
 import com.selfbell.domain.model.CriminalDetail
-
-// ✅ 새로운 Enum 클래스를 정의하여 지도에 표시할 마커 모드를 관리합니다.
-//enum class MapMarkerMode {
-//    SAFETY_BELL_ONLY, // 안심벨만 표시
-//    SAFETY_BELL_AND_CRIMINALS // 안심벨 + 범죄자 모두 표시
-//}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    // ViewModel을 직접 주입받고, UI는 이를 관찰합니다.
     viewModel: HomeViewModel = hiltViewModel(),
     onMsgReportClick: () -> Unit
 ) {
-    // ViewModel의 상태를 관찰합니다.
     val uiState by viewModel.uiState.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
     val cameraTargetLatLng by viewModel.cameraTargetLatLng.collectAsState()
     val searchResultMessage by viewModel.searchResultMessage.collectAsState()
 
-    // ✅ 변경: HomeViewModel의 criminals 상태를 직접 관찰합니다.
     val criminals by viewModel.criminals.collectAsState()
 
-    // ✅ 성범죄자 상세 정보 상태 관찰
     val selectedCriminalDetail by viewModel.selectedCriminalDetail.collectAsState()
+    val selectedEmergencyBellDetail = (uiState as? HomeUiState.Success)?.selectedEmergencyBellDetail
 
-    // ✅ ViewModel의 새로운 상태를 관찰합니다.
+
     val mapMarkerMode by viewModel.mapMarkerMode.collectAsState()
 
-    // ✅ 추가: 범죄자 정보 로딩 상태를 관찰합니다.
     val isCriminalsLoading by viewModel.isCriminalsLoading.collectAsState()
 
     var naverMapInstance by remember { mutableStateOf<NaverMap?>(null) }
     var infoWindowData by remember { mutableStateOf<Pair<LatLng, String>?>(null) }
-    var currentModalMode by remember { mutableStateOf(ModalMode.SEARCH) }
 
-    // ✅ 지도에 추가된 마커들을 관리할 상태 추가
     val allMarkers = remember { mutableListOf<Marker>() }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val mapClickModifier = Modifier.clickable {
-        if (currentModalMode != ModalMode.SEARCH) {
-            currentModalMode = ModalMode.SEARCH
-            // 상세정보 상태 초기화
-            viewModel.setSelectedEmergencyBellDetail(null)
-            viewModel.setSelectedCriminalDetail(null)
+    val modalMode by remember(selectedEmergencyBellDetail, selectedCriminalDetail) {
+        derivedStateOf {
+            if (selectedEmergencyBellDetail != null || selectedCriminalDetail != null) {
+                ModalMode.DETAIL
+            } else {
+                ModalMode.SEARCH
+            }
         }
     }
 
-    val smsPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            Toast.makeText(context, "문자 발송 권한이 허용되었습니다.", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "문자 발송 권한이 거부되었습니다.", Toast.LENGTH_SHORT).show()
+    val mapClickModifier = Modifier.clickable {
+        if (modalMode == ModalMode.DETAIL) {
+            viewModel.clearDetails()
         }
     }
-    // 플로팅 바텀바 패딩 (오버레이 전용)
+
     val floatingBottomPadding = LocalFloatingBottomBarPadding.current
 
-    // ✅ LaunchedEffect로 카메라 위치 변경 관찰
     LaunchedEffect(cameraTargetLatLng) {
         Log.d("HomeScreen", "Camera position changed to $cameraTargetLatLng")
         cameraTargetLatLng?.let { latLng ->
@@ -114,13 +91,10 @@ fun HomeScreen(
         }
     }
 
-    // ✅ 새로운 LaunchedEffect 추가: 마커 모드와 범죄자 데이터 변경을 관찰하여 마커 업데이트
-    // ✅ 수정: 마커 모드, 범죄자 데이터, 맵 인스턴스 변경을 관찰하여 마커 업데이트
     LaunchedEffect(naverMapInstance, uiState, mapMarkerMode) {
         Log.d("HomeScreen", "LaunchedEffect triggered. mapMarkerMode: $mapMarkerMode")
         val map = naverMapInstance ?: return@LaunchedEffect
 
-        // ⚠️ 기존 마커 제거 로직: 모든 마커를 제거하고 다시 그립니다.
         Log.d("HomeScreen", "Clearing all markers. Total markers: ${allMarkers.size}")
         allMarkers.forEach { it.map = null }
         allMarkers.clear()
@@ -129,7 +103,6 @@ fun HomeScreen(
         if (uiState is HomeUiState.Success) {
             val successState = uiState as HomeUiState.Success
 
-            // 안심벨 마커 추가 (항상 표시)
             Log.d("HomeScreen", "Attempting to add emergency bells. Count: ${successState.emergencyBells.size}")
             successState.emergencyBells.forEach { bell ->
                 val marker = addMarker(
@@ -144,7 +117,6 @@ fun HomeScreen(
                     ),
                     onClick = { markerData ->
                         viewModel.getEmergencyBellDetail(markerData.objtId!!)
-                        currentModalMode = ModalMode.DETAIL
                     }
                 )
                 allMarkers.add(marker)
@@ -152,9 +124,8 @@ fun HomeScreen(
             }
             Log.d("HomeScreen", "Added ${successState.emergencyBells.size} emergency bell markers.")
 
-            // 범죄자 마커 추가 (토글 상태에 따라 표시)
             if (mapMarkerMode == MapMarkerMode.SAFETY_BELL_AND_CRIMINALS) {
-                Log.d("HomeScreen", "Attempting to add criminals. Count: ${criminals.size}") // ✅ 수정: successState.criminals 대신 criminals 변수 사용
+                Log.d("HomeScreen", "Attempting to add criminals. Count: ${criminals.size}")
                 criminals.forEach { criminal ->
                     val marker = addMarker(
                         naverMap = map,
@@ -174,13 +145,12 @@ fun HomeScreen(
                                 distanceMeters = markerData.distance
                             )
                             viewModel.setSelectedCriminalDetail(criminalDetail)
-                            currentModalMode = ModalMode.DETAIL
                         }
                     )
                     allMarkers.add(marker)
                     Log.d("HomeScreen", "Added criminal marker at ${criminal.lat}, ${criminal.lon}")
                 }
-                Log.d("HomeScreen", "Added ${criminals.size} criminal markers.") // ✅ 수정
+                Log.d("HomeScreen", "Added ${criminals.size} criminal markers.")
             }
         }
     }
@@ -191,7 +161,6 @@ fun HomeScreen(
             cameraPosition = cameraTargetLatLng ?: DEFAULT_LAT_LNG,
             onMapReady = { map ->
                 naverMapInstance = map
-                // ⚠️ 마커 그리는 로직은 LaunchedEffect로 이동
             }
         )
         when (val state = uiState) {
@@ -229,11 +198,10 @@ fun HomeScreen(
                     (emergencyBellMarkers + criminalMarkers).sortedBy { it.distance }
                 }
 
-                // ✅ MapMarkerToggleButton의 로직을 변경했습니다.
                 MapMarkerToggleButton(
                     mapMarkerMode = mapMarkerMode,
                     onToggle = { viewModel.toggleMapMarkerMode() },
-                    isLoading = isCriminalsLoading, // ✅ 로딩 상태 전달
+                    isLoading = isCriminalsLoading,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(WindowInsets.statusBars.asPaddingValues())
@@ -274,7 +242,7 @@ fun HomeScreen(
                                 style = Typography.labelSmall.copy(color = Color(0xFF949494))
                             )
                             Text(
-                                "SelfBell 사용자",
+                                "SafeBell 사용자",
                                 style = Typography.bodyMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -282,7 +250,6 @@ fun HomeScreen(
                         }
                         IconButton(
                             onClick = {
-                                currentModalMode = ModalMode.SEARCH
                                 coroutineScope.launch { sheetState.show() }
                                 onMsgReportClick()
                             }
@@ -305,12 +272,28 @@ fun HomeScreen(
                     onSearchTextChange = viewModel::onSearchTextChanged,
                     onSearchClick = viewModel::onSearchConfirmed,
                     mapMarkers = modalMapMarkers,
-                    onMarkerItemClick = viewModel::onMapMarkerClicked,
+                    onMarkerItemClick = { markerData ->
+                        // 공통 로직: 지도 이동 및 검색창 텍스트 업데이트
+                        viewModel.onMapMarkerClicked(markerData)
+
+                        // 상세 정보 표시 로직
+                        if (markerData.type == MapMarkerData.MarkerType.SAFETY_BELL && markerData.objtId != null) {
+                            viewModel.getEmergencyBellDetail(markerData.objtId)
+                        } else if (markerData.type == MapMarkerData.MarkerType.CRIMINAL) {
+                            val criminalDetail = CriminalDetail(
+                                address = markerData.address,
+                                lat = markerData.latLng.latitude,
+                                lon = markerData.latLng.longitude,
+                                distanceMeters = markerData.distance
+                            )
+                            viewModel.setSelectedCriminalDetail(criminalDetail)
+                        }
+                    },
                     selectedEmergencyBellDetail = state.selectedEmergencyBellDetail,
-                    selectedCriminalDetail = state.selectedCriminalDetail,
-                    modalMode = currentModalMode,
-                    onModalModeChange = { newMode -> currentModalMode = newMode },
-                    mapMarkerMode = mapMarkerMode // ✅ 추가된 파라미터
+                    selectedCriminalDetail = selectedCriminalDetail,
+                    modalMode = modalMode,
+                    mapMarkerMode = mapMarkerMode,
+                    onDetailDismiss = { viewModel.clearDetails() },
                 )
             }
             is HomeUiState.Error -> {
@@ -354,13 +337,12 @@ fun HomeScreen(
     }
 }
 
-// ✅ `clearAllMarkers` 함수와 `addOrUpdateMarker` 함수는 제거하고, 새로운 `addMarker` 함수를 사용합니다.
 private fun addMarker(
     naverMap: NaverMap,
     latLng: LatLng,
     data: MapMarkerData,
     onClick: (MapMarkerData) -> Unit
-): Marker { // ✅ Marker 객체를 반환하도록 수정
+): Marker {
     return Marker().apply {
         position = latLng
         map = naverMap
@@ -372,12 +354,10 @@ private fun addMarker(
     }
 }
 
-// ✅ HomeScren에 특화된 토글 버튼 컴포저블을 새로 만들었습니다.
 @Composable
 fun MapMarkerToggleButton(
     mapMarkerMode: MapMarkerMode,
     onToggle: () -> Unit,
-    // ✅ 추가: 로딩 상태 파라미터
     isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -389,7 +369,6 @@ fun MapMarkerToggleButton(
             .background(Color.White, RoundedCornerShape(20.dp))
             .clip(RoundedCornerShape(20.dp))
     ) {
-        // ✅ 로딩 상태에 따라 UI 분기
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(24.dp),
