@@ -48,8 +48,8 @@ fun AddressSearchModal(
     selectedEmergencyBellDetail: EmergencyBellDetail?,
     selectedCriminalDetail: CriminalDetail?,
     modalMode: ModalMode,
-    onModalModeChange: (ModalMode) -> Unit = {},
-    mapMarkerMode: MapMarkerMode, // ✅ mapMarkerMode 파라미터 추가
+    onDetailDismiss: () -> Unit,
+    mapMarkerMode: MapMarkerMode,
 ) {
     Surface(
         modifier = modifier
@@ -95,7 +95,7 @@ fun AddressSearchModal(
 
                     // ==== 마커 리스트 ====
                     val filteredMarkers = remember(mapMarkers, mapMarkerMode) {
-                        Log.d("AddressSearchModal", "Recomposing marker list. Total items: ${mapMarkers.size}, Mode: $mapMarkerMode") // ✅ 로그 추가
+                        Log.d("AddressSearchModal", "Recomposing marker list. Total items: ${mapMarkers.size}, Mode: $mapMarkerMode")
                         if (mapMarkerMode == MapMarkerMode.SAFETY_BELL_ONLY) {
                             mapMarkers.filter { it.type == MapMarkerData.MarkerType.SAFETY_BELL }
                         } else {
@@ -114,18 +114,14 @@ fun AddressSearchModal(
                             modifier = Modifier.fillMaxWidth().heightIn(max = 160.dp)
                         ) {
                             items(filteredMarkers) { markerData ->
-                                Log.d("AddressSearchModal", "Displaying item: ${markerData.address}, Type: ${markerData.type}") // ✅ 로그 추가
+                                Log.d("AddressSearchModal", "Displaying item: ${markerData.address}, Type: ${markerData.type}")
                                 Row(
-                                    Modifier.fillMaxWidth().height(40.dp).clickable {
-                                        if (markerData.type == MapMarkerData.MarkerType.SAFETY_BELL && markerData.objtId != null) {
-                                            // 안심벨 마커 클릭 시 상세정보 모드로 전환
-                                            onModalModeChange(ModalMode.DETAIL)
-                                        } else if (markerData.type == MapMarkerData.MarkerType.CRIMINAL) {
-                                            // 성범죄자 마커 클릭 시 상세정보 모드로 전환
-                                            onModalModeChange(ModalMode.DETAIL)
-                                        }
-                                        onMarkerItemClick(markerData)
-                                    },
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(40.dp)
+                                        .clickable {
+                                            onMarkerItemClick(markerData)
+                                        },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Image(
@@ -150,10 +146,8 @@ fun AddressSearchModal(
                     }
                 }
                 ModalMode.DETAIL -> {
-                    // ==== 상세 정보 (안심벨 또는 성범죄자) ====
                     when {
                         selectedEmergencyBellDetail != null -> {
-                            // 안심벨 상세 정보
                             val detail = selectedEmergencyBellDetail
                             Column(
                                 modifier = Modifier.fillMaxWidth()
@@ -167,7 +161,7 @@ fun AddressSearchModal(
                                         contentDescription = "뒤로가기",
                                         modifier = Modifier
                                             .size(24.dp)
-                                            .clickable { onModalModeChange(ModalMode.SEARCH) }
+                                            .clickable { onDetailDismiss() }
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
@@ -183,11 +177,9 @@ fun AddressSearchModal(
                                     text = "거리: ${detail.distance?.let { "${it.toInt()}m" } ?: "알 수 없음"}",
                                     style = Typography.bodyMedium
                                 )
-                                // TODO: 필요한 다른 정보 추가
                             }
                         }
                         selectedCriminalDetail != null -> {
-                            // 성범죄자 상세 정보
                             val detail = selectedCriminalDetail
                             Column(
                                 modifier = Modifier.fillMaxWidth()
@@ -201,21 +193,21 @@ fun AddressSearchModal(
                                         contentDescription = "뒤로가기",
                                         modifier = Modifier
                                             .size(24.dp)
-                                            .clickable { onModalModeChange(ModalMode.SEARCH) }
+                                            .clickable { onDetailDismiss() }
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
-                                        text = "성범죄자 상세 정보",
+                                        text = "성범죄자 거주지 정보",
                                         style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                                     )
                                 }
-                                                                 Spacer(Modifier.height(16.dp))
-                                 Text("이름: 성범죄자", style = Typography.bodyMedium)
-                                 Text("유형: 거주지", style = Typography.bodyMedium)
-                                 Text(
-                                     text = "거리: ${detail.distanceMeters.toInt()}m",
-                                     style = Typography.bodyMedium
-                                 )
+                                Spacer(Modifier.height(16.dp))
+                                Text("주소지: ${detail.address}", style = Typography.bodyMedium)
+                                Text("유형: 거주지", style = Typography.bodyMedium)
+                                Text(
+                                    text = "거리: ${detail.distanceMeters.toInt()}m",
+                                    style = Typography.bodyMedium
+                                )
                             }
                         }
                         else -> {
