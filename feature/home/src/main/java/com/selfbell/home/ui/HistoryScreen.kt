@@ -16,6 +16,7 @@ import com.selfbell.home.ui.composables.HistoryCardItem
 import com.selfbell.domain.model.SafeWalkHistoryItem
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.sp
 import com.selfbell.core.ui.insets.LocalFloatingBottomBarPadding
 import com.selfbell.core.ui.theme.GrayInactive
@@ -29,6 +30,7 @@ fun HistoryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val currentFilter by viewModel.currentFilter.collectAsState()
     val floatingBottomPadding = LocalFloatingBottomBarPadding.current
+
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -121,7 +123,6 @@ private fun HistoryFilterButtons(
                 .padding(4.dp), // 내부 패딩
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // ✅ [수정] HistoryUserFilter.values() -> ALL 포함
             HistoryUserFilter.values().forEach { filterType ->
                 val isSelected = selectedFilter == filterType
 

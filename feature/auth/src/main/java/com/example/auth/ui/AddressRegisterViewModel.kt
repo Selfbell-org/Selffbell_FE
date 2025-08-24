@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naver.maps.geometry.LatLng // LatLng import
+import com.selfbell.core.location.LocationTracker
 import com.selfbell.domain.model.AddressModel
 import com.selfbell.domain.repository.AddressRepository
+import com.selfbell.domain.repository.ReverseGeocodingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -16,7 +18,9 @@ import kotlin.text.isNotBlank
 
 @HiltViewModel
 class AddressRegisterViewModel @Inject constructor(
-    private val addressRepository: AddressRepository // Hilt를 통해 주입
+    private val addressRepository: AddressRepository, // Hilt를 통해 주입
+    private val locationTracker: LocationTracker, // 👈 [추가]
+    private val reverseGeocodingRepository: ReverseGeocodingRepository
 ) : ViewModel() {
 
     private val _searchAddress = MutableStateFlow("")
@@ -37,6 +41,9 @@ class AddressRegisterViewModel @Inject constructor(
 
     // 디바운싱을 위한 Job
     private var searchJob: Job? = null
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
 
     init {
         // searchAddress StateFlow의 변경을 감지하고 debounce 적용
@@ -137,19 +144,43 @@ class AddressRegisterViewModel @Inject constructor(
 
     fun getCurrentLocationAddress() {
         viewModelScope.launch {
-            // TODO: 현재 위치를 가져와서 주소로 변환하는 로직 구현
-            // 예시: locationProvider.getCurrentLocation { lat, lon ->
-            //     val address = addressRepository.getAddressFromCoordinates(lat, lon)
-            //     address?.let {
-            //         _searchAddress.value = it.roadAddress.ifEmpty { it.jibunAddress }
-            //         _addressResults.value = listOf(it)
-            //         _isAddressSelected.value = true
-            //          _selectedAddressDetail.value = it
-            //     }
-            // }
-            // 임시로 하드코딩된 주소 선택 (실제 구현 필요)
-            val tempAddress = AddressModel("임시 현재 위치 도로명", "임시 현재 위치 지번", "0.0", "0.0")
-            selectAddress(tempAddress) // selectAddress를 통해 UI 상태 업데이트 (이미 _selectedAddressDetail 설정됨)
+            _isLoading.value = true
+            try {
+                // 1. 새로 만든 getCurrentLocation() 함수 호출
+                val location = locationTracker.getCurrentLocation()
+                if (location == null) {
+                    Log.e("AddressRegisterVM", "Failed to get current location.")
+                    // TODO: 사용자에게 위치를 가져올 수 없다는 Toast 메시지 등을 보여주는 로직 추가
+                    return@launch
+                }
+
+                // 2. 위도/경도를 주소 문자열로 변환
+                val addressString = reverseGeocodingRepository.reverseGeocode(
+                    lat = location.latitude,
+                    lon = location.longitude
+                )
+                if (addressString == null) {
+                    Log.e("AddressRegisterVM", "Failed to reverse geocode.")
+                    // TODO: 사용자에게 주소를 변환할 수 없다는 Toast 메시지 등을 보여주는 로직 추가
+                    return@launch
+                }
+
+                // 3. 변환된 주소와 좌표로 AddressModel 객체 생성
+                val currentAddress = AddressModel(
+                    roadAddress = addressString,
+                    jibunAddress = "", // 도로명 주소만 사용
+                    y = location.latitude.toString(),
+                    x = location.longitude.toString()
+                )
+
+                // 4. 기존 selectAddress 함수를 재사용하여 UI 상태 업데이트
+                selectAddress(currentAddress)
+
+            } catch (e: Exception) {
+                Log.e("AddressRegisterVM", "Error getting current location address", e)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }
