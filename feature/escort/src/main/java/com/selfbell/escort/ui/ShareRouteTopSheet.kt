@@ -45,7 +45,7 @@ fun ShareRouteTopSheet(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 50.dp)
+            //.padding(top = 50.dp)
             .shadow(10.dp, RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)),
         shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
