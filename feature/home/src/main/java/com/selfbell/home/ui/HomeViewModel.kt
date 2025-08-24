@@ -29,7 +29,6 @@ import kotlin.text.ifEmpty
 import kotlin.text.toDoubleOrNull
 import com.selfbell.core.model.Contact // ✅ Contact 모델 import
 
-// ✅ 지도의 마커 표시 모드를 위한 enum 클래스 (HomeViewModel이 접근 가능하도록 이 파일에 추가)
 enum class MapMarkerMode {
     SAFETY_BELL_ONLY,
     SAFETY_BELL_AND_CRIMINALS
@@ -41,8 +40,7 @@ sealed interface HomeUiState {
         val userLatLng: LatLng,
         val emergencyBells: List<EmergencyBell>,
         val criminals: List<Criminal>,
-        val selectedEmergencyBellDetail: EmergencyBellDetail? = null,
-        val selectedCriminalDetail: CriminalDetail? = null
+        val selectedEmergencyBellDetail: EmergencyBellDetail? = null
     ) : HomeUiState
     data class Error(val message: String) : HomeUiState
 }
@@ -56,9 +54,9 @@ class HomeViewModel @Inject constructor(
     private val criminalRepository: CriminalRepository,
     private val locationTracker: LocationTracker,
     private val tokenManager: TokenManager,
-    private val emergencyRepository: EmergencyBellRepository, // ✅ EmergencyRepository 주입
-    private val contactRepository: ContactRepository, // ✅ ContactRepository 주입
-    private val authRepository: AuthRepository // ✅ AuthRepository 주입
+    private val emergencyRepository: EmergencyBellRepository,
+    private val contactRepository: ContactRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -73,20 +71,19 @@ class HomeViewModel @Inject constructor(
     private val _searchResultMessage = MutableStateFlow<String?>(null)
     val searchResultMessage: StateFlow<String?> = _searchResultMessage.asStateFlow()
 
-    // ✅ 지도의 마커 모드를 관리하는 상태 (StateFlow)
     private val _mapMarkerMode = MutableStateFlow(MapMarkerMode.SAFETY_BELL_ONLY)
     val mapMarkerMode: StateFlow<MapMarkerMode> = _mapMarkerMode.asStateFlow()
 
-    // ✅ 범죄자 정보를 미리 로드하여 저장할 별도의 StateFlow
     private val _preloadedCriminals = MutableStateFlow<List<Criminal>>(emptyList())
-    // UI에서 접근할 수 있도록 공개된 StateFlow 추가
+
     val criminals: StateFlow<List<Criminal>> = _preloadedCriminals.asStateFlow()
 
-    // ✅ 범죄자 데이터 로딩 상태를 위한 StateFlow 추가
     private val _isCriminalsLoading = MutableStateFlow(false)
     val isCriminalsLoading: StateFlow<Boolean> = _isCriminalsLoading.asStateFlow()
 
-    // ✅ 긴급 신고 시 선택된 보호자 목록 (더미 데이터)
+    // ✅ 범죄자 정보를 한 번만 로드하기 위한 플래그 추가
+    private var hasLoadedInitialCriminals = false
+
     private val _selectedGuardians = MutableStateFlow(
         listOf(
             Contact(1L, null, "엄마", "01011112222"),
@@ -94,21 +91,17 @@ class HomeViewModel @Inject constructor(
         )
     )
     val selectedGuardians: StateFlow<List<Contact>> = _selectedGuardians.asStateFlow()
-    
-    // ✅ 보호자 목록 상태 추가
+
     private val _guardians = MutableStateFlow<List<Contact>>(emptyList())
     val guardians: StateFlow<List<Contact>> = _guardians.asStateFlow()
 
-    // ✅ 긴급 신고 메시지 템플릿
     private val _messageTemplates = MutableStateFlow(
         listOf(
             "위급 상황입니다. 제 위치를 확인해주세요.",
             "현재 위험에 처해있습니다. 도움을 요청합니다."
         )
     )
-    val messageTemplates: StateFlow<List<String>> = _messageTemplates.asStateFlow()
 
-    // ✅ 성범죄자 상세 정보 상태
     private val _selectedCriminalDetail = MutableStateFlow<CriminalDetail?>(null)
     val selectedCriminalDetail: StateFlow<CriminalDetail?> = _selectedCriminalDetail.asStateFlow()
 
@@ -116,12 +109,10 @@ class HomeViewModel @Inject constructor(
     init {
         startHomeLocationStream()
         loadAcceptedGuardians()
-        // ✅ 추가: _preloadedCriminals의 변경을 감지하여 UIState를 업데이트합니다.
         viewModelScope.launch {
             _preloadedCriminals.collectLatest { criminalsList ->
                 val current = _uiState.value
                 if (current is HomeUiState.Success) {
-                    // 범죄자 리스트가 업데이트되면 기존 UIState의 criminals를 새 데이터로 교체
                     _uiState.value = current.copy(criminals = criminalsList)
                 }
             }
@@ -141,10 +132,11 @@ class HomeViewModel @Inject constructor(
                         radius = 500
                     ).sortedBy { it.distance ?: Double.MAX_VALUE }
 
-                    val current = _uiState.value
-                    if (current !is HomeUiState.Success) {
-                        // 초기 로딩 시에만 범죄자 정보 미리 로드 시작
+                    // ✅✅✅ 문제의 로직 수정 ✅✅✅
+                    // 불안정한 UI 상태 체크 대신, 플래그를 사용하여 최초 한 번만 호출하도록 변경
+                    if (!hasLoadedInitialCriminals) {
                         fetchCriminals(userLatLng)
+                        hasLoadedInitialCriminals = true
                     }
 
                     // UI 상태 업데이트
@@ -221,7 +213,6 @@ class HomeViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "보호자 목록 로드 실패: ${e.message}", e)
-                // 실패 시 더미 데이터 유지
             }
         }
     }
@@ -338,7 +329,6 @@ class HomeViewModel @Inject constructor(
         _searchResultMessage.value = null
     }
 
-    // ✅ 긴급 신고 메시지를 보내는 함수 추가
     fun sendEmergencyAlert(selectedGuardians: List<Contact>, message: String) {
         Log.d("HomeViewModel", "=== sendEmergencyAlert 함수 시작 ===")
         Log.d("HomeViewModel", "입력받은 보호자: ${selectedGuardians.size}명")
@@ -349,7 +339,6 @@ class HomeViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                // 1. 현재 사용자의 위치(lat, lon)를 가져옵니다.
                 Log.d("HomeViewModel", "1단계: 현재 사용자 위치 가져오기")
                 val currentState = _uiState.value
                 val currentLocation = if (currentState is HomeUiState.Success) {
@@ -358,8 +347,7 @@ class HomeViewModel @Inject constructor(
                     DEFAULT_LAT_LNG
                 }
                 Log.d("HomeViewModel", "현재 위치: lat=${currentLocation.latitude}, lon=${currentLocation.longitude}")
-                
-                // 2. selectedGuardians 리스트에서 userId만 추출하여 List<Long> 타입의 receiverIds를 만듭니다.
+
                 Log.d("HomeViewModel", "2단계: 보호자 userId 추출")
                 val receiverIds = selectedGuardians
                     .mapNotNull { it.userId }
@@ -371,27 +359,22 @@ class HomeViewModel @Inject constructor(
                     Log.w("HomeViewModel", "유효한 receiver ID가 없습니다")
                     return@launch
                 }
-                
-                // 3. SosMessageRequest 객체를 생성합니다.
-                //    - templateId 필드를 항상 1로 하드코딩합니다.
-                //    - message 필드에는 함수로 전달받은 message 문자열을 그대로 넣습니다.
+
                 Log.d("HomeViewModel", "3단계: SosMessageRequest 객체 생성")
                 val request = SosMessageRequest(
                     receiverUserIds = receiverIds,
-                    templateId = 1, // 항상 1로 하드코딩
+                    templateId = 1,
                     message = message,
                     lat = currentLocation.latitude,
                     lon = currentLocation.longitude
                 )
                 Log.d("HomeViewModel", "생성된 SosMessageRequest: $request")
-                
-                // 4. 생성된 Request 객체를 사용하여 emergencyBellRepository.sendSosMessage()를 호출합니다.
+
                 Log.d("HomeViewModel", "4단계: emergencyBellRepository.sendSosMessage() 호출")
                 Log.d("HomeViewModel", "API 호출 시작: POST /api/v1/sos/messages")
                 
                 val response = emergencyBellRepository.sendSosMessage(request)
-                
-                // 5. 성공 및 실패 시 로그를 출력합니다.
+
                 Log.d("HomeViewModel", "=== SOS 메시지 전송 성공! ===")
                 Log.d("HomeViewModel", "응답 ID: ${response.id}")
                 Log.d("HomeViewModel", "전송된 수: ${response.sentCount}")
@@ -406,5 +389,11 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    // ✅ 상세 정보 상태를 모두 초기화하는 함수 추가
+    fun clearDetails() {
+        setSelectedEmergencyBellDetail(null)
+        setSelectedCriminalDetail(null)
     }
 }
