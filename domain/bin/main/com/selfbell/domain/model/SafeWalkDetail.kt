@@ -38,13 +38,7 @@ data class SafeWalkDetail(
     val expectedArrival: LocalDateTime?,
     val timerEnd: LocalDateTime?,
     val guardians: List<Guardian>,
-    val endedAt: LocalDateTime?,
-    // ✅ 서버에서 받아올 추가 필드들
-    val expectedStartTime: LocalDateTime? = null, // 상대가 설정한 시작 시간
-    val expectedEndTime: LocalDateTime? = null,   // 상대가 설정한 종료 시간
-    val estimatedDurationMinutes: Int? = null,   // 예상 소요 시간 (분)
-    val actualDurationMinutes: Int? = null,      // 실제 소요 시간 (분)
-    val timeDifferenceMinutes: Int? = null       // 예상 대비 실제 시간 차이 (분)
+    val endedAt: LocalDateTime?
 )
 
 // ✅ 5. 상세 정보에 사용되는 부가 모델
