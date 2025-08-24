@@ -32,7 +32,6 @@ import com.selfbell.core.ui.theme.Danger
 import com.selfbell.core.ui.composables.SelfBellButtonType
 import com.selfbell.core.ui.composables.SelfBellButton
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryCardItem(
     historyItem: SafeWalkHistoryItem, // SafeWalkDetail 타입
@@ -90,8 +89,8 @@ fun HistoryCardItem(
 private fun SelfBellStatusBadge(status: SafeWalkStatus) {
     val buttonType = when (status) {
         SafeWalkStatus.IN_PROGRESS -> SelfBellButtonType.PRIMARY_FILLED
-        SafeWalkStatus.ARRIVED, SafeWalkStatus.MANUAL_END -> SelfBellButtonType.OUTLINED
-        SafeWalkStatus.TIMEOUT -> SelfBellButtonType.OUTLINED // 취소 상태도 OUTLINED로 처리
+        SafeWalkStatus.ARRIVED, SafeWalkStatus.MANUAL_END -> SelfBellButtonType.LIGHTER_FILLED
+        SafeWalkStatus.TIMEOUT -> SelfBellButtonType.LIGHTER_FILLED // 취소 상태도 OUTLINED로 처리
     }
 
     val text = when (status) {
@@ -102,7 +101,7 @@ private fun SelfBellStatusBadge(status: SafeWalkStatus) {
 
     SelfBellButton(
         text = text,
-        onClick = { /* 상태 배지는 클릭 불가 */ },
+        onClick = { },
         buttonType = buttonType,
         isSmall = true,
         enabled = true,
