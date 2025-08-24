@@ -1,6 +1,7 @@
 package com.selfbell.core.location
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -12,6 +13,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -93,6 +95,7 @@ class LocationTracker @Inject constructor(
 	}
 
 	// ✅ 개선된 버전: 위치 권한과 GPS 상태를 확인하고 더 자세한 로깅 제공
+	@SuppressLint("MissingPermission")
 	suspend fun getLastKnownLocationWithLogging(): Location? {
 		if (!hasLocationPermission()) {
 			android.util.Log.w("LocationTracker", "위치 권한이 없습니다.")
@@ -119,6 +122,33 @@ class LocationTracker @Inject constructor(
 	private fun hasLocationPermission(): Boolean {
 		return ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
 			   ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+	}
+
+	suspend fun getCurrentLocation(): Location? {
+		if (!hasLocationPermission()) {
+			android.util.Log.w("LocationTracker", "위치 권한이 없습니다.")
+			return null
+		}
+
+		// getCurrentLocation은 권한 체크가 필요한 메서드이므로 SuppressLint 추가
+
+		return try {
+			// FusedLocationProviderClient의 일회성 위치 요청 API 사용
+			val location = fusedLocationClient.getCurrentLocation(
+				Priority.PRIORITY_HIGH_ACCURACY,
+				CancellationTokenSource().token
+			).await() // 코루틴으로 결과 대기
+
+			if (location != null) {
+				android.util.Log.d("LocationTracker", "현재 위치 획득 성공: lat=${location.latitude}, lon=${location.longitude}")
+			} else {
+				android.util.Log.w("LocationTracker", "현재 위치를 가져올 수 없습니다 (null). GPS를 확인하세요.")
+			}
+			location
+		} catch (e: Exception) {
+			android.util.Log.e("LocationTracker", "현재 위치 획득 중 오류", e)
+			null
+		}
 	}
 }
 
