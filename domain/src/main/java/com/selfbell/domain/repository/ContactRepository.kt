@@ -26,6 +26,13 @@ interface ContactRepository {
      * @return 사용자 존재 여부
      */
     suspend fun checkUserExists(phoneNumber: String): Boolean
+
+    /**
+     * 특정 전화번호로 가입된 사용자 정보를 가져옵니다.
+     * @param phoneNumber 확인할 전화번호
+     * @return 사용자 정보 (없으면 null)
+     */
+    suspend fun getUserInfo(phoneNumber: String): com.selfbell.domain.model.UserInfo?
     suspend fun getDeviceContacts(): List<ContactUser> // ✅ 로컬 연락처만 가져오는 함수 추가
 
 

@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import android.util.Log
 import com.selfbell.core.model.Contact
 import com.selfbell.core.ui.composables.ContactListItem
 import com.selfbell.core.ui.composables.ReportScreenHeader
@@ -167,7 +168,16 @@ fun SelectRecipientScreen(
             )
             SelfBellButton(
                 text = "다음",
-                onClick = { onNextClick(selectedGuardians, selectedMessage) },
+                onClick = { 
+                    Log.d("SelectRecipientScreen", "=== 다음 버튼 클릭 ===")
+                    Log.d("SelectRecipientScreen", "선택된 보호자: ${selectedGuardians.size}명")
+                    selectedGuardians.forEachIndexed { index, contact ->
+                        Log.d("SelectRecipientScreen", "보호자 ${index + 1}: ${contact.name} (ID: ${contact.id}, userId: ${contact.userId}, 전화번호: ${contact.phoneNumber})")
+                    }
+                    Log.d("SelectRecipientScreen", "선택된 메시지: '$selectedMessage'")
+                    Log.d("SelectRecipientScreen", "다음 단계로 진행...")
+                    onNextClick(selectedGuardians, selectedMessage) 
+                },
                 modifier = Modifier.weight(1f),
                 enabled = isNextButtonEnabled,
                 buttonType = SelfBellButtonType.PRIMARY_FILLED
