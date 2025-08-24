@@ -94,21 +94,30 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val type = data["type"]
         val wardName = data["wardName"] ?: "보호 대상자"
         val message = data["message"] ?: ""
+        val isGuardian = data["isGuardian"]?.toBoolean() ?: false
         
         Log.d(TAG, "📋 파싱된 데이터:")
         Log.d(TAG, "  - type: $type")
         Log.d(TAG, "  - wardName: $wardName")
         Log.d(TAG, "  - message: $message")
+        Log.d(TAG, "  - isGuardian: $isGuardian")
         
         when (type) {
             "SAFE_WALK_STARTED" -> {
                 Log.d(TAG, "🚶‍♀️ 안심귀가 시작 알림 감지")
                 Log.d(TAG, "보호 대상자: $wardName")
                 Log.d(TAG, "알림 메시지: $message")
+                Log.d(TAG, "수신자: ${if (isGuardian) "보호자" else "피보호자"}")
+                
+                val notificationBody = if (isGuardian) {
+                    "${wardName}님의 안전 귀가가 시작되었습니다"
+                } else {
+                    "안전 귀가가 시작되었습니다"
+                }
                 
                 showSafeWalkNotification(
                     title = "안심귀가 시작",
-                    body = "${wardName}님의 안전 귀가가 시작되었습니다",
+                    body = notificationBody,
                     isStart = true
                 )
             }
@@ -116,10 +125,17 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 Log.d(TAG, "🏁 안심귀가 종료 알림 감지")
                 Log.d(TAG, "보호 대상자: $wardName")
                 Log.d(TAG, "알림 메시지: $message")
+                Log.d(TAG, "수신자: ${if (isGuardian) "보호자" else "피보호자"}")
+                
+                val notificationBody = if (isGuardian) {
+                    "${wardName}님의 안전 귀가가 종료되었습니다"
+                } else {
+                    "안전 귀가가 종료되었습니다"
+                }
                 
                 showSafeWalkNotification(
                     title = "안심귀가 종료",
-                    body = "${wardName}님의 안전 귀가가 종료되었습니다",
+                    body = notificationBody,
                     isStart = false
                 )
             }
