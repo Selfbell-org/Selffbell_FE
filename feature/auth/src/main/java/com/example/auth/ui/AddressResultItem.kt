@@ -22,7 +22,7 @@ import com.selfbell.domain.model.AddressModel
  * @param address 표시할 주소 데이터 모델.
  * @param onClick 아이템 클릭 시 실행될 람다 함수.
  */
-@Composable
+@Composable//
 fun AddressResultItem(address: AddressModel, onClick: () -> Unit) {
     Column(
         modifier = Modifier
