@@ -1,5 +1,8 @@
 package com.selfbell.data.di
 
+import android.content.Context
+import com.selfbell.data.BuildConfig
+import com.selfbell.data.R
 import com.selfbell.data.api.AuthInterceptor
 import com.selfbell.data.api.AuthService
 import com.selfbell.data.api.ContactService
@@ -18,6 +21,7 @@ import com.selfbell.domain.repository.FavoriteAddressRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -31,7 +35,15 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "http://3.37.244.247:8080/"
+    @Provides
+    @Singleton
+    @Named("baseUrl")
+    // ✅✅✅ 이 함수를 아래와 같이 수정합니다. ✅✅✅
+    fun provideBaseUrl(@ApplicationContext context: Context): String {
+        // Context를 통해 R.string 리소스에 접근합니다.
+        return context.getString(R.string.base_url)
+    }
+
 
     /**
      * AuthInterceptor가 토큰 재발급 시에만 사용하는 별도의 OkHttpClient
@@ -55,9 +67,13 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("authRetrofit")
-    fun provideAuthRetrofit(@Named("authOkHttpClient") okHttpClient: OkHttpClient): Retrofit {
+
+    fun provideAuthRetrofit(
+        @Named("authOkHttpClient") okHttpClient: OkHttpClient,
+        @Named("baseUrl") baseUrl: String
+    ): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(baseUrl) // ✅ 2. 파라미터로 받은 baseUrl을 사용합니다.
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -113,9 +129,12 @@ object NetworkModule {
     @Singleton
     @Provides
     @Named("backendRetrofit")
-    fun provideRetrofit(@Named("backendOkHttpClient") okHttpClient: OkHttpClient): Retrofit {
+    fun provideRetrofit(
+        @Named("backendOkHttpClient") okHttpClient: OkHttpClient,
+        @Named("baseUrl") baseUrl: String
+    ): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(baseUrl) // ✅ 2. 파라미터로 받은 baseUrl을 사용합니다.
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

@@ -7,15 +7,19 @@ plugins {
 }
 
 // local.properties 파일 로드
-val properties = Properties() // 'new' 키워드 없이 사용
+val properties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
-    properties.load(localPropertiesFile.inputStream()) // newDataInputStream() 대신 inputStream() 사용
+    properties.load(localPropertiesFile.inputStream())
 }
 
 android {
     namespace = "com.selfbell.data"
     compileSdk = 35
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         minSdk = 26
@@ -31,6 +35,8 @@ android {
 
         buildConfigField("String", "NAVER_API_CLIENT_ID", "\"${properties.getProperty("NAVER_API_CLIENT_ID", "")}\"")
         buildConfigField("String", "NAVER_API_CLIENT_SECRET", "\"${properties.getProperty("NAVER_API_CLIENT_SECRET", "")}\"")
+        resValue("string", "base_url", properties.getProperty("API_BASE_URL", ""))
+
     }
 
     buildTypes {
@@ -49,9 +55,7 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        buildConfig = true
-    }
+
 }
 dependencies {
     // domain 모듈 의존성 (필수)!
