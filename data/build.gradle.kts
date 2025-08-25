@@ -7,15 +7,19 @@ plugins {
 }
 
 // local.properties 파일 로드
-val properties = Properties() // 'new' 키워드 없이 사용
+val properties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
-    properties.load(localPropertiesFile.inputStream()) // newDataInputStream() 대신 inputStream() 사용
+    properties.load(localPropertiesFile.inputStream())
 }
 
 android {
     namespace = "com.selfbell.data"
     compileSdk = 35
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         minSdk = 26
@@ -30,10 +34,10 @@ android {
         // Hilt에 주입하기 위해 BuildConfig 필드 추가
         buildConfigField("String", "NAVER_API_CLIENT_ID", "\"${properties.getProperty("NAVER_API_CLIENT_ID", "")}\"")
         buildConfigField("String", "NAVER_API_CLIENT_SECRET", "\"${properties.getProperty("NAVER_API_CLIENT_SECRET", "")}\"")
-        
-        // API Base URLs 설정
-        buildConfigField("String", "API_BASE_URL", "\"${properties.getProperty("API_BASE_URL")}\"")
-        buildConfigField("String", "STOMP_WS_URL", "\"${properties.getProperty("STOMP_WS_URL")}\"")
+
+        resValue("string", "base_url", properties.getProperty("API_BASE_URL", ""))
+        resValue("string", "websocket_endpoint", properties.getProperty("WEBSOCKET_ENDPOINT", ""))
+
     }
 
     buildTypes {
@@ -52,9 +56,7 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        buildConfig = true
-    }
+
 }
 dependencies {
     // domain 모듈 의존성 (필수)!
