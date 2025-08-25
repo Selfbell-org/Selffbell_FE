@@ -36,6 +36,7 @@ android {
         buildConfigField("String", "NAVER_API_CLIENT_ID", "\"${properties.getProperty("NAVER_API_CLIENT_ID", "")}\"")
         buildConfigField("String", "NAVER_API_CLIENT_SECRET", "\"${properties.getProperty("NAVER_API_CLIENT_SECRET", "")}\"")
         resValue("string", "base_url", properties.getProperty("API_BASE_URL", ""))
+        resValue("string", "websocket_endpoint", properties.getProperty("WEBSOCKET_ENDPOINT", ""))
 
     }
 

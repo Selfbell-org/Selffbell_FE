@@ -50,19 +50,17 @@ private enum class DestinationSelectionType {
 
 @HiltViewModel
 class EscortViewModel @Inject constructor(
+    private val stompManager: StompManager,
     private val savedStateHandle: SavedStateHandle,
     private val contentResolver: ContentResolver,
     private val safeWalkRepository: SafeWalkRepository,
     private val FavoriteAddressRepository: FavoriteAddressRepository,
-    private val addressRepository: AddressRepository,
     private val locationTracker: LocationTracker,
     private val tokenManager: TokenManager,
     private val contactRepository: ContactRepository,
     private val reverseGeocodingRepository: ReverseGeocodingRepository,
-    private val application: Application // ✅ Application Context 주입
+    private val application: Application
 ) : ViewModel() {
-
-    private val stompManager = StompManager()
 
     // 출발지/도착지 상태
     private val _startLocation = MutableStateFlow(LocationState("현재 위치", LatLng(37.5665, 126.9780)))
