@@ -32,9 +32,9 @@ android {
         manifestPlaceholders["NAVER_MAPS_CLIENT_SECRET"] = properties.getProperty("NAVER_MAPS_CLIENT_SECRET", "YOUR_DEFAULT_SECRET")
 
         // Hilt에 주입하기 위해 BuildConfig 필드 추가
-
         buildConfigField("String", "NAVER_API_CLIENT_ID", "\"${properties.getProperty("NAVER_API_CLIENT_ID", "")}\"")
         buildConfigField("String", "NAVER_API_CLIENT_SECRET", "\"${properties.getProperty("NAVER_API_CLIENT_SECRET", "")}\"")
+
         resValue("string", "base_url", properties.getProperty("API_BASE_URL", ""))
         resValue("string", "websocket_endpoint", properties.getProperty("WEBSOCKET_ENDPOINT", ""))
 

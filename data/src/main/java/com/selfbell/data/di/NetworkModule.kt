@@ -38,11 +38,11 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("baseUrl")
-    // ✅✅✅ 이 함수를 아래와 같이 수정합니다. ✅✅✅
     fun provideBaseUrl(@ApplicationContext context: Context): String {
         // Context를 통해 R.string 리소스에 접근합니다.
         return context.getString(R.string.base_url)
     }
+
 
 
     /**

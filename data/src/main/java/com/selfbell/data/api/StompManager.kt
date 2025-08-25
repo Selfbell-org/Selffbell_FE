@@ -21,7 +21,9 @@ class StompManager @Inject constructor(
     fun connect(token: String, sessionId: Long) {
         val headers = mapOf("Authorization" to "Bearer $token")
 
+
         val endpoint = context.getString(R.string.websocket_endpoint)
+
         stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, endpoint, headers)
 
         val lifecycleDisposable = stompClient?.lifecycle()?.subscribe { lifecycleEvent ->

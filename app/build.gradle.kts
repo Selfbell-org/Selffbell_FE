@@ -38,6 +38,10 @@ android {
         // Manifest Placeholder 설정
         addManifestPlaceholders(mapOf("NAVER_MAPS_CLIENT_ID" to properties.getProperty("NAVER_MAPS_CLIENT_ID")))
         resValue("string", "naver_maps_client_id_from_gradle", properties.getProperty("NAVER_MAPS_CLIENT_ID"))
+        
+        // API Base URLs 설정
+        buildConfigField("String", "API_BASE_URL", "\"${properties.getProperty("API_BASE_URL")}\"")
+        buildConfigField("String", "STOMP_WS_URL", "\"${properties.getProperty("STOMP_WS_URL")}\"")
 
     }
 
